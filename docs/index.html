@@ -5,648 +5,1009 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>rendimiento-equipo</title>
 <meta name="claude:viewport-fit-sides" content="cover">
-<meta name="description" content="Skill para Claude Code y Codex que diagnostica el equipo y manda cada tarea pesada al motor que mejor la hace.">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,100..900&family=Fraunces:ital,opsz,wght@0,9..144,300..700;1,9..144,300..700&display=swap">
+<meta name="description" content="Skill para Claude Code y Codex que diagnostica tu Mac y manda cada tarea pesada al motor que mejor la hace.">
 <style>
-/* Ficha técnica editorial: columna izquierda dura, el chip del Mac piloto como única pieza de drama, todo lo demás en silencio. Sistema Expediente Lobo: claro para leer, oscuro según el equipo del lector. */
+/* Simbiosis Codex (superficies, grises, celdas de comando, tipografía del sistema) + apple.com (titulares grandes,
+   escenas fijas que se recorren con el scroll, mosaicos) + Outlayr (píldora flotante, titular en degradado, datos
+   con etiquetas mínimas, curva .32,.72,0,1). Oscuro primero; claro con los tokens claros de Codex y Apple. */
 :root{
-  --lienzo:#FAF6EE; --superficie:#F0ECE2; --acento:#A85A1A; --texto:#0E0C0A; --atenuado:#4D463D; --meta:#8A8070;
-  --sobre-acento:#FAF6EE;
-  --atm-1:rgba(232,131,58,0); --atm-2:rgba(232,131,58,0);
-  --term-fondo:#1A1613; --term-texto:#EAE4D7; --term-meta:#9E948A; --term-acento:#E8833A; --term-borde:#1A1613;
-  --display:"Fraunces","Iowan Old Style",Georgia,serif;
-  --util:"Archivo","Helvetica Neue",Arial,sans-serif;
-  --codigo:ui-monospace,"SF Mono",Menlo,Consolas,monospace;
-  --t-display:clamp(2.7rem,1.3rem + 6.2vw,6.6rem);
-  --t-h2:clamp(2rem,1.25rem + 3.2vw,3.5rem);
-  --t-h3:clamp(1.15rem,1rem + .5vw,1.4rem);
-  --t-lead:clamp(1.125rem,1rem + .45vw,1.35rem);
-  --t-cuerpo:1.0625rem;
-  --t-meta:.76rem;
-  --t-dato:clamp(2.6rem,1.6rem + 3.4vw,4.2rem);
-  --gutter:clamp(16px,4vw,56px);
+  color-scheme:dark;
+  --bg:#0d0d0d; --bg-alt:#111111; --panel:#171717; --panel-2:#212121; --panel-3:#2b2b2b;
+  --line:rgba(255,255,255,.08); --line-2:rgba(255,255,255,.15);
+  --text:#ececec; --text-2:#b4b4b4; --text-3:#8f8f8f; --text-4:#5d5d5d;
+  --accent:#0285ff; --accent-text:#63a8f8; --on-accent:#ffffff;
+  --ok:#42dec2; --warn:#fee096; --bad:#fdb9ab;
+  --e-p:#b0c9fe; --e-e:#42dec2; --e-g:#c8a4fb; --e-a:#fbadca; --e-v:#fee096; --e-m:#b3e3fc;
+  --glow-1:rgba(2,133,255,.18); --glow-2:rgba(200,164,251,.11);
+  --shadow:0 40px 90px rgba(0,0,0,.6),0 0 0 1px rgba(255,255,255,.06);
+  --nav-bg:rgba(28,28,28,.7);
+  --grad-a:#ffffff; --grad-b:#8a8a8a;
+  --sans:-apple-system,BlinkMacSystemFont,"SF Pro Display","SF Pro Text","Segoe UI",system-ui,sans-serif;
+  --mono:ui-monospace,"SFMono-Regular","SF Mono",Menlo,Consolas,monospace;
+  --ease:cubic-bezier(.32,.72,0,1);
+  --gut:clamp(16px,4vw,48px);
 }
-@media (prefers-color-scheme: dark){
-  :root:not([data-theme="light"]){
-    --lienzo:#0E0C0A; --superficie:#1A1613; --acento:#E8833A; --texto:#EAE4D7; --atenuado:#9E948A; --meta:#6B6258;
-    --sobre-acento:#0E0C0A; --atm-1:rgba(232,131,58,.11); --atm-2:rgba(232,131,58,.07); --term-borde:#6B6258;
-    color-scheme:dark;
+@media (prefers-color-scheme: light){
+  :root:not([data-theme="dark"]){
+    color-scheme:light;
+    --bg:#ffffff; --bg-alt:#f5f5f7; --panel:#f9f9f9; --panel-2:#efefef; --panel-3:#e3e3e3;
+    --line:rgba(0,0,0,.08); --line-2:rgba(0,0,0,.14);
+    --text:#0d0d0d; --text-2:#5d5d5d; --text-3:#8f8f8f; --text-4:#b4b4b4;
+    --accent:#0071e3; --accent-text:#0066cc; --on-accent:#ffffff;
+    --ok:#055f51; --warn:#7d3f09; --bad:#ab1616;
+    --e-p:#2451da; --e-e:#055f51; --e-g:#7e14d0; --e-a:#c31b74; --e-v:#7d3f09; --e-m:#0b5c7c;
+    --glow-1:rgba(0,113,227,.12); --glow-2:rgba(126,20,208,.07);
+    --shadow:0 40px 80px rgba(0,0,0,.14),0 0 0 1px rgba(0,0,0,.06);
+    --nav-bg:rgba(255,255,255,.72);
+    --grad-a:#0d0d0d; --grad-b:#8f8f8f;
   }
 }
-:root[data-theme="dark"]{
-  --lienzo:#0E0C0A; --superficie:#1A1613; --acento:#E8833A; --texto:#EAE4D7; --atenuado:#9E948A; --meta:#6B6258;
-  --sobre-acento:#0E0C0A; --atm-1:rgba(232,131,58,.11); --atm-2:rgba(232,131,58,.07); --term-borde:#6B6258;
-  color-scheme:dark;
+:root[data-theme="light"]{
+  color-scheme:light;
+  --bg:#ffffff; --bg-alt:#f5f5f7; --panel:#f9f9f9; --panel-2:#efefef; --panel-3:#e3e3e3;
+  --line:rgba(0,0,0,.08); --line-2:rgba(0,0,0,.14);
+  --text:#0d0d0d; --text-2:#5d5d5d; --text-3:#8f8f8f; --text-4:#b4b4b4;
+  --accent:#0071e3; --accent-text:#0066cc; --on-accent:#ffffff;
+  --ok:#055f51; --warn:#7d3f09; --bad:#ab1616;
+  --e-p:#2451da; --e-e:#055f51; --e-g:#7e14d0; --e-a:#c31b74; --e-v:#7d3f09; --e-m:#0b5c7c;
+  --glow-1:rgba(0,113,227,.12); --glow-2:rgba(126,20,208,.07);
+  --shadow:0 40px 80px rgba(0,0,0,.14),0 0 0 1px rgba(0,0,0,.06);
+  --nav-bg:rgba(255,255,255,.72);
+  --grad-a:#0d0d0d; --grad-b:#8f8f8f;
 }
 
 *,*::before,*::after{box-sizing:border-box}
-body{background:var(--lienzo);color:var(--texto);font:420 var(--t-cuerpo)/1.55 var(--util);-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility}
-::selection{background:var(--acento);color:var(--sobre-acento)}
-a{color:inherit;text-decoration-color:var(--acento);text-decoration-thickness:2px;text-underline-offset:3px}
-a:hover{color:var(--acento)}
-:focus-visible{outline:2px solid var(--acento);outline-offset:3px}
-h1,h2,h3{font-family:var(--display);font-weight:480;margin:0;text-wrap:balance}
-h1 em,h2 em{font-style:italic;color:var(--acento)}
-p{margin:0}
-code.k{font-family:var(--codigo);font-size:.86em;background:var(--superficie);padding:.08em .34em;white-space:nowrap}
+html{scroll-behavior:smooth}
+body{margin:0;background:var(--bg);color:var(--text);font:400 17px/1.5 var(--sans);-webkit-font-smoothing:antialiased;overflow-x:clip}
+a{color:var(--accent-text);text-decoration:none}
+a:hover{text-decoration:underline}
+:focus-visible{outline:2px solid var(--accent);outline-offset:3px;border-radius:8px}
+h1,h2,h3,p{margin:0}
+h1,h2,h3{text-wrap:balance}
+code,pre{font-family:var(--mono)}
+svg.i{width:20px;height:20px;flex:none;fill:none;stroke:currentColor;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round}
+.wrap{max-width:1180px;margin-inline:auto;padding-left:max(var(--gut),env(safe-area-inset-left,0px));padding-right:max(var(--gut),env(safe-area-inset-right,0px))}
+.grad{background:linear-gradient(100deg,var(--grad-a) 30%,var(--grad-b));-webkit-background-clip:text;background-clip:text;color:transparent}
+.kicker{font-size:12px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;color:var(--text-3);display:inline-flex;align-items:center;gap:8px}
+.kicker svg.i{width:16px;height:16px;color:var(--accent-text)}
+.k-code{font-family:var(--mono);font-size:.86em;background:var(--panel-2);border:1px solid var(--line);padding:.06em .4em;border-radius:6px;white-space:nowrap}
 
-.atmosfera{position:fixed;inset:0;pointer-events:none;z-index:0;
-  background:radial-gradient(56vw 42vw at 88% 6%,var(--atm-1),transparent 70%),radial-gradient(48vw 38vw at 4% 62%,var(--atm-2),transparent 70%)}
-main,.cabecera,.pie{position:relative;z-index:1}
-.envoltura{max-width:1240px;margin-inline:auto;padding-left:max(var(--gutter),env(safe-area-inset-left,0px));padding-right:max(var(--gutter),env(safe-area-inset-right,0px))}
+/* Fondo vivo */
+.ambient{position:fixed;inset:0;pointer-events:none;z-index:0;overflow:hidden}
+.ambient i{position:absolute;width:60vmax;height:60vmax;border-radius:50%;filter:blur(40px);opacity:1}
+.ambient i:nth-child(1){left:-18vmax;top:-26vmax;background:radial-gradient(closest-side,var(--glow-1),transparent);animation:drift 22s var(--ease) infinite alternate}
+.ambient i:nth-child(2){right:-22vmax;top:8vmax;background:radial-gradient(closest-side,var(--glow-2),transparent);animation:drift 28s var(--ease) infinite alternate-reverse}
+@keyframes drift{to{transform:translate3d(6vmax,5vmax,0) scale(1.08)}}
+main,.nav,footer{position:relative;z-index:1}
 
-/* Cabecera */
-.cabecera{display:flex;align-items:center;justify-content:space-between;gap:16px 24px;flex-wrap:wrap;padding-block:22px}
-.marca{display:flex;align-items:baseline;gap:10px;text-decoration:none}
-.marca::before{content:"";width:10px;height:10px;background:var(--acento);align-self:center}
-.marca b{font-family:var(--display);font-variation-settings:"opsz" 36;font-weight:540;font-size:1.15rem;letter-spacing:-.01em}
-.marca span,.nav a{font-size:var(--t-meta);font-stretch:85%;font-weight:600;letter-spacing:.2em;text-transform:uppercase;color:var(--atenuado)}
-.nav{display:flex;gap:6px 22px;flex-wrap:wrap}
-.nav a{text-decoration:none}
-.nav a:hover{color:var(--acento)}
-
-/* Etiquetas */
-.ceja{display:flex;align-items:center;gap:14px;font-size:var(--t-meta);font-stretch:85%;font-weight:620;letter-spacing:.22em;text-transform:uppercase;color:var(--atenuado)}
-.ceja::before{content:"";flex:none;width:34px;height:3px;background:var(--acento)}
-.etiqueta{font-size:var(--t-meta);font-stretch:85%;font-weight:620;letter-spacing:.2em;text-transform:uppercase;color:var(--meta)}
+/* Navegación en píldora */
+.nav{position:fixed;left:50%;top:calc(12px + env(safe-area-inset-top,0px));transform:translateX(-50%);z-index:20;display:flex;align-items:center;gap:6px;padding:6px;border-radius:999px;background:var(--nav-bg);border:1px solid var(--line-2);-webkit-backdrop-filter:blur(20px) saturate(180%);backdrop-filter:blur(20px) saturate(180%);max-width:calc(100vw - 24px)}
+.brand{display:flex;align-items:center;gap:8px;padding:6px 12px 6px 8px;color:var(--text);font-weight:600;font-size:14px;white-space:nowrap}
+.brand:hover{text-decoration:none}
+.brand .logo{width:26px;height:26px;border-radius:8px;display:grid;place-items:center;background:var(--text);color:var(--bg)}
+.brand .logo svg.i{width:16px;height:16px;stroke-width:1.8}
+.links{position:relative;display:flex}
+.links a{position:relative;z-index:1;padding:7px 13px;font-size:13.5px;color:var(--text-2);border-radius:999px;white-space:nowrap;transition:color .3s var(--ease)}
+.links a:hover{text-decoration:none;color:var(--text)}
+.links a.on{color:var(--text)}
+.links .ind{position:absolute;top:0;bottom:0;left:0;width:0;border-radius:999px;background:var(--panel-3);transition:transform .45s var(--ease),width .45s var(--ease),opacity .3s;opacity:0}
+.btn{display:inline-flex;align-items:center;gap:8px;border-radius:999px;font-weight:500;font-size:15px;padding:11px 20px;border:1px solid transparent;cursor:pointer;transition:transform .35s var(--ease),background-color .3s,border-color .3s;white-space:nowrap}
+.btn:hover{text-decoration:none;transform:translateY(-1px)}
+.btn svg.i{width:17px;height:17px}
+.btn.pri{background:var(--accent);color:var(--on-accent)}
+.btn.ghost{background:transparent;color:var(--text);border-color:var(--line-2)}
+.btn.ghost:hover{border-color:var(--text-3)}
+.nav .btn{padding:8px 15px;font-size:13.5px}
+@media (max-width:820px){.links{display:none}}
 
 /* Portada */
-.hero{padding-block:clamp(32px,6vw,88px) clamp(28px,4vw,56px)}
-.hero-texto{border-left:3px solid var(--acento);padding-left:clamp(16px,2.6vw,36px);display:grid;gap:clamp(18px,2.4vw,28px);max-width:62rem}
-h1{font-size:var(--t-display);font-variation-settings:"opsz" 144;line-height:.93;letter-spacing:-.035em}
-.lead{font-size:var(--t-lead);line-height:1.5;color:var(--atenuado);max-width:40em}
-.lead strong{color:var(--texto);font-weight:560}
-.acciones{display:flex;gap:12px;flex-wrap:wrap}
-.btn{display:inline-flex;align-items:center;gap:10px;padding:13px 20px;font-weight:600;font-size:.95rem;text-decoration:none;border:1px solid var(--texto)}
-.btn-1{background:var(--texto);color:var(--lienzo)}
-.btn-1:hover{background:var(--acento);border-color:var(--acento);color:var(--sobre-acento)}
-.btn-2{color:var(--texto)}
-.btn-2:hover{border-color:var(--acento);color:var(--acento)}
-.parrilla{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:0;margin:clamp(32px,4vw,52px) 0 0;border-top:1px solid var(--texto)}
-.parrilla div{padding:14px 18px 0 0;display:grid;gap:6px;min-width:0}
-.parrilla dt{font-size:var(--t-meta);font-stretch:85%;font-weight:620;letter-spacing:.2em;text-transform:uppercase;color:var(--meta)}
-.parrilla dd{margin:0;font-family:var(--display);font-variation-settings:"opsz" 30;font-size:1.06rem;line-height:1.3}
-@media (max-width:760px){.parrilla{grid-template-columns:repeat(2,minmax(0,1fr));row-gap:16px}}
+.hero{padding-top:calc(130px + env(safe-area-inset-top,0px));text-align:center;overflow:hidden}
+.hero-txt{display:flex;flex-direction:column;align-items:center;gap:22px;will-change:transform,opacity}
+.tag{display:inline-flex;align-items:center;gap:10px;padding:6px 14px 6px 10px;border-radius:999px;border:1px solid var(--line-2);background:var(--panel);color:var(--text-2);font-size:13.5px}
+.tag:hover{text-decoration:none;color:var(--text)}
+.tag .dot{width:8px;height:8px;border-radius:50%;background:var(--ok);box-shadow:0 0 0 4px color-mix(in srgb,var(--ok) 20%,transparent)}
+h1{font-size:clamp(2.6rem,1rem + 6.4vw,6.2rem);font-weight:650;letter-spacing:-.045em;line-height:1.02;max-width:12ch}
+.sub{max-width:36em;color:var(--text-2);font-size:clamp(1.05rem,.95rem + .4vw,1.3rem);line-height:1.5}
+.sub b{color:var(--text);font-weight:600}
+.ctas{display:flex;gap:12px;flex-wrap:wrap;justify-content:center}
+.hero-stage{position:relative;margin:clamp(48px,7vw,84px) auto 0;max-width:1060px;perspective:1800px}
+
+/* Ventana de Codex */
+.win{position:relative;z-index:2;text-align:left;border-radius:14px;background:var(--panel);box-shadow:var(--shadow);overflow:hidden;transform-origin:50% 0;will-change:transform}
+.win-bar{display:flex;align-items:center;gap:8px;height:40px;padding:0 14px;border-bottom:1px solid var(--line);background:var(--bg-alt)}
+.win-bar i{width:12px;height:12px;border-radius:50%;background:#ff5f57}
+.win-bar i:nth-child(2){background:#febc2e}.win-bar i:nth-child(3){background:#28c840}
+.win-bar span{flex:1;text-align:center;font-size:13px;color:var(--text-3);margin-right:52px}
+.win-body{display:grid;grid-template-columns:230px minmax(0,1fr);min-height:440px}
+.side{border-right:1px solid var(--line);padding:14px 10px;display:grid;align-content:start;gap:2px;background:var(--bg-alt);font-size:13.5px}
+.side-new{display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:8px;color:var(--text);font-weight:500;margin-bottom:10px}
+.side-new svg.i{width:16px;height:16px}
+.side-h{font-size:11.5px;color:var(--text-3);padding:4px 10px;font-weight:500}
+.side-it{display:flex;align-items:center;gap:9px;padding:7px 10px;border-radius:8px;color:var(--text-2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.side-it.on{background:var(--panel-2);color:var(--text)}
+.side-it svg.i{width:15px;height:15px;color:var(--text-3)}
+.spin{width:12px;height:12px;border-radius:50%;border:1.6px solid var(--line-2);border-top-color:var(--accent-text);animation:spin 1s linear infinite;flex:none}
+@keyframes spin{to{transform:rotate(360deg)}}
+.main{padding:22px clamp(14px,3vw,34px) 18px;display:flex;flex-direction:column;gap:14px;font-size:14.5px;min-width:0}
+.u{align-self:flex-end;max-width:78%;background:var(--panel-2);padding:10px 15px;border-radius:18px;color:var(--text)}
+.ai{color:var(--text);line-height:1.55}
+.ai b{font-weight:600}
+.cell{border:1px solid var(--line);border-radius:12px;overflow:hidden;background:var(--bg-alt)}
+.cell-h{display:flex;align-items:center;gap:9px;padding:9px 12px;font-size:12.5px;color:var(--text-2);min-width:0}
+.cell-h code{color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;flex:1;min-width:0}
+.cell-h svg.i{width:15px;height:15px;color:var(--text-3)}
+.cell-h .okk{display:inline-flex;align-items:center;gap:4px;color:var(--ok);font-family:var(--sans)}
+.cell-h .okk svg.i{width:14px;height:14px;color:var(--ok);stroke-width:2}
+.cell pre{margin:0;padding:10px 12px;border-top:1px solid var(--line);font-size:12px;line-height:1.6;color:var(--text-2);overflow-x:auto}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chip{display:inline-flex;align-items:center;gap:6px;font-size:12.5px;padding:5px 10px;border-radius:999px;background:color-mix(in srgb,var(--c) 14%,transparent);color:var(--c);border:1px solid color-mix(in srgb,var(--c) 30%,transparent)}
+.chip svg.i{width:14px;height:14px}
+.composer{margin-top:auto;display:flex;align-items:center;gap:10px;border:1px solid var(--line-2);border-radius:22px;padding:8px 8px 8px 16px;background:var(--panel-2);color:var(--text-3);font-size:14px}
+.composer span{flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.composer .send{width:32px;height:32px;border-radius:50%;display:grid;place-items:center;background:var(--text);color:var(--bg)}
+.composer .send svg.i{width:16px;height:16px;stroke-width:2}
+.float{position:absolute;z-index:3;will-change:transform}
+.float .card{display:flex;align-items:center;gap:12px;padding:12px 14px;border-radius:16px;background:var(--nav-bg);border:1px solid var(--line-2);-webkit-backdrop-filter:blur(18px) saturate(160%);backdrop-filter:blur(18px) saturate(160%);box-shadow:0 18px 40px rgba(0,0,0,.25);text-align:left;animation:bob 7s var(--ease) infinite alternate}
+.float:nth-of-type(2) .card{animation-delay:-2s}.float:nth-of-type(3) .card{animation-delay:-4s}.float:nth-of-type(4) .card{animation-delay:-6s}
+@keyframes bob{to{transform:translateY(-10px)}}
+.ico{width:36px;height:36px;border-radius:10px;display:grid;place-items:center;background:color-mix(in srgb,var(--c) 16%,transparent);color:var(--c);flex:none}
+.float small{display:block;font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--text-3);font-weight:600}
+.float b{font-size:15px;font-weight:600;font-variant-numeric:tabular-nums}
+.f1{left:-4%;top:16%}.f2{right:-5%;top:6%}.f3{left:-6%;bottom:12%}.f4{right:-3%;bottom:20%}
+@media (max-width:1100px){.f1,.f3{left:-1%}.f2,.f4{right:-1%}}
+@media (max-width:760px){.win-body{grid-template-columns:1fr;min-height:0}.side{display:none}.f2,.f3{display:none}.f1{display:none}.f4{right:2%;bottom:-22px}.float .card{padding:9px 11px}.u{max-width:92%}}
 
 /* Secciones */
-.seccion{padding-block:clamp(56px,8vw,112px);border-top:1px solid var(--meta)}
-.cabeza{display:grid;grid-template-columns:minmax(0,6fr) minmax(0,5fr);gap:20px clamp(24px,5vw,72px);align-items:end;margin-bottom:clamp(32px,4.4vw,56px)}
-.cabeza > div{display:grid;gap:18px}
-h2{font-size:var(--t-h2);font-variation-settings:"opsz" 144;line-height:.98;letter-spacing:-.03em}
-.cabeza > p{color:var(--atenuado);max-width:34em}
-@media (max-width:860px){.cabeza{grid-template-columns:1fr}}
+.sec{padding-block:clamp(90px,12vw,160px)}
+.head{display:grid;justify-items:center;text-align:center;gap:18px;margin-bottom:clamp(40px,6vw,72px)}
+h2{font-size:clamp(2.1rem,1.1rem + 3.8vw,4rem);font-weight:650;letter-spacing:-.04em;line-height:1.04;max-width:16ch}
+.head p{max-width:38em;color:var(--text-2);font-size:clamp(1rem,.95rem + .3vw,1.18rem)}
 
-/* Mapa */
-.mapa{display:grid;grid-template-columns:minmax(0,5fr) minmax(0,7fr);grid-template-areas:"tareas chip" "detalle chip";gap:28px clamp(28px,4vw,56px);align-items:start}
-.tareas{grid-area:tareas;display:grid;gap:6px;margin:0;padding:0;list-style:none}
-.tarea{display:flex;justify-content:space-between;align-items:baseline;gap:12px;width:100%;text-align:left;padding:11px 14px 11px 16px;border:1px solid var(--meta);border-left:3px solid transparent;background:transparent;color:var(--texto);font:500 1rem/1.25 var(--util);cursor:pointer;transition:background-color .2s,border-color .2s}
-.tarea small{font-size:.68rem;font-stretch:85%;font-weight:620;letter-spacing:.16em;text-transform:uppercase;color:var(--meta);white-space:nowrap}
-.tarea:hover{border-color:var(--texto);border-left-color:transparent}
-.tarea[aria-pressed="true"]{background:var(--superficie);border-color:var(--superficie);border-left-color:var(--acento)}
-.tarea[aria-pressed="true"] small{color:var(--acento)}
-.detalle{grid-area:detalle;border-left:3px solid var(--acento);padding:4px 0 4px clamp(16px,2vw,24px);display:grid;gap:10px;min-width:0}
-.d-dato{font-stretch:120%;font-weight:800;font-size:var(--t-dato);line-height:1;letter-spacing:-.02em;font-variant-numeric:tabular-nums;margin-top:4px}
-.d-contra{font-family:var(--display);font-style:italic;font-variation-settings:"opsz" 30;font-size:1.15rem;color:var(--atenuado)}
-.d-nota{max-width:36em}
-.d-fuente{font-size:.82rem;color:var(--meta)}
-.chip{grid-area:chip;position:relative;border:1px solid var(--texto);padding:clamp(16px,2.4vw,28px);background:var(--lienzo);margin:0}
-.reg{position:absolute;width:16px;height:16px;border:0 solid var(--acento);opacity:.5}
-.reg.r1{top:-9px;left:-9px;border-top-width:2px;border-left-width:2px}
-.reg.r2{top:-9px;right:-9px;border-top-width:2px;border-right-width:2px}
-.reg.r3{bottom:-9px;left:-9px;border-bottom-width:2px;border-left-width:2px}
-.reg.r4{bottom:-9px;right:-9px;border-bottom-width:2px;border-right-width:2px}
-.chip-cab{display:flex;justify-content:space-between;align-items:baseline;gap:6px 16px;flex-wrap:wrap;margin-bottom:18px}
-.chip-nombre{font-family:var(--display);font-variation-settings:"opsz" 60;font-size:clamp(1.35rem,1rem + 1vw,1.75rem);font-weight:520;letter-spacing:-.02em}
-.bloques{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));grid-template-areas:"p p e" "g g a" "v v v" "m m m";gap:10px}
-.bloque{border:1px solid var(--meta);padding:13px;display:flex;flex-direction:column;gap:10px;min-width:0;transition:border-color .3s}
-.bloque.activo{border:2px solid var(--acento);padding:12px}
-.b-cab{display:flex;justify-content:space-between;align-items:baseline;gap:8px}
-.b-nombre{font-size:.7rem;font-stretch:85%;font-weight:640;letter-spacing:.15em;text-transform:uppercase;color:var(--atenuado);line-height:1.3}
-.activo .b-nombre{color:var(--acento)}
-.b-cifra{font-stretch:120%;font-weight:800;font-size:1.45rem;line-height:1;font-variant-numeric:tabular-nums}
-.celdas{display:flex;flex-wrap:wrap;gap:4px}
-.celdas i{width:13px;height:13px;border:1px solid var(--meta);transition:background-color .22s,border-color .22s;transition-delay:calc(var(--i,0) * 24ms)}
-.activo .celdas i{background:var(--acento);border-color:var(--acento)}
-.b-pie{font-size:.74rem;color:var(--meta);line-height:1.35}
-.codecs{display:flex;flex-wrap:wrap;align-items:center;gap:5px}
-.codecs span{width:6.4rem;font-size:.74rem;color:var(--meta)}
-.codecs b,.codecs s{font-size:.74rem;font-weight:600;padding:3px 7px;border:1px solid var(--meta);transition:background-color .25s,color .25s,border-color .25s}
-.codecs s{color:var(--meta);border-style:dashed}
-.activo .codecs b{background:var(--acento);border-color:var(--acento);color:var(--sobre-acento)}
-.mem-barra{height:14px;border:1px solid var(--meta);position:relative}
-.mem-gpu{position:absolute;inset:0 auto 0 0;width:74%;background:var(--superficie);border-right:2px solid var(--meta);transition:background-color .3s}
-.activo .mem-gpu{background:var(--acento);border-right-color:var(--acento)}
-.mem-escala{display:flex;justify-content:space-between;gap:12px;font-size:.74rem;color:var(--meta)}
-@media (max-width:860px){.mapa{grid-template-columns:1fr;grid-template-areas:"tareas" "chip" "detalle"}.tareas{grid-template-columns:repeat(2,minmax(0,1fr))}}
-@media (max-width:520px){
-  .tarea{flex-direction:column;gap:4px;padding:10px 10px 10px 12px;font-size:.92rem}
-  .bloques{grid-template-columns:repeat(2,minmax(0,1fr));grid-template-areas:"p p" "e a" "g g" "v v" "m m"}
-  .codecs span{width:100%}
+/* Morph genérico ligado al scroll (en ambos sentidos) */
+.morph{--r:1;transform:translate3d(0,calc((1 - var(--r)) * 70px),0) scale(calc(.9 + .1 * var(--r)));opacity:calc(.15 + .85 * var(--r));clip-path:inset(calc((1 - var(--r)) * 7%) round calc(var(--rad,24px) + (1 - var(--r)) * 140px));will-change:transform,opacity,clip-path}
+
+/* Escena del chip */
+.seq{position:relative;height:380vh}
+.seq-pin{position:sticky;top:0;height:100vh;height:100svh;display:flex;flex-direction:column;justify-content:center;align-items:center;gap:clamp(18px,3vh,32px);padding-top:56px;overflow:hidden}
+.caps{position:relative;width:min(calc(100vw - 32px),820px);height:clamp(96px,14vh,140px);text-align:center}
+.cap{position:absolute;inset:0;display:grid;align-content:center;justify-items:center;gap:10px;opacity:0;transform:translateY(16px) scale(.98);transition:opacity .6s var(--ease),transform .6s var(--ease);pointer-events:none}
+.cap.on{opacity:1;transform:none}
+.cap h2{font-size:clamp(1.6rem,1rem + 2.4vw,3rem);max-width:22ch}
+.stage{position:relative;width:min(calc(100vw - 32px),980px);height:min(62svh,560px);--k:0;--s:1}
+.stage::before{content:"";position:absolute;inset:0;border-radius:44px;padding:1.5px;background:linear-gradient(140deg,var(--e-p),var(--e-g) 40%,var(--e-a) 70%,var(--e-v));-webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);-webkit-mask-composite:xor;mask-composite:exclude;opacity:calc(1 - var(--s) * 1.4);pointer-events:none;z-index:3}
+.die{position:absolute;inset:0;display:grid;place-items:center;align-content:center;gap:8px;z-index:4;pointer-events:none;opacity:calc(1 - var(--s) * 1.6)}
+.die svg.i{width:clamp(44px,6vw,64px);height:clamp(44px,6vw,64px);stroke-width:1.2;color:var(--text-2)}
+.die b{font-size:clamp(2.2rem,1rem + 4vw,4.4rem);font-weight:650;letter-spacing:-.04em}
+.die small{font-size:13px;color:var(--text-3);letter-spacing:.14em;text-transform:uppercase;font-weight:600}
+.blk{position:absolute;left:0;top:0;width:100%;height:100%;--ec:var(--text-3);border-radius:18px;border:1px solid color-mix(in srgb,var(--ec) calc(var(--k) * 45%),var(--line-2));background:color-mix(in srgb,var(--ec) calc(var(--k) * 9%),var(--panel));padding:clamp(10px,1.6vw,18px);display:flex;flex-direction:column;gap:clamp(6px,1vh,12px);overflow:hidden;transition:box-shadow .4s var(--ease)}
+.blk:hover{box-shadow:0 0 0 1px color-mix(in srgb,var(--ec) 60%,transparent),0 20px 50px color-mix(in srgb,var(--ec) 18%,transparent)}
+.blk>*{opacity:var(--k)}
+.bh{display:flex;align-items:center;gap:10px;min-width:0}
+.bh .ico{width:32px;height:32px;border-radius:9px;--c:var(--ec)}
+.bh .ico svg.i{width:18px;height:18px}
+.bh span:not(.ico){font-size:clamp(11px,.6rem + .4vw,14px);font-weight:600;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;flex:1;min-width:0}
+.bh .cnt{font-size:clamp(20px,1rem + 1.4vw,32px);font-weight:650;letter-spacing:-.03em;font-variant-numeric:tabular-nums;color:var(--ec)}
+.cells{display:flex;flex-wrap:wrap;gap:clamp(3px,.4vw,5px)}
+.cells i{width:clamp(9px,1.2vw,14px);height:clamp(9px,1.2vw,14px);border-radius:3px;border:1px solid color-mix(in srgb,var(--ec) 45%,transparent);transition:background-color .25s,transform .35s var(--ease)}
+.cells i.on{background:var(--ec);transform:scale(1.04)}
+.bt{margin-top:auto;font-size:clamp(10.5px,.55rem + .3vw,12.5px);color:var(--text-3);line-height:1.35}
+.codecs{display:flex;flex-wrap:wrap;gap:5px;align-items:center}
+.codecs em{font-style:normal;font-size:11px;color:var(--text-3);width:5.6rem}
+.codecs b{font-size:11px;font-weight:600;padding:3px 7px;border-radius:6px;border:1px solid color-mix(in srgb,var(--ec) 45%,transparent);color:var(--ec)}
+.codecs s{font-size:11px;padding:3px 7px;border-radius:6px;border:1px dashed var(--line-2);color:var(--text-4)}
+.membar{position:relative;height:12px;border-radius:6px;background:var(--panel-3);overflow:hidden}
+.membar i{position:absolute;inset:0 auto 0 0;width:calc(var(--fill,0) * 74%);background:var(--ec);border-radius:6px}
+.memleg{display:flex;justify-content:space-between;gap:8px;font-size:11.5px;color:var(--text-3);font-variant-numeric:tabular-nums}
+@media (max-width:640px){.seq{height:320vh}.stage{height:58svh}.codecs em{display:none}.codecs+.codecs{display:none}.bh .ico{display:none}.codecs b,.codecs s{padding:2px 5px;font-size:10px}}
+
+/* Tareas */
+.map{display:grid;grid-template-columns:minmax(0,7fr) minmax(0,5fr);gap:clamp(20px,3vw,40px);align-items:start}
+.tasks{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.task{--c:var(--text-3);text-align:left;font:inherit;color:inherit;cursor:pointer;display:grid;gap:12px;align-content:start;padding:18px;border-radius:20px;background:var(--panel);border:1px solid var(--line);transition:transform .45s var(--ease),border-color .3s,background-color .3s;--rad:20px}
+.task:hover,.task.on{border-color:color-mix(in srgb,var(--c) 55%,transparent);background:color-mix(in srgb,var(--c) 6%,var(--panel))}
+.task:hover{transform:translateY(-3px)}
+.task .ico svg.i{width:19px;height:19px}
+.task h3{font-size:16px;font-weight:600;letter-spacing:-.01em}
+.task .eng{font-size:11px;letter-spacing:.12em;text-transform:uppercase;font-weight:600;color:var(--c)}
+.task .st{display:flex;align-items:baseline;gap:8px;color:var(--text-3);font-size:13px}
+.task .st b{font-size:24px;font-weight:650;letter-spacing:-.03em;color:var(--text);font-variant-numeric:tabular-nums}
+.side-panel{position:sticky;top:90px;display:grid;gap:14px}
+.mini{position:relative;aspect-ratio:16/11;max-width:100%;border-radius:22px;background:var(--panel);border:1px solid var(--line);padding:12px}
+.mini .mb{position:absolute;--ec:var(--text-3);border-radius:10px;border:1px solid var(--line-2);background:var(--panel-2);display:flex;flex-direction:column;justify-content:space-between;padding:8px 10px;transition:background-color .45s var(--ease),border-color .45s var(--ease),transform .45s var(--ease),opacity .45s}
+.mini .mb span{font-size:11px;font-weight:600;color:var(--text-3);transition:color .3s;line-height:1.2}
+.mini .mb svg.i{width:16px;height:16px;color:var(--text-4);transition:color .3s}
+.mini.has .mb{opacity:.45}
+.mini .mb.on{opacity:1;background:color-mix(in srgb,var(--ec) 18%,var(--panel-2));border-color:var(--ec);transform:scale(1.03)}
+.mini .mb.on span,.mini .mb.on svg.i{color:var(--ec)}
+.info{border-radius:22px;background:var(--panel);border:1px solid var(--line);padding:18px;display:grid;gap:10px}
+.info p{color:var(--text-2);font-size:15px}
+.info .who{font-size:12px;letter-spacing:.12em;text-transform:uppercase;font-weight:600;color:var(--accent-text)}
+.info pre{margin:0;font-size:12px;background:var(--bg-alt);border:1px solid var(--line);border-radius:10px;padding:10px 12px;overflow-x:auto;color:var(--text)}
+.info .src{font-size:12.5px;color:var(--text-3);display:flex;align-items:center;gap:6px}
+.info .src svg.i{width:14px;height:14px}
+@media (max-width:900px){.map{grid-template-columns:1fr}.side-panel{position:sticky;top:64px;z-index:5;order:-1;grid-template-columns:minmax(0,5fr) minmax(0,7fr);background:var(--bg);padding-block:8px}.info{padding:12px;gap:6px}.info p{font-size:13px}.info pre{display:none}}
+@media (max-width:560px){.tasks{grid-template-columns:1fr}.side-panel{grid-template-columns:1fr}.mini{aspect-ratio:16/8}.info{display:none}.task{padding:14px}}
+
+/* Datos */
+.stats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px;margin-bottom:14px}
+.stat{--c:var(--accent-text);border-radius:24px;background:var(--panel);border:1px solid var(--line);padding:22px;display:grid;gap:6px;align-content:start;cursor:default;transition:border-color .3s}
+.stat:hover{border-color:color-mix(in srgb,var(--c) 50%,transparent)}
+.stat .ico{margin-bottom:10px}
+.big{font-size:clamp(2.6rem,1.6rem + 2.6vw,4rem);font-weight:650;letter-spacing:-.045em;line-height:1;font-variant-numeric:tabular-nums;background:linear-gradient(120deg,var(--c),color-mix(in srgb,var(--c) 45%,var(--text)));-webkit-background-clip:text;background-clip:text;color:transparent}
+.stat p{color:var(--text-2);font-size:14.5px}
+.charts{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
+.card{border-radius:28px;background:var(--panel);border:1px solid var(--line);padding:clamp(18px,2.6vw,30px);display:grid;gap:18px;align-content:start;--rad:28px;min-width:0}
+.card.wide{grid-column:1/-1}
+.card-h{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap}
+.card-h h3{font-size:clamp(1.15rem,1rem + .5vw,1.5rem);font-weight:600;letter-spacing:-.02em}
+.card-h p{font-size:14px;color:var(--text-3);margin-top:4px}
+.timer{font-family:var(--mono);font-size:clamp(1.6rem,1.2rem + 1.4vw,2.4rem);font-weight:500;letter-spacing:-.02em;font-variant-numeric:tabular-nums;color:var(--text)}
+.timer small{font-size:.5em;color:var(--text-3);margin-left:4px}
+.rows{display:grid;gap:14px}
+.rows:hover .row:not(:hover){opacity:.4}
+.row{--c:var(--text-3);display:grid;grid-template-columns:minmax(0,1fr) auto;gap:6px 14px;align-items:center;transition:opacity .3s var(--ease);cursor:default}
+.row .lab{font-size:14px;color:var(--text-2);min-width:0}
+.row .lab code{font-size:12.5px;color:var(--text)}
+.row .val{font-size:15px;font-weight:600;font-variant-numeric:tabular-nums;display:inline-flex;align-items:center;gap:6px;justify-self:end;color:var(--text)}
+.row .val svg.i{width:16px;height:16px;color:var(--c);stroke-width:2;opacity:0;transform:scale(.6);transition:opacity .3s,transform .4s var(--ease)}
+.row.done .val svg.i{opacity:1;transform:none}
+.track{grid-column:1/-1;position:relative;height:12px;border-radius:999px;background:var(--panel-3);overflow:hidden}
+.track i{position:absolute;inset:0 auto 0 0;width:calc(var(--w,0) * 100%);border-radius:999px;background:var(--c)}
+.track i.rng{background:repeating-linear-gradient(135deg,var(--c) 0 2px,transparent 2px 6px);border:1px solid var(--c);left:calc(var(--a) * 100%);width:calc(var(--w,0) * (var(--b) - var(--a)) * 100%)}
+.track.tall{height:22px;border-radius:8px}.track.tall i{border-radius:8px}
+.axis{position:relative;height:16px;margin-top:-6px;font-size:11px;color:var(--text-3);font-variant-numeric:tabular-nums}
+.axis span{position:absolute;left:var(--x);transform:translateX(-50%)}
+.axis span:first-child{transform:none}.axis span:last-child{transform:translateX(-100%)}
+.dots{display:grid;gap:14px}
+.dots .row{grid-template-columns:minmax(0,1fr) auto}
+.dotgrid{grid-column:1/-1;display:flex;flex-wrap:wrap;gap:3px}
+.dotgrid i{width:8px;height:8px;border-radius:50%;background:var(--panel-3);transition:background-color .2s}
+.dotgrid i.on{background:var(--c)}
+.note{margin-top:18px;display:flex;gap:12px;align-items:flex-start;padding:16px 18px;border-radius:18px;border:1px dashed var(--line-2);color:var(--text-2);font-size:14.5px}
+.note svg.i{color:var(--warn);margin-top:2px}
+@media (max-width:900px){.stats{grid-template-columns:repeat(2,minmax(0,1fr))}.charts{grid-template-columns:1fr}}
+@media (max-width:440px){.stat{padding:16px}.stats{gap:10px}}
+
+/* Cómo trabaja */
+.how{position:relative;height:420vh}
+.how-pin{position:sticky;top:0;height:100vh;height:100svh;display:flex;align-items:center;padding-top:60px}
+.how-grid{display:grid;grid-template-columns:minmax(0,5fr) minmax(0,7fr);gap:clamp(24px,4vw,56px);align-items:center;width:100%}
+.how-h{display:grid;gap:14px;margin-bottom:26px}
+.how-h h2{font-size:clamp(1.9rem,1rem + 2.8vw,3.2rem);max-width:none}
+.steps-wrap{position:relative}
+.steps{position:relative;list-style:none;margin:0;padding:0;display:grid;gap:8px}
+.steps-wrap svg.line{position:absolute;left:21px;top:32px;width:2px;height:calc(100% - 64px);overflow:visible}
+.steps-wrap svg.line path{stroke:var(--accent);stroke-width:2;fill:none}
+.steps-wrap svg.line path.base{stroke:var(--line-2)}
+.step{position:relative;display:grid;grid-template-columns:44px minmax(0,1fr);gap:4px 14px;padding:10px 0;opacity:.45;transition:opacity .45s var(--ease)}
+.step.on{opacity:1}
+.step .dot{grid-row:span 2;width:44px;height:44px;border-radius:50%;display:grid;place-items:center;background:var(--bg);border:1px solid var(--line-2);color:var(--text-3);transition:all .45s var(--ease);z-index:1}
+.step.on .dot,.step.past .dot{border-color:var(--accent);color:var(--accent-text);background:color-mix(in srgb,var(--accent) 12%,var(--bg))}
+.step h3{font-size:18px;font-weight:600;display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
+.step h3 code{font-size:12.5px;color:var(--text-3);font-weight:400}
+.step p{color:var(--text-2);font-size:14.5px;max-height:0;overflow:hidden;transition:max-height .5s var(--ease)}
+.step.on p{max-height:9em}
+.term{border-radius:16px;background:var(--panel);box-shadow:var(--shadow);overflow:hidden;min-width:0}
+.term-bar{display:flex;align-items:center;gap:12px;padding:0 10px 0 14px;height:42px;border-bottom:1px solid var(--line);background:var(--bg-alt)}
+.term-bar .lights{display:flex;gap:7px}.term-bar .lights i{width:11px;height:11px;border-radius:50%;background:var(--panel-3)}
+.seg{display:flex;gap:2px;padding:3px;border-radius:10px;background:var(--panel-2);margin-left:auto;overflow-x:auto;max-width:100%}
+.seg button{font:500 12.5px var(--sans);color:var(--text-2);background:transparent;border:0;padding:5px 10px;border-radius:7px;cursor:pointer;white-space:nowrap;transition:background-color .3s var(--ease),color .3s}
+.seg button[aria-selected="true"]{background:var(--panel);color:var(--text);box-shadow:0 1px 2px rgba(0,0,0,.2)}
+.panes{position:relative;height:min(52vh,430px)}
+.pane{position:absolute;inset:0;padding:16px 18px;overflow:auto;opacity:0;transform:translateY(10px);transition:opacity .5s var(--ease),transform .5s var(--ease);pointer-events:none}
+.pane.on{opacity:1;transform:none;pointer-events:auto}
+.pane pre{margin:0;font-size:12.5px;line-height:1.65;color:var(--text-2)}
+.pane .ln{display:block;opacity:0;transform:translateX(-6px);transition:opacity .25s,transform .35s var(--ease)}
+.pane .ln.on{opacity:1;transform:none}
+.pane .c{color:var(--accent-text)}.pane .g{color:var(--ok)}.pane .y{color:var(--warn)}.pane .m{color:var(--text-3)}.pane .w{color:var(--text)}
+.pane .tit{display:block;font-family:var(--sans);font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--text-3);margin-bottom:10px}
+@media (max-width:900px){
+  .how{height:400vh}.how-pin{align-items:flex-start;padding-top:80px}
+  .how-grid{grid-template-columns:1fr;gap:16px}
+  .how-h{margin-bottom:8px}.how-h p{display:none}.how-h h2{font-size:1.8rem}
+  .steps{grid-template-columns:repeat(4,minmax(0,1fr));gap:6px}.steps-wrap svg.line{display:none}
+  .step{grid-template-columns:1fr;justify-items:center;text-align:center;padding:0}.step .dot{grid-row:auto;width:40px;height:40px}
+  .step h3{font-size:12.5px;justify-content:center}.step h3 code{display:none}.step p{display:none}
+  .panes{height:min(48svh,400px)}.pane pre{font-size:11px}
 }
 
-/* Origen */
-.origen{display:grid;grid-template-columns:minmax(0,5fr) minmax(0,6fr);gap:28px clamp(28px,5vw,72px);align-items:start}
-.origen > div{display:grid;gap:18px}
-.cita{margin:0;border-left:3px solid var(--acento);padding-left:clamp(16px,2.4vw,32px);display:grid;gap:16px}
-.cita p{font-family:var(--display);font-variation-settings:"opsz" 30;font-size:clamp(1.15rem,1rem + .55vw,1.42rem);line-height:1.45;font-weight:400}
-.cita footer{font-family:var(--display);font-style:italic;font-size:1.05rem;color:var(--atenuado)}
-@media (max-width:860px){.origen{grid-template-columns:1fr}}
-
-/* Gráficos */
-.graficos{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:clamp(32px,4vw,56px) clamp(28px,4vw,64px)}
-@media (max-width:860px){.graficos{grid-template-columns:1fr}}
-.grafico{margin:0;display:grid;gap:14px;min-width:0}
-.grafico figcaption{display:flex;justify-content:space-between;align-items:baseline;gap:6px 16px;flex-wrap:wrap;border-top:2px solid var(--texto);padding-top:12px}
-.g-titulo{font-family:var(--display);font-variation-settings:"opsz" 40;font-size:var(--t-h3);font-weight:500;letter-spacing:-.01em}
-.g-razon{font-stretch:118%;font-weight:800;font-size:1.05rem;color:var(--acento);font-variant-numeric:tabular-nums;white-space:nowrap}
-.g-fila,.g-eje{display:grid;grid-template-columns:minmax(0,1fr) 5.6rem;column-gap:12px}
-.g-fila{grid-template-areas:"lbl lbl" "pista val";row-gap:5px}
-.g-lbl{grid-area:lbl;font-size:.86rem;color:var(--atenuado)}
-.g-lbl code{font-family:var(--codigo);font-size:.92em}
-.g-pista{grid-area:pista;position:relative;height:20px;border-left:1px solid var(--texto)}
-.g-barra{position:absolute;inset:0 auto 0 0;width:var(--v);min-width:2px;background:var(--atenuado)}
-.g-rango{position:absolute;top:0;bottom:0;left:var(--a);width:calc(var(--b) - var(--a));border:1px solid var(--atenuado);background:repeating-linear-gradient(135deg,var(--atenuado) 0 1.5px,transparent 1.5px 5px)}
-.gana .g-barra{background:var(--acento)}
-.gana .g-rango{border-color:var(--acento);background:repeating-linear-gradient(135deg,var(--acento) 0 1.5px,transparent 1.5px 5px)}
-.g-val{grid-area:val;align-self:center;font-stretch:112%;font-weight:700;font-size:.95rem;font-variant-numeric:tabular-nums;white-space:nowrap}
-.gana .g-val{color:var(--acento)}
-.g-regla{height:10px;border-left:1px solid var(--texto);border-right:1px solid var(--meta);
-  background:repeating-linear-gradient(to right,var(--meta) 0 1px,transparent 1px var(--menor)) top left/100% 5px no-repeat,
-             repeating-linear-gradient(to right,var(--texto) 0 1px,transparent 1px var(--mayor)) top left/100% 10px no-repeat}
-.g-num{position:relative;height:1.3em;margin-top:4px;font-size:.72rem;color:var(--meta);font-variant-numeric:tabular-nums}
-.g-num span{position:absolute;left:var(--x);transform:translateX(-50%);white-space:nowrap}
-.g-num span:first-child{transform:none}
-.g-num span:last-child{transform:translateX(-100%)}
-.nota-medida{margin-top:clamp(32px,4vw,48px);display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:16px clamp(28px,4vw,64px);font-size:.92rem;color:var(--atenuado)}
-.nota-medida p:last-child{border-left:3px solid var(--acento);padding-left:16px}
-@media (max-width:860px){.nota-medida{grid-template-columns:1fr}}
-
-/* Pasos y terminal */
-.dos{display:grid;grid-template-columns:minmax(0,5fr) minmax(0,6fr);gap:32px clamp(28px,5vw,72px);align-items:start}
-@media (max-width:960px){.dos{grid-template-columns:1fr}}
-.pasos{list-style:none;margin:0;padding:0;display:grid;gap:26px}
-.pasos li{display:grid;grid-template-columns:3.2rem minmax(0,1fr);gap:4px 14px}
-.pasos .n{grid-row:span 2;font-stretch:122%;font-weight:800;font-size:1.9rem;line-height:1;color:var(--acento);font-variant-numeric:tabular-nums}
-.pasos h3{font-size:var(--t-h3);font-variation-settings:"opsz" 40;font-weight:500;letter-spacing:-.01em;display:flex;flex-wrap:wrap;align-items:baseline;gap:4px 12px}
-.pasos p{color:var(--atenuado)}
-.term{margin:0;background:var(--term-fondo);color:var(--term-texto);border:1px solid var(--term-borde);min-width:0}
-.term-cab{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:9px 14px;border-bottom:1px solid #6B6258;font-size:.72rem;color:var(--term-meta);letter-spacing:.04em}
-.term pre{margin:0;padding:16px 18px;overflow-x:auto;font:400 .8rem/1.62 var(--codigo);tab-size:2}
-.term .p{color:var(--term-meta)}
-.term .a{color:var(--term-acento)}
-.term .l{display:block}
-.term .l::before{content:"$ ";color:var(--term-meta)}
-.copiar{font:600 .72rem/1 var(--util);letter-spacing:.12em;text-transform:uppercase;color:var(--term-texto);background:transparent;border:1px solid var(--term-meta);padding:7px 10px;cursor:pointer}
-.copiar:hover{border-color:var(--term-acento);color:var(--term-acento)}
-.copiar:focus-visible{outline-color:var(--term-acento)}
-
-/* Memoria y frenos */
-.texto{display:grid;gap:16px;max-width:36em}
-.texto p{color:var(--atenuado)}
-.texto .term{margin-top:6px}
-.tabla-envoltura{overflow-x:auto;min-width:0}
-table{border-collapse:collapse;width:100%;font-size:.94rem}
-th,td{text-align:left;vertical-align:top;padding:12px 14px 12px 0;border-bottom:1px solid var(--meta)}
-th{font-size:var(--t-meta);font-stretch:85%;font-weight:620;letter-spacing:.2em;text-transform:uppercase;color:var(--meta);border-bottom:2px solid var(--texto);white-space:nowrap}
-td:first-child{font-weight:560}
-td.estado{font-family:var(--display);font-style:italic;font-variation-settings:"opsz" 30;color:var(--atenuado);white-space:nowrap}
-.regla-freno{margin-top:18px;border-left:3px solid var(--acento);padding-left:16px}
+/* Frenos y huella */
+.two{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
+.brakes{display:grid;gap:12px}
+.brake{--c:var(--ok);display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:6px 14px;align-items:center;padding:16px;border-radius:20px;background:var(--bg-alt);border:1px solid var(--line)}
+.brake h4{margin:0;font-size:15px;font-weight:600}
+.brake .state{font-size:12.5px;font-weight:600;color:var(--c);padding:4px 10px;border-radius:999px;background:color-mix(in srgb,var(--c) 14%,transparent);white-space:nowrap}
+.scale{grid-column:1/-1;position:relative;display:grid;grid-auto-flow:column;grid-auto-columns:1fr;gap:4px;margin-top:6px}
+.scale span{height:28px;border-radius:7px;display:grid;place-items:center;font-size:11px;color:var(--text-3);background:var(--panel-2);cursor:default;transition:background-color .3s,color .3s}
+.scale span.stop{background:repeating-linear-gradient(135deg,color-mix(in srgb,var(--bad) 22%,transparent) 0 4px,transparent 4px 8px);color:var(--bad)}
+.scale span:hover{color:var(--text)}
+.scale .mk{position:absolute;top:-6px;width:calc((100% - (var(--n) - 1) * 4px) / var(--n));height:40px;border:2px solid var(--c);border-radius:9px;left:calc(var(--pos) * (100% + 4px) / var(--n));transition:left .1s linear;pointer-events:none}
+.fp{display:grid;justify-items:center;gap:18px;text-align:center}
+.fp svg.big-fp{width:min(42%,170px);height:auto;fill:none;stroke:var(--accent-text);stroke-width:1.2;stroke-linecap:round}
+.fp svg.big-fp path{stroke-dasharray:var(--len,100);stroke-dashoffset:calc(var(--len,100) * (1 - var(--d,1)))}
+.tree{width:100%;text-align:left;border-radius:16px;background:var(--bg-alt);border:1px solid var(--line);padding:14px 16px;font-size:12.5px;line-height:1.75;overflow-x:auto;color:var(--text-2);margin:0}
+.tree b{color:var(--accent-text);font-weight:500}.tree i{font-style:normal;color:var(--text-3)}
+@media (max-width:900px){.two{grid-template-columns:1fr}}
 
 /* Reglas */
-.reglas{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:0 clamp(24px,3vw,44px)}
-.reglas article{border-top:1px solid var(--texto);padding:18px 0 30px;display:grid;gap:10px;align-content:start}
-.reglas h3{font-size:var(--t-h3);font-variation-settings:"opsz" 40;font-weight:500;letter-spacing:-.01em;line-height:1.2}
-.reglas p{color:var(--atenuado);font-size:.98rem}
-@media (max-width:960px){.reglas{grid-template-columns:repeat(2,minmax(0,1fr))}}
-@media (max-width:600px){.reglas{grid-template-columns:1fr}}
+.rules{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px}
+.rule{--c:var(--accent-text);position:relative;overflow:hidden;border-radius:24px;background:var(--panel);border:1px solid var(--line);padding:24px;display:grid;gap:12px;align-content:start;--rad:24px}
+.rule::before{content:"";position:absolute;inset:0;background:radial-gradient(320px circle at var(--mx,50%) var(--my,0%),color-mix(in srgb,var(--c) 16%,transparent),transparent 60%);opacity:0;transition:opacity .4s var(--ease);pointer-events:none}
+.rule:hover::before{opacity:1}
+.rule h3{font-size:18px;font-weight:600;letter-spacing:-.015em;line-height:1.25}
+.rule p{color:var(--text-2);font-size:15px}
+@media (max-width:900px){.rules{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media (max-width:600px){.rules{grid-template-columns:1fr}}
 
 /* Instalar */
-.instalar{display:grid;grid-template-columns:minmax(0,6fr) minmax(0,5fr);gap:40px clamp(28px,5vw,72px);align-items:start}
-.instalar .texto{max-width:none}
-@media (max-width:960px){.instalar{grid-template-columns:1fr}}
+.install{display:grid;grid-template-columns:minmax(0,7fr) minmax(0,5fr);gap:14px;align-items:start}
+.install .term .panes{height:auto;min-height:0}
+.install .pane{position:relative;inset:auto;display:none;opacity:1;transform:none}
+.install .pane.on{display:block}
+.install .pane .ln{opacity:1;transform:none}
+.install .pane .ln::before{content:"$ ";color:var(--text-3)}
+.copy{display:inline-flex;align-items:center;gap:6px;font:500 12.5px var(--sans);color:var(--text-2);background:transparent;border:1px solid var(--line-2);border-radius:8px;padding:5px 10px;cursor:pointer}
+.copy:hover{color:var(--text);border-color:var(--text-3)}
+.copy svg.i{width:14px;height:14px}
+.inst-foot{padding:14px 18px;border-top:1px solid var(--line);font-size:14px;color:var(--text-2)}
+.compat{display:grid;gap:10px}
+.cp{display:grid;grid-template-columns:auto minmax(0,1fr);gap:4px 12px;padding:16px;border-radius:18px;background:var(--panel);border:1px solid var(--line)}
+.cp .st{grid-row:span 2;width:10px;height:10px;border-radius:50%;margin-top:6px;background:var(--c);box-shadow:0 0 0 4px color-mix(in srgb,var(--c) 18%,transparent)}
+.cp b{font-size:15px;font-weight:600}.cp span{font-size:14px;color:var(--text-2)}
+@media (max-width:900px){.install{grid-template-columns:1fr}}
+@media (max-width:560px){.term-bar .lights{display:none}.term-bar{padding-left:8px}.seg button{padding:5px 8px}}
 
-/* Fuentes */
-.fuentes{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:28px clamp(24px,3vw,44px)}
-.fuentes section{display:grid;gap:12px;align-content:start}
-.fuentes ul{list-style:none;margin:0;padding:0;display:grid;gap:9px}
-.fuentes a{text-decoration:none;font-size:.95rem;line-height:1.35;display:inline}
-.fuentes a::after{content:" ↗";color:var(--acento)}
-.fuentes a:hover{text-decoration:underline}
-@media (max-width:860px){.fuentes{grid-template-columns:1fr}}
+/* Fuentes y pie */
+.src-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px}
+.src-col{border-radius:24px;background:var(--panel);border:1px solid var(--line);padding:22px;display:grid;gap:12px;align-content:start}
+.src-col ul{list-style:none;margin:0;padding:0;display:grid;gap:10px}
+.src-col a{display:flex;align-items:flex-start;gap:8px;font-size:14.5px;line-height:1.35}
+.src-col a svg.i{width:15px;height:15px;margin-top:2px}
+@media (max-width:900px){.src-grid{grid-template-columns:1fr}}
+footer{border-top:1px solid var(--line);padding-block:32px calc(40px + env(safe-area-inset-bottom,0px));color:var(--text-3);font-size:13.5px}
+footer .wrap{display:flex;justify-content:space-between;gap:12px 24px;flex-wrap:wrap}
 
-/* Pie */
-.pie{border-top:1px solid var(--texto);padding-block:28px 40px;display:flex;justify-content:space-between;align-items:baseline;gap:12px 32px;flex-wrap:wrap}
-.firma{font-family:var(--display);font-style:italic;font-variation-settings:"opsz" 60;font-size:1.5rem;display:flex;align-items:center;gap:12px}
-.firma::before{content:"";width:10px;height:10px;background:var(--acento)}
-.pie p{font-size:.86rem;color:var(--meta)}
+/* Tooltip */
+.tip{position:fixed;z-index:30;pointer-events:none;padding:8px 11px;border-radius:10px;background:var(--panel-2);border:1px solid var(--line-2);color:var(--text);font-size:12.5px;line-height:1.4;max-width:260px;box-shadow:0 12px 30px rgba(0,0,0,.25);opacity:0;transform:translateY(4px);transition:opacity .2s,transform .3s var(--ease)}
+.tip.on{opacity:1;transform:none}
 
-@media (prefers-reduced-motion: reduce){*,*::before,*::after{transition:none!important;animation:none!important}}
+@media (prefers-reduced-motion: reduce){
+  html{scroll-behavior:auto}
+  .ambient i,.float .card,.spin{animation:none}
+  .morph{transform:none;opacity:1;clip-path:none}
+}
 </style>
 </head>
 <body>
-<div class="atmosfera" aria-hidden="true"></div>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <symbol id="i-cpu" viewBox="0 0 24 24"><rect x="6" y="6" width="12" height="12" rx="2"/><rect x="9.5" y="9.5" width="5" height="5" rx="1"/><path d="M9 3v3M15 3v3M9 18v3M15 18v3M3 9h3M3 15h3M18 9h3M18 15h3"/></symbol>
+    <symbol id="i-leaf" viewBox="0 0 24 24"><path d="M5 19c0-8 5-13 14-14-1 9-6 14-14 14z"/><path d="M5 19l7-7"/></symbol>
+    <symbol id="i-gpu" viewBox="0 0 24 24"><rect x="2.5" y="6" width="19" height="11" rx="2"/><circle cx="8.5" cy="11.5" r="2.5"/><circle cx="15.5" cy="11.5" r="2.5"/><path d="M6 17v2.5M10 17v2.5"/></symbol>
+    <symbol id="i-spark" viewBox="0 0 24 24"><path d="M11 3l1.9 5.1L18 10l-5.1 1.9L11 17l-1.9-5.1L4 10l5.1-1.9z"/><path d="M18.5 15l.7 1.8 1.8.7-1.8.7-.7 1.8-.7-1.8-1.8-.7 1.8-.7z"/></symbol>
+    <symbol id="i-film" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M7 5v14M17 5v14M3 9.5h4M3 14.5h4M17 9.5h4M17 14.5h4"/></symbol>
+    <symbol id="i-mem" viewBox="0 0 24 24"><rect x="3" y="7" width="18" height="9" rx="1.5"/><path d="M7 10.5h2M11 10.5h2M15 10.5h2M6 16v3M10 16v3M14 16v3M18 16v3"/></symbol>
+    <symbol id="i-wave" viewBox="0 0 24 24"><path d="M3 12h1M6 9v6M9 6v12M12 9v6M15 4v16M18 8v8M21 11v2"/></symbol>
+    <symbol id="i-person" viewBox="0 0 24 24"><circle cx="12" cy="9" r="3"/><path d="M6.5 19.5c.8-3.2 2.9-4.8 5.5-4.8s4.7 1.6 5.5 4.8"/><path d="M3 7V4.5A1.5 1.5 0 0 1 4.5 3H7M17 3h2.5A1.5 1.5 0 0 1 21 4.5V7M21 17v2.5a1.5 1.5 0 0 1-1.5 1.5H17M7 21H4.5A1.5 1.5 0 0 1 3 19.5V17"/></symbol>
+    <symbol id="i-layers" viewBox="0 0 24 24"><path d="M12 3l9 5-9 5-9-5z"/><path d="M3 12.5l9 5 9-5"/><path d="M3 16.5l9 5 9-5"/></symbol>
+    <symbol id="i-image" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2"/><circle cx="9" cy="10" r="1.6"/><path d="M21 16l-5-5-9 8"/></symbol>
+    <symbol id="i-sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2.5v2M12 19.5v2M2.5 12h2M19.5 12h2M5.3 5.3l1.4 1.4M17.3 17.3l1.4 1.4M5.3 18.7l1.4-1.4M17.3 6.7l1.4-1.4"/></symbol>
+    <symbol id="i-moon" viewBox="0 0 24 24"><path d="M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5z"/></symbol>
+    <symbol id="i-export" viewBox="0 0 24 24"><path d="M12 15V3M7.5 7.5L12 3l4.5 4.5"/><path d="M5 13v6a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-6"/></symbol>
+    <symbol id="i-play" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M10 8.5l5.5 3.5-5.5 3.5z"/></symbol>
+    <symbol id="i-pulse" viewBox="0 0 24 24"><path d="M3 12h4l2.5-6 4 12 2.5-6H21"/></symbol>
+    <symbol id="i-sliders" viewBox="0 0 24 24"><path d="M4 6h10M18 6h2M4 12h4M12 12h8M4 18h12"/><circle cx="16" cy="6" r="2"/><circle cx="10" cy="12" r="2"/><circle cx="18" cy="18" r="2"/></symbol>
+    <symbol id="i-timer" viewBox="0 0 24 24"><circle cx="12" cy="13.5" r="7.5"/><path d="M12 13.5V9.5M9.5 2.5h5M18.5 6.5L20 5"/></symbol>
+    <symbol id="i-broom" viewBox="0 0 24 24"><path d="M15 3l-3.5 7.5"/><path d="M7 10.5h9l2 10H5z"/><path d="M9.5 14.5v6M13 14.5v6"/></symbol>
+    <symbol id="i-thermo" viewBox="0 0 24 24"><path d="M10 14.5V5a2 2 0 1 1 4 0v9.5a4 4 0 1 1-4 0z"/><path d="M12 10v7"/></symbol>
+    <symbol id="i-gauge" viewBox="0 0 24 24"><path d="M4 17a8 8 0 1 1 16 0"/><path d="M12 17l4-5"/></symbol>
+    <symbol id="i-swap" viewBox="0 0 24 24"><path d="M7 4L3 8l4 4M3 8h14M17 20l4-4-4-4M21 16H7"/></symbol>
+    <symbol id="i-battery" viewBox="0 0 24 24"><rect x="2.5" y="7" width="17" height="10" rx="2"/><path d="M22 10.5v3M6 10v4"/></symbol>
+    <symbol id="i-finger" viewBox="0 0 24 24"><path d="M6.5 18.5c-.8-1.9-1.2-4-1.2-6.3a6.7 6.7 0 0 1 11-5.1"/><path d="M18.4 10c.2.7.3 1.4.3 2.2 0 3-.4 5.6-1.3 8"/><path d="M9.3 20.5c.9-2.2 1.3-4.8 1.3-7.8a1.4 1.4 0 0 1 2.8 0c0 1.4-.1 2.8-.3 4.1"/><path d="M8 13a4 4 0 0 1 8-.6c0 2.8-.4 5.3-1.1 7.6"/></symbol>
+    <symbol id="i-term" viewBox="0 0 24 24"><rect x="3" y="4.5" width="18" height="15" rx="2"/><path d="M7 9.5l3 2.5-3 2.5M12.5 15h4.5"/></symbol>
+    <symbol id="i-code" viewBox="0 0 24 24"><path d="M8.5 7L3.5 12l5 5M15.5 7l5 5-5 5M13.5 4.5l-3 15"/></symbol>
+    <symbol id="i-copy" viewBox="0 0 24 24"><rect x="8.5" y="8.5" width="12" height="12" rx="2"/><path d="M15.5 8.5V5a1.5 1.5 0 0 0-1.5-1.5H5A1.5 1.5 0 0 0 3.5 5v9A1.5 1.5 0 0 0 5 15.5h3.5"/></symbol>
+    <symbol id="i-check" viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5"/></symbol>
+    <symbol id="i-arrow" viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></symbol>
+    <symbol id="i-up" viewBox="0 0 24 24"><path d="M12 19V5M6 11l6-6 6 6"/></symbol>
+    <symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
+    <symbol id="i-ban" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M5.6 5.6l12.8 12.8"/></symbol>
+    <symbol id="i-server" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="7" rx="1.5"/><rect x="3" y="13" width="18" height="7" rx="1.5"/><path d="M7 7.5h.01M7 16.5h.01"/></symbol>
+    <symbol id="i-power" viewBox="0 0 24 24"><path d="M12 3v8"/><path d="M6.3 6.8a8 8 0 1 0 11.4 0"/></symbol>
+    <symbol id="i-book" viewBox="0 0 24 24"><path d="M4 5.5A2.5 2.5 0 0 1 6.5 3H20v15H6.5A2.5 2.5 0 0 0 4 20.5z"/><path d="M4 20.5A2.5 2.5 0 0 1 6.5 18H20v3H6.5"/></symbol>
+    <symbol id="i-alert" viewBox="0 0 24 24"><path d="M12 4l9 16H3z"/><path d="M12 10v4M12 17h.01"/></symbol>
+    <symbol id="i-ext" viewBox="0 0 24 24"><path d="M14 4h6v6M20 4l-9 9M18 14v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h5"/></symbol>
+  </defs>
+</svg>
 
-<header class="cabecera envoltura">
-  <a class="marca" href="#inicio"><b>rendimiento-equipo</b><span>v1.0.0</span></a>
-  <nav class="nav" aria-label="Secciones">
-    <a href="#mapa">Mapa</a><a href="#medido">Medido</a><a href="#como">Cómo trabaja</a><a href="#instalar">Instalar</a>
-    <a href="https://github.com/sebaslobo22/rendimiento-equipo">GitHub ↗</a>
-  </nav>
-</header>
+<div class="ambient" aria-hidden="true"><i></i><i></i></div>
+
+<nav class="nav" aria-label="Principal">
+  <a class="brand" href="#inicio"><span class="logo"><svg class="i"><use href="#i-cpu"/></svg></span>rendimiento-equipo</a>
+  <div class="links" id="links">
+    <span class="ind" id="ind"></span>
+    <a href="#chip">Chip</a><a href="#tareas">Tareas</a><a href="#medido">Medido</a><a href="#como">Cómo</a><a href="#reglas">Reglas</a>
+  </div>
+  <a class="btn pri" href="#instalar">Instalar</a>
+</nav>
 
 <main id="inicio">
-  <section class="hero envoltura">
-    <div class="hero-texto">
-      <p class="ceja">Skill para Claude Code y Codex</p>
-      <h1>Cada tarea al <em>motor</em> que mejor la hace.</h1>
-      <p class="lead">Antes de un render, una transcripción o un lote, <strong>rendimiento-equipo</strong> mira el equipo donde corre y reparte el trabajo entre los núcleos, la GPU, el Neural Engine y el motor de video. Lo que mide en tu máquina pesa más que cualquier receta genérica.</p>
-      <div class="acciones">
-        <a class="btn btn-1" href="#instalar">Instalar</a>
-        <a class="btn btn-2" href="https://github.com/sebaslobo22/rendimiento-equipo">Ver el código ↗</a>
-      </div>
-    </div>
-    <dl class="parrilla">
-      <div><dt>Piloto</dt><dd>macOS en Apple Silicon</dd></div>
-      <div><dt>Funciona en</dt><dd>Claude Code y Codex</dd></div>
-      <div><dt>Necesita</dt><dd>Python 3, sin red ni dependencias</dd></div>
-      <div><dt>Licencia</dt><dd>MIT</dd></div>
-    </dl>
-  </section>
-
-  <section class="seccion" id="mapa" aria-labelledby="t-mapa">
-    <div class="envoltura">
-      <div class="cabeza">
-        <div><p class="ceja">El mapa</p><h2 id="t-mapa">Ocho tareas, cinco <em>motores</em>.</h2></div>
-        <p>Elige una tarea para ver a qué parte del chip la manda la skill y por qué. El esquema es el Mac piloto tal como lo reporta <code class="k">diagnosticar.py</code>: cada cuadro es un núcleo real.</p>
+  <!-- Portada -->
+  <section class="hero" id="hero">
+    <div class="wrap">
+      <div class="hero-txt" id="hero-txt">
+        <a class="tag" href="#instalar"><span class="dot"></span>Skill para Claude Code y Codex · v1.0.0</a>
+        <h1 class="grad">Cada tarea, al motor que mejor la hace.</h1>
+        <p class="sub"><b>rendimiento-equipo</b> mira tu Mac antes de un render, una transcripción o un lote, y reparte el trabajo entre la CPU, la GPU, el Neural Engine y el motor de video. Lo que mide en tu equipo manda.</p>
+        <div class="ctas">
+          <a class="btn pri" href="#instalar">Instalar en 3 comandos <svg class="i"><use href="#i-arrow"/></svg></a>
+          <a class="btn ghost" href="https://github.com/sebaslobo22/rendimiento-equipo"><svg class="i"><use href="#i-code"/></svg>Ver el código</a>
+        </div>
       </div>
 
-      <div class="mapa">
-        <ul class="tareas" aria-label="Tareas">
-          <li><button class="tarea" type="button" data-tarea="codificar" aria-pressed="true">Codificar el video final <small>Motor de video</small></button></li>
-          <li><button class="tarea" type="button" data-tarea="decodificar" aria-pressed="false">Leer el video del iPhone <small>Motor de video</small></button></li>
-          <li><button class="tarea" type="button" data-tarea="transcribir" aria-pressed="false">Transcribir la voz <small>GPU</small></button></li>
-          <li><button class="tarea" type="button" data-tarea="recortar" aria-pressed="false">Recortar a la persona <small>Neural Engine</small></button></li>
-          <li><button class="tarea" type="button" data-tarea="componer" aria-pressed="false">Componer con Remotion <small>CPU · rendimiento</small></button></li>
-          <li><button class="tarea" type="button" data-tarea="laminas" aria-pressed="false">Láminas de carrusel <small>CPU · rendimiento</small></button></li>
-          <li><button class="tarea" type="button" data-tarea="hdr" aria-pressed="false">Pasar de HDR a SDR <small>CPU · rendimiento</small></button></li>
-          <li><button class="tarea" type="button" data-tarea="lote" aria-pressed="false">Lotes de fondo <small>CPU · eficiencia</small></button></li>
-        </ul>
+      <div class="hero-stage" id="hero-stage">
+        <div class="float f1" data-par="0.14"><div class="card"><span class="ico" style="--c:var(--e-v)"><svg class="i"><use href="#i-film"/></svg></span><span><small>Motor de video</small><b>12 codificadores</b></span></div></div>
+        <div class="float f2" data-par="0.22"><div class="card"><span class="ico" style="--c:var(--e-a)"><svg class="i"><use href="#i-spark"/></svg></span><span><small>Neural Engine</small><b>16 núcleos</b></span></div></div>
+        <div class="float f3" data-par="0.18"><div class="card"><span class="ico" style="--c:var(--e-m)"><svg class="i"><use href="#i-swap"/></svg></span><span><small>Swap</small><b>Estable</b></span></div></div>
+        <div class="float f4" data-par="0.1"><div class="card"><span class="ico" style="--c:var(--ok)"><svg class="i"><use href="#i-timer"/></svg></span><span><small>Codificar 15 s</small><b>4,1 s en vez de 22,1</b></span></div></div>
 
-        <figure class="chip" aria-label="Esquema del Mac piloto: Apple M4 Pro con 24 GB">
-          <i class="reg r1"></i><i class="reg r2"></i><i class="reg r3"></i><i class="reg r4"></i>
-          <figcaption class="chip-cab"><span class="chip-nombre">Apple M4 Pro</span><span class="etiqueta">Mac piloto · 24 GB</span></figcaption>
-          <div class="bloques">
-            <div class="bloque" data-motor="pcores" style="grid-area:p">
-              <div class="b-cab"><span class="b-nombre">Núcleos de rendimiento</span><span class="b-cifra">10</span></div>
-              <div class="celdas" data-n="10"></div>
-              <p class="b-pie">CPU, nivel 0 (Performance)</p>
-            </div>
-            <div class="bloque" data-motor="ecores" style="grid-area:e">
-              <div class="b-cab"><span class="b-nombre">Eficiencia</span><span class="b-cifra">4</span></div>
-              <div class="celdas" data-n="4"></div>
-              <p class="b-pie">CPU, nivel 1</p>
-            </div>
-            <div class="bloque" data-motor="gpu" style="grid-area:g">
-              <div class="b-cab"><span class="b-nombre">GPU</span><span class="b-cifra">20</span></div>
-              <div class="celdas" data-n="20"></div>
-              <p class="b-pie">Metal, familia apple9</p>
-            </div>
-            <div class="bloque" data-motor="ane" style="grid-area:a">
-              <div class="b-cab"><span class="b-nombre">Neural Engine</span><span class="b-cifra">16</span></div>
-              <div class="celdas" data-n="16"></div>
-              <p class="b-pie">Core ML y Vision</p>
-            </div>
-            <div class="bloque activo" data-motor="video" style="grid-area:v">
-              <div class="b-cab"><span class="b-nombre">Motor de video</span><span class="b-cifra">12</span></div>
-              <div class="codecs"><span>Codifica</span><b>H.264</b><b>HEVC</b><b>ProRes</b><b>JPEG</b></div>
-              <div class="codecs"><span>Decodifica</span><b>AV1</b><b>H.264</b><b>HEVC</b><b>ProRes</b><s title="Sin decodificación por hardware">VP9</s></div>
-              <p class="b-pie">12 de 27 codificadores corren por hardware (VideoToolbox)</p>
-            </div>
-            <div class="bloque" data-motor="memoria" style="grid-area:m">
-              <div class="b-cab"><span class="b-nombre">Memoria unificada</span><span class="b-cifra">24 GB</span></div>
-              <div class="mem-barra"><span class="mem-gpu"></span></div>
-              <div class="mem-escala"><span>La GPU puede usar hasta 17,76 GB</span><span>24 GB</span></div>
+        <div class="win" id="win" role="img" aria-label="Ventana de Codex usando la skill rendimiento-equipo para renderizar tres videos">
+          <div class="win-bar"><i></i><i></i><i></i><span>Codex</span></div>
+          <div class="win-body">
+            <aside class="side">
+              <div class="side-new"><svg class="i"><use href="#i-plus"/></svg>Nueva tarea</div>
+              <p class="side-h">Tareas</p>
+              <div class="side-it on"><span class="spin"></span>Renderizar los 3 Reels</div>
+              <div class="side-it"><svg class="i"><use href="#i-wave"/></svg>Transcribir notas de voz</div>
+              <div class="side-it"><svg class="i"><use href="#i-person"/></svg>Recortar a la persona</div>
+              <div class="side-it"><svg class="i"><use href="#i-broom"/></svg>Limpiar procesos</div>
+            </aside>
+            <div class="main">
+              <div class="u">Renderiza los tres Reels en paralelo sin que se cuelgue la Mac.</div>
+              <p class="ai">Primero miro el equipo con la skill <b>rendimiento-equipo</b>.</p>
+              <div class="cell"><div class="cell-h"><svg class="i"><use href="#i-term"/></svg><code>python3 scripts/diagnosticar.py</code><span class="okk"><svg class="i"><use href="#i-check"/></svg>Listo</span></div><pre>Apple M4 Pro · 10 Performance + 4 Efficiency · GPU 20 · Neural Engine 16 · 24 GB
+presión normal · swap creciendo: no · térmico nominal</pre></div>
+              <div class="cell"><div class="cell-h"><svg class="i"><use href="#i-term"/></svg><code>python3 scripts/perfil.py --renders 3</code><span class="okk"><svg class="i"><use href="#i-check"/></svg>Listo</span></div><pre>--concurrency=3 --hardware-acceleration=required --video-bitrate=12M
+--offthreadvideo-cache-size-in-bytes=2147483648 · frenos: ninguno</pre></div>
+              <p class="ai">Lanzo los tres renders con el motor de video, 3 hilos y 2 GB de caché cada uno.</p>
+              <div class="chips"><span class="chip" style="--c:var(--e-v)"><svg class="i"><use href="#i-film"/></svg>Motor de video</span><span class="chip" style="--c:var(--e-p)"><svg class="i"><use href="#i-cpu"/></svg>3 × 3 hilos</span><span class="chip" style="--c:var(--e-m)"><svg class="i"><use href="#i-mem"/></svg>2 GB por render</span></div>
+              <div class="composer"><span>Pide otra tarea a Codex</span><span class="send"><svg class="i"><use href="#i-up"/></svg></span></div>
             </div>
           </div>
-        </figure>
-
-        <div class="detalle" aria-live="polite">
-          <p class="etiqueta" id="d-motor">Va al motor de video</p>
-          <p class="d-dato" id="d-dato">4,1 s</p>
-          <p class="d-contra" id="d-contra">contra 22,1 s en la CPU</p>
-          <p class="d-nota" id="d-nota">15 s de video vertical de iPhone pasados a H.264 1080×1920. La CPU trabajó 5 s en vez de 263 s. Va con bitrate fijo: sin él, el archivo sale mucho más grande.</p>
-          <div class="term" id="d-term"><pre><code id="d-cmd">-hwaccel videotoolbox … -c:v h264_videotoolbox -b:v 12M -allow_sw 0</code></pre></div>
-          <p class="d-fuente" id="d-fuente">Medido en el Mac piloto con medir.py</p>
         </div>
       </div>
     </div>
   </section>
 
-  <section class="seccion" aria-labelledby="t-origen">
-    <div class="envoltura origen">
-      <div><p class="ceja">Por qué existe</p><h2 id="t-origen">El motor de video estaba <em>ocioso</em>.</h2></div>
-      <blockquote class="cita">
-        <p>El 27.10.2026, renderizando los videos de mi marca personal, encontré a mi Mac codificando en la CPU mientras el motor de video no hacía nada. También había cuatro servidores de Whisper vivos y 9 GB de swap.</p>
-        <p>Corregí cada cosa midiendo y guardé el método en esta skill, para que el agente lo aplique antes de empezar y no después del problema.</p>
-        <footer>Sebastián Lobo</footer>
-      </blockquote>
-    </div>
-  </section>
-
-  <section class="seccion" id="medido" aria-labelledby="t-medido">
-    <div class="envoltura">
-      <div class="cabeza">
-        <div><p class="ceja">Lo medido</p><h2 id="t-medido">Tres pruebas, un solo <em>equipo</em>.</h2></div>
-        <p>Cada barra está a escala con su propia regla. El ganador de cada prueba va en el color de acento. En tu equipo las cifras serán otras, y por eso la skill vuelve a medir antes de cambiar un método.</p>
+  <!-- Chip: escena fija -->
+  <section class="seq" id="chip" aria-label="Los seis motores del Mac piloto">
+    <div class="seq-pin">
+      <div class="caps">
+        <div class="cap on" data-s="0"><span class="kicker"><svg class="i"><use href="#i-cpu"/></svg>El chip</span><h2>Tu Mac no es un solo procesador.</h2></div>
+        <div class="cap" data-s="1"><span class="kicker"><svg class="i"><use href="#i-layers"/></svg>Seis motores</span><h2>Son seis motores, y cada uno es bueno en algo distinto.</h2></div>
+        <div class="cap" data-s="2"><span class="kicker"><svg class="i"><use href="#i-pulse"/></svg>diagnosticar.py</span><h2>La skill los cuenta en tu equipo. Nada viene escrito a mano.</h2></div>
+        <div class="cap" data-s="3"><span class="kicker"><svg class="i"><use href="#i-arrow"/></svg>Reparto</span><h2>Y manda cada tarea al que mejor la hace.</h2></div>
       </div>
-
-      <div class="graficos">
-        <figure class="grafico">
-          <figcaption><span class="g-titulo">Codificar 15 s de video vertical</span><span class="g-razon">5,4 veces más rápido</span></figcaption>
-          <div class="g-fila"><span class="g-lbl">CPU · <code>libx264</code></span><div class="g-pista"><span class="g-barra" style="--v:88.4%"></span></div><span class="g-val">22,1 s</span></div>
-          <div class="g-fila gana"><span class="g-lbl">Motor de video · <code>h264_videotoolbox</code></span><div class="g-pista"><span class="g-barra" style="--v:16.4%"></span></div><span class="g-val">4,1 s</span></div>
-          <div class="g-eje"><div><div class="g-regla" style="--menor:4%;--mayor:20%"></div><div class="g-num"><span style="--x:0%">0</span><span style="--x:20%">5</span><span style="--x:40%">10</span><span style="--x:60%">15</span><span style="--x:80%">20</span><span style="--x:100%">25 s</span></div></div></div>
-        </figure>
-
-        <figure class="grafico">
-          <figcaption><span class="g-titulo">Trabajo de CPU en esa misma prueba</span><span class="g-razon">53 veces menos</span></figcaption>
-          <div class="g-fila"><span class="g-lbl">CPU · <code>libx264</code></span><div class="g-pista"><span class="g-barra" style="--v:87.67%"></span></div><span class="g-val">263 s</span></div>
-          <div class="g-fila gana"><span class="g-lbl">Motor de video</span><div class="g-pista"><span class="g-barra" style="--v:1.67%"></span></div><span class="g-val">5 s</span></div>
-          <div class="g-eje"><div><div class="g-regla" style="--menor:6.6667%;--mayor:33.3333%"></div><div class="g-num"><span style="--x:0%">0</span><span style="--x:33.333%">100</span><span style="--x:66.667%">200</span><span style="--x:100%">300 s</span></div></div></div>
-        </figure>
-
-        <figure class="grafico">
-          <figcaption><span class="g-titulo">Decodificar 30 s de HEVC</span><span class="g-razon">Cerca de la mitad</span></figcaption>
-          <div class="g-fila"><span class="g-lbl">CPU, en varias corridas</span><div class="g-pista"><span class="g-barra" style="--v:73.33%"></span><span class="g-rango" style="--a:73.33%;--b:90%"></span></div><span class="g-val">4,4–5,4 s</span></div>
-          <div class="g-fila gana"><span class="g-lbl">Motor de video · <code>-hwaccel videotoolbox</code></span><div class="g-pista"><span class="g-barra" style="--v:40%"></span><span class="g-rango" style="--a:40%;--b:43.33%"></span></div><span class="g-val">2,4–2,6 s</span></div>
-          <div class="g-eje"><div><div class="g-regla" style="--menor:3.3333%;--mayor:16.6667%"></div><div class="g-num"><span style="--x:0%">0</span><span style="--x:16.667%">1</span><span style="--x:33.333%">2</span><span style="--x:50%">3</span><span style="--x:66.667%">4</span><span style="--x:83.333%">5</span><span style="--x:100%">6 s</span></div></div></div>
-        </figure>
-
-        <figure class="grafico">
-          <figcaption><span class="g-titulo">4 láminas de carrusel a 2×</span><span class="g-razon">23 % menos tiempo</span></figcaption>
-          <div class="g-fila"><span class="g-lbl">Chrome sin ventana, con GPU</span><div class="g-pista"><span class="g-barra" style="--v:76.5%"></span></div><span class="g-val">15,3 s</span></div>
-          <div class="g-fila gana"><span class="g-lbl">Chrome sin ventana, <code>--disable-gpu</code></span><div class="g-pista"><span class="g-barra" style="--v:59%"></span></div><span class="g-val">11,8 s</span></div>
-          <div class="g-eje"><div><div class="g-regla" style="--menor:5%;--mayor:25%"></div><div class="g-num"><span style="--x:0%">0</span><span style="--x:25%">5</span><span style="--x:50%">10</span><span style="--x:75%">15</span><span style="--x:100%">20 s</span></div></div></div>
-        </figure>
-      </div>
-
-      <div class="nota-medida">
-        <p>Mac piloto: Apple M4 Pro con 10 núcleos de rendimiento y 4 de eficiencia, GPU de 20 núcleos y 24 GB de memoria, macOS 27.2. Medido el 27.10.2026 con <code class="k">medir.py</code>. Las láminas son el único caso donde la GPU perdió.</p>
-        <p>Pendiente: <code class="k">--gl=angle</code> en Remotion. Una de dos pruebas falló y había otros renders en marcha, así que no se adopta hasta medirlo en limpio.</p>
-      </div>
-    </div>
-  </section>
-
-  <section class="seccion" id="como" aria-labelledby="t-como">
-    <div class="envoltura">
-      <div class="cabeza">
-        <div><p class="ceja">Cómo trabaja</p><h2 id="t-como">Mide antes de <em>cambiar</em>.</h2></div>
-        <p>Cuatro scripts de Python sin dependencias, más una consulta en Swift para Metal, VideoToolbox y Core ML. El agente los corre en este orden y tú también puedes hacerlo a mano.</p>
-      </div>
-      <div class="dos">
-        <ol class="pasos">
-          <li><span class="n">1</span><h3>Diagnosticar <code class="k">diagnosticar.py</code></h3><p>Consulta el hardware en el momento: niveles de CPU, presión de memoria, familia Metal, codificadores por hardware, Neural Engine y estado térmico. No trae ningún valor escrito a mano.</p></li>
-          <li><span class="n">2</span><h3>Recomendar <code class="k">perfil.py</code></h3><p>Cruza el diagnóstico con lo medido en ese equipo y entrega los comandos, los frenos activos y un bloque listo para el encargo de cada subagente, que no hereda skills ni contexto.</p></li>
-          <li><span class="n">3</span><h3>Medir <code class="k">medir.py</code></h3><p>Compara el método nuevo con el actual sin otros renders en marcha. Solo adopta un ganador claro: al menos 15 % más rápido y con una diferencia visual menor a 2 de 255.</p></li>
-          <li><span class="n">4</span><h3>Limpiar <code class="k">limpiar.py</code></h3><p>Lista los procesos que lanzaron los agentes y siguen vivos, y con <code class="k">--aplicar</code> los apaga por PID. Los procesos protegidos y los que están en uso no se tocan.</p></li>
-        </ol>
-        <div class="term">
-          <div class="term-cab"><span>Extracto de perfil.py en el Mac piloto, 27.10.2026</span></div>
-<pre><code><span class="p">$</span> python3 scripts/perfil.py --renders 3 --formato texto
-<span class="a">EQUIPO</span>  macOS 27.2 | arm64 | Apple M4 Pro | huella 64245f9fa14a
-  CPU            Performance 10 + Efficiency 4 (14 logicos)
-  Memoria        24.0 GB | presion normal | libre 62% | swap 5056.3 de 6144.0 MB | swap creciendo: no
-  GPU            20 nucleos | Metal apple9 | memoria unificada: True
-  Video (HW)     codificadores 12 de 27 | decodifica: av1 h264 hevc prores prores_4444 (no: vp9)
-  Neural Engine  16 nucleos | termico nominal | bajo consumo: no
-
-<span class="a">FRENOS</span>  memoria: libre | termico: libre | bajo consumo: libre
-
-<span class="a">FFMPEG</span>  (formula+medido)
-  decodificar    -hwaccel videotoolbox [medido (2026-10-27)]
-  final          -c:v h264_videotoolbox -b:v 12M -allow_sw 0
-  HDR a SDR      zscale+tonemap en CPU, una sola vez por tramo, guardado y reutilizado
-
-<span class="a">REMOTION</span>  3 render(es) pedidos, 3 en paralelo
-  concurrencia   3 por render (nucleos nivel 0: 10) [formula]
-  hardware       required, 12M [medido (2026-10-27)]
-  --gl           pendiente: no se pasa --gl hasta medirlo (medir.py remotion, sin otros renders en marcha)
-
-<span class="a">WHISPER</span>
-  1 servidor, backend metal [medido (2026-10-27)]</code></pre>
+      <div class="stage" id="stage">
+        <div class="die"><svg class="i"><use href="#i-cpu"/></svg><b>M4 Pro</b><small>Mac piloto · 24 GB</small></div>
+        <div class="blk" data-k="p" style="--ec:var(--e-p)">
+          <div class="bh"><span class="ico"><svg class="i"><use href="#i-cpu"/></svg></span><span>Núcleos de rendimiento</span><b class="cnt" data-to="10">10</b></div>
+          <div class="cells" data-n="10"></div>
+          <p class="bt">Remotion, láminas, HDR a SDR</p>
+        </div>
+        <div class="blk" data-k="e" style="--ec:var(--e-e)">
+          <div class="bh"><span class="ico"><svg class="i"><use href="#i-leaf"/></svg></span><span>Eficiencia</span><b class="cnt" data-to="4">4</b></div>
+          <div class="cells" data-n="4"></div>
+          <p class="bt">Lotes de fondo</p>
+        </div>
+        <div class="blk" data-k="g" style="--ec:var(--e-g)">
+          <div class="bh"><span class="ico"><svg class="i"><use href="#i-gpu"/></svg></span><span>GPU · Metal apple9</span><b class="cnt" data-to="20">20</b></div>
+          <div class="cells" data-n="20"></div>
+          <p class="bt">Whisper con Metal</p>
+        </div>
+        <div class="blk" data-k="a" style="--ec:var(--e-a)">
+          <div class="bh"><span class="ico"><svg class="i"><use href="#i-spark"/></svg></span><span>Neural Engine</span><b class="cnt" data-to="16">16</b></div>
+          <div class="cells" data-n="16"></div>
+          <p class="bt">Recortes con Vision</p>
+        </div>
+        <div class="blk" data-k="v" style="--ec:var(--e-v)">
+          <div class="bh"><span class="ico"><svg class="i"><use href="#i-film"/></svg></span><span>Motor de video</span><b class="cnt" data-to="12">12</b></div>
+          <div class="codecs"><em>Codifica</em><b>H.264</b><b>HEVC</b><b>ProRes</b><b>JPEG</b></div>
+          <div class="codecs"><em>Decodifica</em><b>AV1</b><b>H.264</b><b>HEVC</b><b>ProRes</b><s>VP9</s></div>
+          <p class="bt">12 de 27 codificadores por hardware</p>
+        </div>
+        <div class="blk" data-k="m" style="--ec:var(--e-m)">
+          <div class="bh"><span class="ico"><svg class="i"><use href="#i-mem"/></svg></span><span>Memoria unificada</span><b class="cnt" data-to="24">24</b></div>
+          <div class="membar" id="membar"><i></i></div>
+          <div class="memleg"><span>GPU: hasta 17,76 GB</span><span>24 GB</span></div>
+          <p class="bt">Caché de 2 GB por render</p>
         </div>
       </div>
     </div>
   </section>
 
-  <section class="seccion" aria-labelledby="t-huella">
-    <div class="envoltura">
-      <div class="cabeza">
-        <div><p class="ceja">Por equipo</p><h2 id="t-huella">Lo medido se queda en <em>tu</em> equipo.</h2></div>
-        <p>Las cifras de una máquina no sirven para otra. Por eso nada de lo medido vive en el repositorio, y antes de lanzar trabajo la skill revisa si el equipo está en condiciones.</p>
+  <!-- Tareas -->
+  <section class="sec" id="tareas">
+    <div class="wrap">
+      <div class="head morph">
+        <span class="kicker"><svg class="i"><use href="#i-sliders"/></svg>Ocho tareas</span>
+        <h2 class="grad">Pasa el cursor por una tarea.</h2>
+        <p>El esquema marca el motor al que la skill la manda. Cada cifra sale del Mac piloto o de la documentación oficial, y abajo dice cuál.</p>
       </div>
-      <div class="dos">
-        <div class="texto">
-          <p>Cada equipo tiene una huella: un hash corto del sistema, la arquitectura, el chip, la memoria y los niveles de núcleos. Si cambias de equipo cambia la huella, y la skill empieza de cero sin heredar cifras de otra máquina. Una actualización de macOS no la cambia.</p>
-          <div class="term"><pre><code>~/.local/share/rendimiento-equipo/
-  64245f9fa14a/            <span class="p"># huella del Mac piloto</span>
-    mediciones.md          <span class="p"># cada prueba, con su comando y su salida</span>
-    perfil-medido.json     <span class="p"># lo adoptado, con fecha</span>
-    estado-memoria.json    <span class="p"># para saber si el swap crece</span></code></pre></div>
+      <div class="map">
+        <div class="tasks" id="tasks">
+          <button class="task morph on" type="button" data-t="codificar" style="--c:var(--e-v)"><span class="ico"><svg class="i"><use href="#i-export"/></svg></span><span class="eng">Motor de video</span><h3>Codificar el video final</h3><span class="st"><b>4,1 s</b>contra 22,1 s</span></button>
+          <button class="task morph" type="button" data-t="decodificar" style="--c:var(--e-v)"><span class="ico"><svg class="i"><use href="#i-play"/></svg></span><span class="eng">Motor de video</span><h3>Leer el video del iPhone</h3><span class="st"><b>2,4 s</b>contra 4,4–5,4 s</span></button>
+          <button class="task morph" type="button" data-t="transcribir" style="--c:var(--e-g)"><span class="ico"><svg class="i"><use href="#i-wave"/></svg></span><span class="eng">GPU</span><h3>Transcribir la voz</h3><span class="st"><b>1</b>servidor, no 4</span></button>
+          <button class="task morph" type="button" data-t="recortar" style="--c:var(--e-a)"><span class="ico"><svg class="i"><use href="#i-person"/></svg></span><span class="eng">Neural Engine</span><h3>Recortar a la persona</h3><span class="st"><b>16</b>núcleos, en local</span></button>
+          <button class="task morph" type="button" data-t="componer" style="--c:var(--e-p)"><span class="ico"><svg class="i"><use href="#i-layers"/></svg></span><span class="eng">Rendimiento</span><h3>Componer con Remotion</h3><span class="st"><b>3 × 3</b>renders × hilos</span></button>
+          <button class="task morph" type="button" data-t="laminas" style="--c:var(--e-p)"><span class="ico"><svg class="i"><use href="#i-image"/></svg></span><span class="eng">CPU</span><h3>Láminas de carrusel</h3><span class="st"><b>11,8 s</b>contra 15,3 s</span></button>
+          <button class="task morph" type="button" data-t="hdr" style="--c:var(--e-p)"><span class="ico"><svg class="i"><use href="#i-sun"/></svg></span><span class="eng">CPU</span><h3>Pasar de HDR a SDR</h3><span class="st"><b>1</b>vez por tramo</span></button>
+          <button class="task morph" type="button" data-t="lote" style="--c:var(--e-e)"><span class="ico"><svg class="i"><use href="#i-moon"/></svg></span><span class="eng">Eficiencia</span><h3>Lotes de fondo</h3><span class="st"><b>4</b>núcleos libres</span></button>
         </div>
+        <div class="side-panel">
+          <div class="mini" id="mini" aria-hidden="true">
+            <div class="mb" data-k="p" style="--ec:var(--e-p)"><svg class="i"><use href="#i-cpu"/></svg><span>Rendimiento</span></div>
+            <div class="mb" data-k="e" style="--ec:var(--e-e)"><svg class="i"><use href="#i-leaf"/></svg><span>Eficiencia</span></div>
+            <div class="mb" data-k="g" style="--ec:var(--e-g)"><svg class="i"><use href="#i-gpu"/></svg><span>GPU</span></div>
+            <div class="mb" data-k="a" style="--ec:var(--e-a)"><svg class="i"><use href="#i-spark"/></svg><span>Neural Engine</span></div>
+            <div class="mb" data-k="v" style="--ec:var(--e-v)"><svg class="i"><use href="#i-film"/></svg><span>Video</span></div>
+            <div class="mb" data-k="m" style="--ec:var(--e-m)"><svg class="i"><use href="#i-mem"/></svg><span>Memoria</span></div>
+          </div>
+          <div class="info" aria-live="polite">
+            <span class="who" id="i-who">Va al motor de video</span>
+            <p id="i-nota">15 s de video vertical de iPhone pasados a H.264 1080×1920. La CPU trabajó 5 s en vez de 263 s. Va con bitrate fijo para que el archivo no salga más grande.</p>
+            <pre id="i-cmd">-hwaccel videotoolbox … -c:v h264_videotoolbox -b:v 12M -allow_sw 0</pre>
+            <span class="src"><svg class="i"><use href="#i-timer"/></svg><span id="i-src">Medido en el Mac piloto con medir.py</span></span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Lo medido -->
+  <section class="sec" id="medido" style="background:var(--bg-alt)">
+    <div class="wrap">
+      <div class="head morph">
+        <span class="kicker"><svg class="i"><use href="#i-timer"/></svg>Lo medido</span>
+        <h2 class="grad">Cifras de un equipo real.</h2>
+        <p>La skill nació el 27.10.2026, cuando medí que mi Mac codificaba video en la CPU con el motor de video ocioso. Estas son las pruebas de ese día. Pasa el cursor por cada barra para ver el detalle.</p>
+      </div>
+
+      <div class="stats">
+        <div class="stat morph" style="--c:var(--e-v)" data-tip="22,1 s con libx264 contra 4,1 s con h264_videotoolbox"><span class="ico"><svg class="i"><use href="#i-export"/></svg></span><span class="big" data-count="5.4" data-dec="1" data-suf="×">5,4×</span><p>más rápido al codificar el video final</p></div>
+        <div class="stat morph" style="--c:var(--e-p)" data-tip="263 s de CPU contra 5 s en la misma prueba"><span class="ico"><svg class="i"><use href="#i-cpu"/></svg></span><span class="big" data-count="53" data-dec="0" data-suf="×">53×</span><p>menos trabajo de CPU en esa prueba</p></div>
+        <div class="stat morph" style="--c:var(--e-m)" data-tip="Punto medio: 4,9 s en CPU contra 2,5 s por hardware"><span class="ico"><svg class="i"><use href="#i-play"/></svg></span><span class="big" data-count="2" data-dec="0" data-suf="×">2×</span><p>más rápido al leer HEVC de iPhone</p></div>
+        <div class="stat morph" style="--c:var(--e-g)" data-tip="15,3 s con GPU contra 11,8 s con --disable-gpu"><span class="ico"><svg class="i"><use href="#i-image"/></svg></span><span class="big" data-count="23" data-dec="0" data-suf=" %">23 %</span><p>menos tiempo en láminas, sin GPU</p></div>
+      </div>
+
+      <div class="charts">
+        <article class="card wide morph" id="race">
+          <div class="card-h"><div><h3>Codificar 15 s de video vertical</h3><p>HEVC de iPhone a H.264 1080×1920. Baja y sube para recorrer el tiempo.</p></div><div class="timer" id="timer">0,0<small>s</small></div></div>
+          <div class="rows">
+            <div class="row" style="--c:var(--text-3)" data-total="22.1" data-tip="libx264 medium crf 20 · 22,1 s reales · 263 s de CPU"><span class="lab">CPU · <code>libx264</code></span><span class="val"><svg class="i"><use href="#i-check"/></svg><span>0,0 s</span></span><div class="track tall"><i></i></div></div>
+            <div class="row" style="--c:var(--e-m)" data-total="4.6" data-tip="h264_videotoolbox 12M, leyendo el video en CPU · 4,6 s reales · 21 s de CPU"><span class="lab">Motor de video, leyendo en CPU</span><span class="val"><svg class="i"><use href="#i-check"/></svg><span>0,0 s</span></span><div class="track tall"><i></i></div></div>
+            <div class="row" style="--c:var(--e-v)" data-total="4.1" data-tip="h264_videotoolbox 12M con -hwaccel videotoolbox · 4,1 s reales · 5 s de CPU"><span class="lab">Motor de video completo · <code>h264_videotoolbox</code></span><span class="val"><svg class="i"><use href="#i-check"/></svg><span>0,0 s</span></span><div class="track tall"><i></i></div></div>
+          </div>
+        </article>
+
+        <article class="card morph" id="dots">
+          <div class="card-h"><div><h3>Trabajo de CPU en esa prueba</h3><p>Cada punto es un segundo de CPU.</p></div></div>
+          <div class="dots">
+            <div class="row" style="--c:var(--text-3)" data-tip="263 s de CPU: la codificación entera en los núcleos"><span class="lab">libx264</span><span class="val">263 s</span><div class="dotgrid" data-dots="263"></div></div>
+            <div class="row" style="--c:var(--e-m)" data-tip="21 s de CPU: el motor codifica, pero la CPU lee el video"><span class="lab">Motor de video, leyendo en CPU</span><span class="val">21 s</span><div class="dotgrid" data-dots="21"></div></div>
+            <div class="row" style="--c:var(--e-v)" data-tip="5 s de CPU: leer y codificar van por hardware"><span class="lab">Motor de video completo</span><span class="val">5 s</span><div class="dotgrid" data-dots="5"></div></div>
+          </div>
+        </article>
+
+        <article class="card morph" id="bars">
+          <div class="card-h"><div><h3>Leer 30 s de HEVC</h3><p>Rango de varias corridas.</p></div></div>
+          <div class="rows">
+            <div class="row" style="--c:var(--text-3)" data-tip="CPU: entre 4,4 y 5,4 s reales, 35–38 s de CPU"><span class="lab">CPU</span><span class="val">4,4–5,4 s</span><div class="track"><i class="rng" style="--a:0;--b:.9"></i></div></div>
+            <div class="row" style="--c:var(--e-v)" data-tip="Hardware: entre 2,4 y 2,6 s reales, 3,3 s de CPU"><span class="lab"><code>-hwaccel videotoolbox</code></span><span class="val">2,4–2,6 s</span><div class="track"><i class="rng" style="--a:0;--b:.4333"></i></div></div>
+            <div class="axis"><span style="--x:0%">0</span><span style="--x:33.33%">2</span><span style="--x:66.67%">4</span><span style="--x:100%">6 s</span></div>
+          </div>
+          <div class="card-h" style="margin-top:8px"><div><h3>4 láminas de carrusel a 2×</h3><p>Chrome sin ventana. Aquí perdió la GPU.</p></div></div>
+          <div class="rows">
+            <div class="row" style="--c:var(--text-3)" data-tip="Con GPU: 15,3 s y bordes suavizados distinto"><span class="lab">Con GPU</span><span class="val">15,3 s</span><div class="track"><i style="--to:.765"></i></div></div>
+            <div class="row" style="--c:var(--e-p)" data-tip="Con --disable-gpu: 11,8 s"><span class="lab"><code>--disable-gpu</code></span><span class="val">11,8 s</span><div class="track"><i style="--to:.59"></i></div></div>
+            <div class="axis"><span style="--x:0%">0</span><span style="--x:25%">5</span><span style="--x:50%">10</span><span style="--x:75%">15</span><span style="--x:100%">20 s</span></div>
+          </div>
+        </article>
+      </div>
+      <p class="note morph"><svg class="i"><use href="#i-alert"/></svg><span>Mac piloto: Apple M4 Pro, 10 núcleos de rendimiento y 4 de eficiencia, GPU de 20 núcleos, 24 GB, macOS 27.2. Pendiente: <span class="k-code">--gl=angle</span> en Remotion. Una de dos pruebas falló con otros renders en marcha, así que no se adopta hasta medirlo en limpio.</span></p>
+    </div>
+  </section>
+
+  <!-- Cómo trabaja: escena fija -->
+  <section class="how" id="como">
+    <div class="how-pin">
+      <div class="wrap how-grid">
         <div>
-          <div class="tabla-envoltura">
-            <table>
-              <caption class="etiqueta" style="text-align:left;caption-side:top;padding-bottom:12px">Frenos que revisa perfil.py</caption>
-              <thead><tr><th scope="col">Freno</th><th scope="col">Se activa con</th><th scope="col">En el piloto</th></tr></thead>
-              <tbody>
-                <tr><td>Presión de memoria</td><td>aviso (2) o crítica (4)</td><td class="estado">normal</td></tr>
-                <tr><td>Swap</td><td>crece entre dos diagnósticos</td><td class="estado">no crece</td></tr>
-                <tr><td>Temperatura</td><td><em>serious</em> o <em>critical</em></td><td class="estado">nominal</td></tr>
-                <tr><td>Bajo consumo</td><td>activado</td><td class="estado">apagado</td></tr>
-              </tbody>
-            </table>
+          <div class="how-h">
+            <span class="kicker"><svg class="i"><use href="#i-term"/></svg>Cómo trabaja</span>
+            <h2 class="grad">Mide antes de cambiar.</h2>
+            <p style="color:var(--text-2)">Cuatro scripts de Python sin dependencias y una consulta en Swift. El agente los corre en este orden.</p>
           </div>
-          <p class="regla-freno">Con un freno activo, <code class="k">perfil.py</code> recomienda serializar o bajar la concurrencia a la mitad. Apple advierte que la memoria libre no es una estadística útil: lo que cuenta es la presión y si el swap crece mientras trabajas.</p>
+          <div class="steps-wrap">
+          <svg class="line" viewBox="0 0 2 100" preserveAspectRatio="none" aria-hidden="true"><path class="base" d="M1 0V100"/><path id="line-on" d="M1 0V100" pathLength="100" stroke-dasharray="100" stroke-dashoffset="100"/></svg>
+          <ol class="steps" id="steps">
+            <li class="step on"><span class="dot"><svg class="i"><use href="#i-pulse"/></svg></span><h3>Diagnosticar <code>diagnosticar.py</code></h3><p>Consulta el hardware en el momento: niveles de CPU, presión de memoria, Metal, codificadores, Neural Engine y temperatura.</p></li>
+            <li class="step"><span class="dot"><svg class="i"><use href="#i-sliders"/></svg></span><h3>Recomendar <code>perfil.py</code></h3><p>Cruza el diagnóstico con lo medido y entrega comandos, frenos y un bloque para cada subagente, que no hereda skills ni contexto.</p></li>
+            <li class="step"><span class="dot"><svg class="i"><use href="#i-timer"/></svg></span><h3>Medir <code>medir.py</code></h3><p>Compara el método nuevo con el actual. Solo adopta un ganador claro: 15 % mejor como mínimo y diferencia visual menor a 2 de 255.</p></li>
+            <li class="step"><span class="dot"><svg class="i"><use href="#i-broom"/></svg></span><h3>Limpiar <code>limpiar.py</code></h3><p>Muestra los procesos que dejaron los agentes y, con <span class="k-code">--aplicar</span>, los apaga por PID. Los protegidos no se tocan.</p></li>
+          </ol>
+          </div>
+        </div>
+        <div class="term" id="term">
+          <div class="term-bar"><span class="lights"><i></i><i></i><i></i></span><div class="seg" role="tablist" aria-label="Script"><button role="tab" aria-selected="true" data-p="0">diagnosticar</button><button role="tab" aria-selected="false" data-p="1">perfil</button><button role="tab" aria-selected="false" data-p="2">medir</button><button role="tab" aria-selected="false" data-p="3">limpiar</button></div></div>
+          <div class="panes">
+<div class="pane on"><pre><span class="tit">Extracto · Mac piloto, 27.10.2026</span><span class="ln"><span class="m">$</span> <span class="w">python3 scripts/diagnosticar.py</span></span><span class="ln">{</span><span class="ln">  <span class="c">"huella"</span>: <span class="g">"64245f9fa14a"</span>,</span><span class="ln">  <span class="c">"cpu"</span>: { <span class="c">"marca"</span>: <span class="g">"Apple M4 Pro"</span>, <span class="c">"niveles"</span>: [</span><span class="ln">    { <span class="c">"nombre"</span>: <span class="g">"Performance"</span>, <span class="c">"nucleos_fisicos"</span>: <span class="y">10</span> },</span><span class="ln">    { <span class="c">"nombre"</span>: <span class="g">"Efficiency"</span>, <span class="c">"nucleos_fisicos"</span>: <span class="y">4</span> } ] },</span><span class="ln">  <span class="c">"memoria"</span>: { <span class="c">"memsize_gb"</span>: <span class="y">24.0</span>, <span class="c">"presion"</span>: <span class="g">"normal"</span>, <span class="c">"swap_creciendo"</span>: <span class="y">false</span> },</span><span class="ln">  <span class="c">"gpu"</span>: { <span class="c">"nucleos"</span>: <span class="y">20</span>, <span class="c">"metal"</span>: { <span class="c">"familia_apple_maxima"</span>: <span class="g">"apple9"</span> } },</span><span class="ln">  <span class="c">"neural_engine"</span>: { <span class="c">"disponible"</span>: <span class="y">true</span>, <span class="c">"nucleos"</span>: <span class="y">16</span> },</span><span class="ln">  <span class="c">"termico"</span>: <span class="g">"nominal"</span>,</span><span class="ln">  <span class="c">"bajo_consumo"</span>: <span class="y">false</span></span><span class="ln">}</span></pre></div>
+<div class="pane"><pre><span class="tit">Extracto · Mac piloto, 27.10.2026</span><span class="ln"><span class="m">$</span> <span class="w">python3 scripts/perfil.py --renders 3 --formato texto</span></span><span class="ln"><span class="c">FRENOS</span>  memoria: libre | termico: libre | bajo consumo: libre</span><span class="ln"> </span><span class="ln"><span class="c">FFMPEG</span>  (formula+medido)</span><span class="ln">  decodificar    -hwaccel videotoolbox <span class="g">[medido (2026-10-27)]</span></span><span class="ln">  final          -c:v h264_videotoolbox -b:v 12M -allow_sw 0</span><span class="ln">  HDR a SDR      zscale+tonemap en CPU, una sola vez por tramo</span><span class="ln"> </span><span class="ln"><span class="c">REMOTION</span>  3 render(es) pedidos, 3 en paralelo</span><span class="ln">  concurrencia   3 por render (nucleos nivel 0: 10) <span class="m">[formula]</span></span><span class="ln">  hardware       required, 12M <span class="g">[medido (2026-10-27)]</span></span><span class="ln">  --gl           <span class="y">pendiente: no se pasa --gl hasta medirlo</span></span><span class="ln"> </span><span class="ln"><span class="c">WHISPER</span>  1 servidor, backend metal <span class="g">[medido (2026-10-27)]</span></span></pre></div>
+<div class="pane"><pre><span class="tit">Lo que quedó en mediciones.md</span><span class="ln"><span class="m">$</span> <span class="w">python3 scripts/medir.py codificar --archivo toma.mov --segundos 15 --registrar</span></span><span class="ln"> </span><span class="ln"><span class="c">## 2026-10-27 · Codificación de video (ffmpeg)</span></span><span class="ln"> </span><span class="ln">| Variante                                   | Real (s) | CPU (s) |</span><span class="ln">| libx264 medium crf 20                      |     22,1 |     263 |</span><span class="ln">| <span class="g">h264_videotoolbox 12M, lectura por hardware</span> |      <span class="g">4,1</span> |       <span class="g">5</span> |</span><span class="ln">| h264_videotoolbox 12M, lectura en CPU      |      4,6 |      21 |</span><span class="ln"> </span><span class="ln"><span class="w">Decisión:</span> VideoToolbox por defecto.</span><span class="ln"><span class="m">Solo cambia el perfil con un ganador claro: ≥15 % mejor y diferencia &lt;2/255.</span></span></pre></div>
+<div class="pane"><pre><span class="tit">Extracto · Mac piloto, 27.10.2026</span><span class="ln"><span class="m">$</span> <span class="w">python3 scripts/limpiar.py</span></span><span class="ln"><span class="y">DRY-RUN</span> (no se termino nada): 0 propio(s), 1 protegido(s), 8 en uso.</span><span class="ln"><span class="c">protegidos</span> (no se tocan):</span><span class="ln">  pid 9934   whisper-server   puerto 8178  servidor de la app OpenWhispr</span><span class="ln"><span class="c">en uso</span> (no se tocan):</span><span class="ln">  pid 80759  chrome-headless  tiene un padre vivo: probablemente un render en curso</span><span class="ln">  pid 80761  chrome-headless  tiene un padre vivo: probablemente un render en curso</span><span class="ln">  <span class="m">… 6 más</span></span><span class="ln"> </span><span class="ln"><span class="m">$</span> <span class="w">python3 scripts/limpiar.py --aplicar</span></span><span class="ln"><span class="m"># apaga por PID solo los propios; aquí no había ninguno</span></span></pre></div>
+          </div>
         </div>
       </div>
     </div>
   </section>
 
-  <section class="seccion" aria-labelledby="t-reglas">
-    <div class="envoltura">
-      <div class="cabeza">
-        <div><p class="ceja">Reglas</p><h2 id="t-reglas">Las que más se <em>rompen</em>.</h2></div>
-        <p>Seis de las doce que el agente lee primero. Cada una viene de un error medido o de la documentación oficial, con su fuente en <code class="k">references/fuentes.md</code>.</p>
+  <!-- Frenos y huella -->
+  <section class="sec" id="frenos">
+    <div class="wrap">
+      <div class="head morph">
+        <span class="kicker"><svg class="i"><use href="#i-gauge"/></svg>Antes de lanzar</span>
+        <h2 class="grad">Revisa si el equipo está en condiciones.</h2>
+        <p>Si un freno está activo, <span class="k-code">perfil.py</span> recomienda hacer las tareas de a una o bajar la concurrencia a la mitad. Las franjas rayadas son las que frenan.</p>
       </div>
-      <div class="reglas">
-        <article><h3>Consulta el hardware, nunca lo escribas a mano.</h3><p>Otro chip trae otros núcleos, otros niveles y otros nombres. La skill pregunta a sysctl, Metal, VideoToolbox y Core ML cada vez.</p></article>
-        <article><h3><code class="k">memory_pressure</code> va sin argumentos.</h3><p>Con <code class="k">-l</code> o <code class="k">-p</code> aplica presión real sobre el equipo y altera lo que querías medir.</p></article>
-        <article><h3>Con hardware, bitrate fijo.</h3><p>En Remotion, <code class="k">--crf</code> desactiva el hardware y cae a libx264 sin avisar. Sin bitrate, un video de 52 s salió con 93 MB contra 67 MB en la CPU.</p></article>
-        <article><h3>Un solo servidor de Whisper.</h3><p>Atiende una petición a la vez. Un segundo servidor no suma velocidad y carga otra copia del modelo en memoria.</p></article>
-        <article><h3>Caché de video por render.</h3><p>Remotion reserva por defecto la mitad de la memoria disponible en cada render. Con tres a la vez se pasa de la RAM, así que se fija a mano.</p></article>
-        <article><h3>Cada agente apaga lo suyo.</h3><p>Por PID y solo lo que lanzó. El servidor de dictado de OpenWhispr y los procesos en uso quedan fuera, aunque se pida lo contrario.</p></article>
+      <div class="two">
+        <article class="card morph" id="brakes">
+          <div class="brakes">
+            <div class="brake" data-pos="0" style="--c:var(--ok)"><span class="ico" style="--c:var(--e-m)"><svg class="i"><use href="#i-gauge"/></svg></span><h4>Presión de memoria</h4><span class="state">normal</span>
+              <div class="scale" style="--n:3"><span data-tip="Nivel 1: el sistema tiene margen">normal</span><span class="stop" data-tip="Nivel 2: frena y baja la concurrencia">aviso</span><span class="stop" data-tip="Nivel 4: frena y hace las tareas de a una">crítica</span><i class="mk"></i></div></div>
+            <div class="brake" data-pos="0" style="--c:var(--ok)"><span class="ico" style="--c:var(--e-g)"><svg class="i"><use href="#i-swap"/></svg></span><h4>Swap</h4><span class="state">no crece</span>
+              <div class="scale" style="--n:2"><span data-tip="Igual o menor que en el diagnóstico anterior">estable</span><span class="stop" data-tip="Más que en el diagnóstico anterior: frena">creciendo</span><i class="mk"></i></div></div>
+            <div class="brake" data-pos="0" style="--c:var(--ok)"><span class="ico" style="--c:var(--e-a)"><svg class="i"><use href="#i-thermo"/></svg></span><h4>Temperatura</h4><span class="state">nominal</span>
+              <div class="scale" style="--n:4"><span data-tip="Sin limitación térmica">nominal</span><span data-tip="Algo de calor, todavía sin freno">fair</span><span class="stop" data-tip="macOS ya baja CPU y GPU: frena">serious</span><span class="stop" data-tip="Frena del todo">critical</span><i class="mk"></i></div></div>
+            <div class="brake" data-pos="0" style="--c:var(--ok)"><span class="ico" style="--c:var(--e-e)"><svg class="i"><use href="#i-battery"/></svg></span><h4>Bajo consumo</h4><span class="state">apagado</span>
+              <div class="scale" style="--n:2"><span data-tip="Rinde completo">apagado</span><span class="stop" data-tip="macOS limita el rendimiento: frena">activado</span><i class="mk"></i></div></div>
+          </div>
+        </article>
+        <article class="card morph fp" id="fp">
+          <svg class="big-fp" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-finger"/></svg>
+          <div style="display:grid;gap:10px;justify-items:center">
+            <h3 style="font-size:clamp(1.3rem,1rem + 1vw,1.8rem);font-weight:600;letter-spacing:-.02em">Lo medido se queda en tu equipo.</h3>
+            <p style="color:var(--text-2);max-width:30em">Cada equipo tiene una huella: un hash del sistema, el chip, la memoria y los niveles de núcleos. Si cambias de Mac, la skill empieza de cero sin heredar cifras de otra máquina. Actualizar macOS no la cambia.</p>
+          </div>
+<pre class="tree">~/.local/share/rendimiento-equipo/
+  <b>64245f9fa14a/</b>          <i># huella del Mac piloto</i>
+    mediciones.md         <i># cada prueba, con su comando</i>
+    perfil-medido.json    <i># lo adoptado, con fecha</i>
+    estado-memoria.json   <i># para saber si el swap crece</i></pre>
+        </article>
       </div>
     </div>
   </section>
 
-  <section class="seccion" id="instalar" aria-labelledby="t-instalar">
-    <div class="envoltura">
-      <div class="cabeza">
-        <div><p class="ceja">Instalar</p><h2 id="t-instalar">Tres comandos para <em>instalarla</em>.</h2></div>
-        <p>El instalador enlaza la skill donde la buscan Claude Code y Codex. No copia archivos, no instala dependencias y no usa la red. Para actualizar basta <code class="k">git pull</code>.</p>
+  <!-- Reglas -->
+  <section class="sec" id="reglas" style="background:var(--bg-alt)">
+    <div class="wrap">
+      <div class="head morph">
+        <span class="kicker"><svg class="i"><use href="#i-book"/></svg>Reglas</span>
+        <h2 class="grad">Las que más se rompen.</h2>
+        <p>Seis de las doce que el agente lee primero. Cada una viene de un error medido o de la documentación oficial.</p>
       </div>
-      <div class="instalar">
-        <div class="texto">
-          <div class="term">
-            <div class="term-cab"><span>Terminal</span><button class="copiar" type="button" data-copiar="cmd-instalar">Copiar</button></div>
-<pre><code id="cmd-instalar"><span class="l">git clone https://github.com/sebaslobo22/rendimiento-equipo.git ~/rendimiento-equipo</span><span class="l">cd ~/rendimiento-equipo</span><span class="l">./install.sh</span></code></pre>
+      <div class="rules">
+        <article class="rule morph" style="--c:var(--e-p)"><span class="ico" style="--c:var(--e-p)"><svg class="i"><use href="#i-ban"/></svg></span><h3>Consulta el hardware, nunca lo escribas a mano.</h3><p>Otro chip trae otros núcleos, niveles y nombres. La skill pregunta a sysctl, Metal, VideoToolbox y Core ML cada vez.</p></article>
+        <article class="rule morph" style="--c:var(--e-m)"><span class="ico" style="--c:var(--e-m)"><svg class="i"><use href="#i-gauge"/></svg></span><h3><span class="k-code">memory_pressure</span> va sin argumentos.</h3><p>Con <span class="k-code">-l</span> o <span class="k-code">-p</span> aplica presión real al equipo y altera lo que querías medir.</p></article>
+        <article class="rule morph" style="--c:var(--e-v)"><span class="ico" style="--c:var(--e-v)"><svg class="i"><use href="#i-film"/></svg></span><h3>Con hardware, bitrate fijo.</h3><p>En Remotion, <span class="k-code">--crf</span> desactiva el hardware sin avisar. Sin bitrate, un video de 52 s salió con 93 MB contra 67 MB en la CPU.</p></article>
+        <article class="rule morph" style="--c:var(--e-g)"><span class="ico" style="--c:var(--e-g)"><svg class="i"><use href="#i-server"/></svg></span><h3>Un solo servidor de Whisper.</h3><p>Atiende una petición a la vez. Un segundo servidor no suma velocidad y carga otra copia del modelo en memoria.</p></article>
+        <article class="rule morph" style="--c:var(--e-a)"><span class="ico" style="--c:var(--e-a)"><svg class="i"><use href="#i-mem"/></svg></span><h3>Caché de video por render.</h3><p>Remotion reserva por defecto la mitad de la memoria disponible en cada render. Con tres a la vez se pasa de la RAM.</p></article>
+        <article class="rule morph" style="--c:var(--e-e)"><span class="ico" style="--c:var(--e-e)"><svg class="i"><use href="#i-power"/></svg></span><h3>Cada agente apaga lo suyo.</h3><p>Por PID y solo lo que lanzó. El servidor de dictado de OpenWhispr y los procesos en uso quedan fuera siempre.</p></article>
+      </div>
+    </div>
+  </section>
+
+  <!-- Instalar -->
+  <section class="sec" id="instalar">
+    <div class="wrap">
+      <div class="head morph">
+        <span class="kicker"><svg class="i"><use href="#i-term"/></svg>Instalar</span>
+        <h2 class="grad">Tres comandos y listo.</h2>
+        <p>El instalador enlaza la skill donde la buscan Claude Code y Codex. No copia archivos, no instala dependencias y no usa la red.</p>
+      </div>
+      <div class="install">
+        <div class="term morph" id="inst" style="--rad:16px">
+          <div class="term-bar"><span class="lights"><i></i><i></i><i></i></span><div class="seg" role="tablist" aria-label="Comandos"><button role="tab" aria-selected="true" data-p="0">Instalar</button><button role="tab" aria-selected="false" data-p="1">Probar</button><button role="tab" aria-selected="false" data-p="2">Actualizar</button><button role="tab" aria-selected="false" data-p="3">Quitar</button></div><button class="copy" type="button" id="copy"><svg class="i"><use href="#i-copy"/></svg><span>Copiar</span></button></div>
+          <div class="panes">
+            <div class="pane on"><pre><span class="ln">git clone https://github.com/sebaslobo22/rendimiento-equipo.git ~/rendimiento-equipo</span><span class="ln">cd ~/rendimiento-equipo</span><span class="ln">./install.sh</span></pre></div>
+            <div class="pane"><pre><span class="ln">python3 ~/rendimiento-equipo/skills/rendimiento-equipo/scripts/perfil.py --formato texto</span></pre></div>
+            <div class="pane"><pre><span class="ln">cd ~/rendimiento-equipo &amp;&amp; git pull</span></pre></div>
+            <div class="pane"><pre><span class="ln">~/rendimiento-equipo/install.sh --desinstalar</span></pre></div>
           </div>
-          <p>Queda enlazada en <code class="k">~/.claude/skills/</code> y en <code class="k">~/.agents/skills/</code>. Si ya había algo con ese nombre, lo aparta en <code class="k">.respaldos/</code> antes de enlazar. Abre una sesión nueva y pide un render o una transcripción: la skill se activa sola. Para ver qué recomienda en tu equipo:</p>
-          <div class="term">
-            <div class="term-cab"><span>Terminal</span><button class="copiar" type="button" data-copiar="cmd-perfil">Copiar</button></div>
-<pre><code id="cmd-perfil"><span class="l">python3 ~/rendimiento-equipo/skills/rendimiento-equipo/scripts/perfil.py --formato texto</span></code></pre>
-          </div>
-          <div class="tabla-envoltura">
-            <table>
-              <thead><tr><th scope="col">Opción de install.sh</th><th scope="col">Qué hace</th></tr></thead>
-              <tbody>
-                <tr><td><code class="k">--destino claude</code></td><td>Enlaza solo para Claude Code. También acepta <code class="k">agentes</code> o <code class="k">ambos</code>.</td></tr>
-                <tr><td><code class="k">--prueba</code></td><td>Muestra lo que haría sin cambiar nada.</td></tr>
-                <tr><td><code class="k">--desinstalar</code></td><td>Quita solo los enlaces que apuntan a este repositorio.</td></tr>
-              </tbody>
-            </table>
-          </div>
+          <p class="inst-foot">Queda enlazada en <span class="k-code">~/.claude/skills/</span> y <span class="k-code">~/.agents/skills/</span>. Abre una sesión nueva y pide un render o una transcripción: la skill se activa sola.</p>
         </div>
-        <div class="tabla-envoltura">
-          <table>
-            <caption class="etiqueta" style="text-align:left;caption-side:top;padding-bottom:12px">Dónde funciona</caption>
-            <thead><tr><th scope="col">Sistema</th><th scope="col">Estado</th></tr></thead>
-            <tbody>
-              <tr><td>macOS en Apple Silicon</td><td>Diagnóstico completo. Medido en un M4 Pro de 24 GB.</td></tr>
-              <tr><td>macOS sin herramientas de Xcode</td><td>Diagnóstico parcial y con aviso. Se completa con <code class="k">xcode-select --install</code>.</td></tr>
-              <tr><td>Windows</td><td>Segunda fase. Hoy responde «sin soporte medido todavía».</td></tr>
-              <tr><td>Linux</td><td>Sin soporte.</td></tr>
-            </tbody>
-          </table>
+        <div class="compat">
+          <div class="cp morph" style="--c:var(--ok)"><span class="st"></span><b>macOS en Apple Silicon</b><span>Diagnóstico completo. Medido en un M4 Pro de 24 GB.</span></div>
+          <div class="cp morph" style="--c:var(--warn)"><span class="st"></span><b>macOS sin herramientas de Xcode</b><span>Diagnóstico parcial, con aviso. Se completa con <span class="k-code">xcode-select --install</span>.</span></div>
+          <div class="cp morph" style="--c:var(--text-3)"><span class="st"></span><b>Windows</b><span>Segunda fase. Hoy responde «sin soporte medido todavía».</span></div>
+          <div class="cp morph" style="--c:var(--text-4)"><span class="st"></span><b>Linux</b><span>Sin soporte.</span></div>
         </div>
       </div>
     </div>
   </section>
 
-  <section class="seccion" aria-labelledby="t-fuentes">
-    <div class="envoltura">
-      <div class="cabeza">
-        <div><p class="ceja">Fuentes</p><h2 id="t-fuentes">De dónde sale cada <em>afirmación</em>.</h2></div>
-        <p>La skill marca cada dato con su nivel de evidencia: documentación oficial, respuesta del mantenedor, medición en el equipo o criterio propio.</p>
+  <!-- Fuentes -->
+  <section class="sec" style="padding-top:0">
+    <div class="wrap">
+      <div class="head morph">
+        <span class="kicker"><svg class="i"><use href="#i-book"/></svg>Fuentes</span>
+        <h2 class="grad">De dónde sale cada dato.</h2>
+        <p>Cada afirmación lleva su nivel de evidencia en <span class="k-code">references/fuentes.md</span>: oficial, del mantenedor, medida en el equipo o criterio propio.</p>
       </div>
-      <div class="fuentes">
-        <section>
-          <p class="etiqueta">Apple</p>
-          <ul>
-            <li><a href="https://developer.apple.com/documentation/apple-silicon/addressing-architectural-differences-in-your-macos-code">Addressing architectural differences in your macOS code</a></li>
-            <li><a href="https://developer.apple.com/documentation/apple-silicon/porting-your-metal-code-to-apple-silicon">Porting your Metal code to Apple silicon</a></li>
-            <li><a href="https://developer.apple.com/documentation/apple-silicon/tuning-your-code-s-performance-for-apple-silicon">Tuning your code's performance for Apple silicon</a></li>
-          </ul>
-        </section>
-        <section>
-          <p class="etiqueta">Herramientas</p>
-          <ul>
-            <li><a href="https://www.remotion.dev/docs/hardware-acceleration">Remotion: aceleración por hardware</a></li>
-            <li><a href="https://www.remotion.dev/docs/offthreadvideo">Remotion: OffthreadVideo y su caché</a></li>
-            <li><a href="https://www.remotion.dev/docs/gl-options">Remotion: opciones de --gl</a></li>
-            <li><a href="https://trac.ffmpeg.org/wiki/HWAccelIntro">ffmpeg: decodificación por hardware</a></li>
-            <li><a href="https://github.com/ggml-org/whisper.cpp/tree/master/examples/server">whisper.cpp: servidor</a></li>
-          </ul>
-        </section>
-        <section>
-          <p class="etiqueta">Skills y agentes</p>
-          <ul>
-            <li><a href="https://agentskills.io/specification">Especificación de Agent Skills</a></li>
-            <li><a href="https://platform.claude.com/docs/en/agents-and-tools/agent-skills/best-practices">Anthropic: buenas prácticas para skills</a></li>
-            <li><a href="https://code.claude.com/docs/en/sub-agents">Claude Code: subagentes</a></li>
-            <li><a href="https://learn.chatgpt.com/docs/build-skills">OpenAI: skills en Codex</a></li>
-          </ul>
-        </section>
+      <div class="src-grid">
+        <div class="src-col morph"><span class="kicker">Apple</span><ul>
+          <li><a href="https://developer.apple.com/documentation/apple-silicon/addressing-architectural-differences-in-your-macos-code"><svg class="i"><use href="#i-ext"/></svg>Addressing architectural differences in your macOS code</a></li>
+          <li><a href="https://developer.apple.com/documentation/apple-silicon/porting-your-metal-code-to-apple-silicon"><svg class="i"><use href="#i-ext"/></svg>Porting your Metal code to Apple silicon</a></li>
+          <li><a href="https://developer.apple.com/documentation/apple-silicon/tuning-your-code-s-performance-for-apple-silicon"><svg class="i"><use href="#i-ext"/></svg>Tuning your code's performance for Apple silicon</a></li>
+        </ul></div>
+        <div class="src-col morph"><span class="kicker">Herramientas</span><ul>
+          <li><a href="https://www.remotion.dev/docs/hardware-acceleration"><svg class="i"><use href="#i-ext"/></svg>Remotion: aceleración por hardware</a></li>
+          <li><a href="https://www.remotion.dev/docs/offthreadvideo"><svg class="i"><use href="#i-ext"/></svg>Remotion: OffthreadVideo y su caché</a></li>
+          <li><a href="https://www.remotion.dev/docs/gl-options"><svg class="i"><use href="#i-ext"/></svg>Remotion: opciones de --gl</a></li>
+          <li><a href="https://trac.ffmpeg.org/wiki/HWAccelIntro"><svg class="i"><use href="#i-ext"/></svg>ffmpeg: decodificación por hardware</a></li>
+          <li><a href="https://github.com/ggml-org/whisper.cpp/tree/master/examples/server"><svg class="i"><use href="#i-ext"/></svg>whisper.cpp: servidor</a></li>
+        </ul></div>
+        <div class="src-col morph"><span class="kicker">Skills y agentes</span><ul>
+          <li><a href="https://agentskills.io/specification"><svg class="i"><use href="#i-ext"/></svg>Especificación de Agent Skills</a></li>
+          <li><a href="https://platform.claude.com/docs/en/agents-and-tools/agent-skills/best-practices"><svg class="i"><use href="#i-ext"/></svg>Anthropic: buenas prácticas para skills</a></li>
+          <li><a href="https://code.claude.com/docs/en/sub-agents"><svg class="i"><use href="#i-ext"/></svg>Claude Code: subagentes</a></li>
+          <li><a href="https://learn.chatgpt.com/docs/build-skills"><svg class="i"><use href="#i-ext"/></svg>OpenAI: skills en Codex</a></li>
+        </ul></div>
       </div>
     </div>
   </section>
 </main>
 
-<footer class="pie envoltura">
-  <span class="firma">Sebastián Lobo</span>
-  <p>rendimiento-equipo v1.0.0 · 27.10.2026 · Licencia MIT</p>
+<footer>
+  <div class="wrap"><span>rendimiento-equipo v1.0.0 · Licencia MIT</span><span>Hecha por Sebastián Lobo · 27.10.2026</span></div>
 </footer>
+
+<div class="tip" id="tip" role="tooltip"></div>
 
 <script>
 (function () {
-  var TAREAS = {
-    codificar: { motores: ["video"], motor: "Va al motor de video", dato: "4,1 s", contra: "contra 22,1 s en la CPU",
-      nota: "15 s de video vertical de iPhone pasados a H.264 1080×1920. La CPU trabajó 5 s en vez de 263 s. Va con bitrate fijo: sin él, el archivo sale mucho más grande.",
-      cmd: "-hwaccel videotoolbox … -c:v h264_videotoolbox -b:v 12M -allow_sw 0", fuente: "Medido en el Mac piloto con medir.py" },
-    decodificar: { motores: ["video"], motor: "Va al motor de video", dato: "2,4 s", contra: "contra 4,4–5,4 s en la CPU",
-      nota: "30 s de HEVC grabado con iPhone. La CPU trabajó 3,3 s en vez de 35–38 s. La guía de ffmpeg advierte que no siempre conviene; en este equipo sí convino.",
-      cmd: "ffmpeg -nostdin -hwaccel videotoolbox -i toma.mov …", fuente: "Medido en el Mac piloto con medir.py" },
-    transcribir: { motores: ["gpu", "memoria"], motor: "Va a la GPU, con Metal", dato: "1 servidor", contra: "llegué a tener 4 vivos y 9 GB de swap",
-      nota: "whisper.cpp con Metal y flash attention. El servidor atiende una petición a la vez: un segundo servidor no suma velocidad y carga otra copia del modelo en memoria.",
-      cmd: "whisper-server -m ggml-large-v3-turbo.bin --port 8801", fuente: "Medido en el Mac piloto y documentado por el mantenedor" },
-    recortar: { motores: ["ane", "gpu"], motor: "Va al Neural Engine y la GPU", dato: "16 núcleos", contra: "y nada sale de tu equipo",
-      nota: "Vision de macOS separa a la persona del fondo en cada fotograma. Así quien habla queda siempre por encima de los gráficos del video.",
-      cmd: "VNGenerateForegroundInstanceMaskRequest", fuente: "Documentación oficial de Apple (supportedComputeStageDevices)" },
-    componer: { motores: ["pcores", "memoria"], motor: "Va a los núcleos de rendimiento", dato: "3 × 3", contra: "3 renders a la vez, 3 hilos cada uno",
-      nota: "La concurrencia sale de los 10 núcleos del nivel 0. Remotion reserva por defecto la mitad de la memoria disponible en cada render; con tres juntos se pasa de la RAM, así que la caché se fija en 2 GB por render.",
-      cmd: "--concurrency=3 --hardware-acceleration=required --video-bitrate=12M --offthreadvideo-cache-size-in-bytes=2147483648", fuente: "Fórmula de perfil.py y medición en el Mac piloto" },
-    laminas: { motores: ["pcores"], motor: "Va a la CPU", dato: "11,8 s", contra: "contra 15,3 s con la GPU",
-      nota: "4 láminas a 2× con Chrome sin ventana. Aquí la GPU fue más lenta y suavizaba distinto los bordes, así que la skill manda estas láminas a la CPU.",
-      cmd: "chrome --headless --disable-gpu --screenshot …", fuente: "Medido en el Mac piloto" },
-    hdr: { motores: ["pcores"], motor: "Va a la CPU, una sola vez", dato: "1 vez", contra: "por tramo, guardado y reutilizado",
-      nota: "Es el paso sin una ruta por hardware validada: el filtro de VideoToolbox para HDR tiene un error de color reportado y el ffmpeg de este equipo no lo trae. Se convierte una vez y se guarda.",
-      cmd: "-vf zscale…,tonemap…  (una vez por tramo, en caché)", fuente: "Ticket de ffmpeg y criterio propio" },
-    lote: { motores: ["ecores"], motor: "Va a los núcleos de eficiencia", dato: "4 núcleos", contra: "para lo que puede esperar",
-      nota: "Con la prioridad de fondo de macOS, un lote largo corre en los núcleos de eficiencia y deja libres los de rendimiento para lo que estás haciendo.",
-      cmd: "taskpolicy -c background python3 lote.py", fuente: "Documentación oficial de Apple (calidad de servicio)" }
-  };
+  var $ = function (s, r) { return (r || document).querySelector(s); };
+  var $$ = function (s, r) { return Array.prototype.slice.call((r || document).querySelectorAll(s)); };
+  var clamp = function (v, a, b) { a = a === undefined ? 0 : a; b = b === undefined ? 1 : b; return Math.min(b, Math.max(a, v)); };
+  var lerp = function (a, b, t) { return a + (b - a) * t; };
+  var ease = function (t) { return t < .5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2; };
+  var seg = function (p, a, b) { return clamp((p - a) / (b - a)); };
+  var num = function (n, d) { return n.toLocaleString("es", { minimumFractionDigits: d, maximumFractionDigits: d }); };
+  var reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
+  var vh = innerHeight;
 
-  document.querySelectorAll(".celdas").forEach(function (c) {
-    for (var i = 0; i < Number(c.dataset.n); i++) {
-      var s = document.createElement("i");
-      s.style.setProperty("--i", i);
-      c.appendChild(s);
-    }
+  // Piezas generadas
+  $$("[data-n]").forEach(function (c) { for (var i = 0; i < +c.dataset.n; i++) c.appendChild(document.createElement("i")); });
+  $$("[data-dots]").forEach(function (c) { for (var i = 0; i < +c.dataset.dots; i++) c.appendChild(document.createElement("i")); });
+
+  // Progreso de un elemento: entrando (0 abajo, 1 a media pantalla), atravesando, o fijo (sticky)
+  function pIn(el) { var r = el.getBoundingClientRect(); return clamp((vh - r.top) / (vh * .55)); }
+  function pThrough(el) { var r = el.getBoundingClientRect(); return clamp((vh * .9 - r.top) / (vh * .6 + r.height * .5)); }
+  function pSticky(el) { var r = el.getBoundingClientRect(); return clamp(-r.top / (r.height - vh)); }
+  function visible(el) { var r = el.getBoundingClientRect(); return r.bottom > -vh * .5 && r.top < vh * 1.5; }
+
+  var morphs = $$(".morph"), pars = $$("[data-par]");
+
+  // Portada: la ventana se endereza y el texto se va
+  var win = $("#win"), heroTxt = $("#hero-txt");
+  function hero() {
+    var p = clamp(scrollY / (vh * .8));
+    if (reduce) return;
+    var e = ease(p);
+    win.style.transform = "rotateX(" + lerp(20, 0, e).toFixed(2) + "deg) scale(" + lerp(.9, 1, e).toFixed(4) + ")";
+    var q = clamp(scrollY / (vh * .9));
+    heroTxt.style.opacity = (1 - q * .9).toFixed(3);
+    heroTxt.style.transform = "translate3d(0," + (-scrollY * .22).toFixed(1) + "px,0) scale(" + (1 - q * .06).toFixed(4) + ")";
+  }
+
+  // Chip: de un bloque a seis motores, y de vuelta al subir
+  var stage = $("#stage"), seqEl = $("#chip"), caps = $$(".cap"), blks = $$(".blk", stage), membar = $("#membar");
+  var FIN = { p: [0, 0, 59, 31], e: [61, 0, 39, 31], g: [0, 33, 59, 34], a: [61, 33, 39, 34], v: [0, 69, 59, 31], m: [61, 69, 39, 31] };
+  var lastCap = 0;
+  function chip() {
+    var p = pSticky(seqEl);
+    var s = ease(seg(p, .12, .42));
+    var k = seg(p, .38, .52);
+    var fill = ease(seg(p, .5, .74));
+    stage.style.setProperty("--s", s.toFixed(4));
+    stage.style.setProperty("--k", k.toFixed(4));
+    stage.style.transform = "scale(" + lerp(.86, 1, ease(seg(p, 0, .14))).toFixed(4) + ")";
+    blks.forEach(function (b, i) {
+      var f = FIN[b.dataset.k], t = clamp(s * 1.25 - i * .05);
+      b.style.left = lerp(0, f[0], t) + "%"; b.style.top = lerp(0, f[1], t) + "%";
+      b.style.width = lerp(100, f[2], t) + "%"; b.style.height = lerp(100, f[3], t) + "%";
+      b.style.borderRadius = lerp(44, 18, t).toFixed(1) + "px";
+      var cells = b.querySelectorAll(".cells i"), lit = Math.round(cells.length * fill);
+      if (b._lit !== lit) { cells.forEach(function (c, j) { c.classList.toggle("on", j < lit); }); b._lit = lit; }
+      var cnt = b.querySelector(".cnt"); cnt.textContent = Math.round(+cnt.dataset.to * fill);
+      b.querySelector(".bt").style.opacity = seg(p, .76, .88).toFixed(3);
+    });
+    membar.style.setProperty("--fill", fill.toFixed(4));
+    var c = p < .14 ? 0 : p < .44 ? 1 : p < .74 ? 2 : 3;
+    if (c !== lastCap) { caps[lastCap].classList.remove("on"); caps[c].classList.add("on"); lastCap = c; }
+  }
+
+  // Datos
+  var race = $("#race"), timer = $("#timer"), raceRows = $$(".row", race);
+  function raceFn() {
+    var t = 24 * seg(pThrough(race), .15, .85);
+    timer.innerHTML = num(t, 1) + "<small>s</small>";
+    raceRows.forEach(function (r) {
+      var tot = +r.dataset.total, w = clamp(t / tot);
+      r.querySelector(".track i").style.setProperty("--w", w.toFixed(4));
+      r.querySelector(".val span").textContent = num(Math.min(t, tot), 1) + " s";
+      r.classList.toggle("done", t >= tot);
+    });
+  }
+  var dots = $("#dots"), grids = $$(".dotgrid", dots);
+  function dotsFn() {
+    var f = seg(pThrough(dots), .15, .7);
+    grids.forEach(function (g) {
+      var all = g.children, lit = Math.round(all.length * f);
+      if (g._lit !== lit) { for (var i = 0; i < all.length; i++) all[i].classList.toggle("on", i < lit); g._lit = lit; }
+    });
+  }
+  var bars = $("#bars"), barIs = $$(".track i", bars);
+  function barsFn() {
+    var f = ease(seg(pThrough(bars), .15, .6));
+    barIs.forEach(function (i) { i.style.setProperty("--w", (i.classList.contains("rng") ? f : f * +i.style.getPropertyValue("--to")).toFixed(4)); });
+  }
+  var counters = $$("[data-count]");
+  function countFn() {
+    counters.forEach(function (c) {
+      var f = ease(seg(pIn(c.parentNode), .2, 1));
+      c.textContent = num(+c.dataset.count * f, +c.dataset.dec) + c.dataset.suf;
+    });
+  }
+
+  // Cómo trabaja: pasos y terminal ligados al scroll
+  var how = $("#como"), steps = $$(".step"), term = $("#term"), panes = $$(".pane", term), tabs = $$(".seg button", term), lineOn = $("#line-on");
+  var lastStep = -1;
+  function showPane(i) {
+    panes.forEach(function (p, j) { p.classList.toggle("on", j === i); });
+    tabs.forEach(function (b, j) { b.setAttribute("aria-selected", String(j === i)); });
+    steps.forEach(function (s, j) { s.classList.toggle("on", j === i); s.classList.toggle("past", j < i); });
+  }
+  function howFn() {
+    var p = pSticky(how), x = p * 4, i = Math.min(3, Math.floor(x)), q = clamp(x - i);
+    if (i !== lastStep) { showPane(i); lastStep = i; }
+    var lines = panes[i].querySelectorAll(".ln"), lit = Math.ceil(lines.length * clamp(q * 1.8 + .08));
+    for (var j = 0; j < lines.length; j++) lines[j].classList.toggle("on", j < lit);
+    lineOn.setAttribute("stroke-dashoffset", (100 - p * 100).toFixed(2));
+  }
+  tabs.forEach(function (b, j) {
+    b.addEventListener("click", function () {
+      var r = how.getBoundingClientRect();
+      scrollTo({ top: scrollY + r.top + (r.height - vh) * (j + .55) / 4, behavior: reduce ? "auto" : "smooth" });
+    });
   });
 
-  var botones = document.querySelectorAll(".tarea");
-  var bloques = document.querySelectorAll(".bloque");
-  function poner(id, texto) { document.getElementById(id).textContent = texto; }
-
-  function elegir(clave) {
-    var t = TAREAS[clave];
-    botones.forEach(function (b) { b.setAttribute("aria-pressed", String(b.dataset.tarea === clave)); });
-    bloques.forEach(function (b) { b.classList.toggle("activo", t.motores.indexOf(b.dataset.motor) !== -1); });
-    poner("d-motor", t.motor); poner("d-dato", t.dato); poner("d-contra", t.contra);
-    poner("d-nota", t.nota); poner("d-cmd", t.cmd); poner("d-fuente", t.fuente);
-  }
-  botones.forEach(function (b) { b.addEventListener("click", function () { elegir(b.dataset.tarea); }); });
-
-  // El chip arranca vacío y se enciende en el primer cuadro, para que el relleno se vea.
-  bloques.forEach(function (b) { b.classList.remove("activo"); });
-  requestAnimationFrame(function () { requestAnimationFrame(function () { elegir("codificar"); }); });
-
-  function seleccionar(el) {
-    var r = document.createRange(); r.selectNodeContents(el);
-    var s = window.getSelection(); s.removeAllRanges(); s.addRange(r);
-  }
-  document.querySelectorAll("[data-copiar]").forEach(function (btn) {
-    btn.addEventListener("click", function () {
-      var el = document.getElementById(btn.dataset.copiar);
-      var texto = Array.prototype.map.call(el.querySelectorAll(".l"), function (l) { return l.textContent; }).join("\n");
-      var listo = function () { btn.textContent = "Copiado"; setTimeout(function () { btn.textContent = "Copiar"; }, 1600); };
-      if (navigator.clipboard && navigator.clipboard.writeText) {
-        navigator.clipboard.writeText(texto).then(listo, function () { seleccionar(el); });
-      } else { seleccionar(el); }
+  // Frenos y huella
+  var brakesEl = $("#brakes"), brakes = $$(".brake", brakesEl);
+  function brakesFn() {
+    var f = ease(seg(pThrough(brakesEl), .1, .5));
+    brakes.forEach(function (b) {
+      var mk = b.querySelector(".mk"), n = +getComputedStyle(b.querySelector(".scale")).getPropertyValue("--n");
+      mk.style.setProperty("--pos", lerp(n - 1, +b.dataset.pos, f).toFixed(4));
     });
+  }
+  var fp = $("#fp"), fpPaths = [];
+  (function () {
+    var svg = $(".big-fp", fp), sym = $("#i-finger");
+    svg.innerHTML = sym.innerHTML;
+    fpPaths = $$("path", svg);
+    fpPaths.forEach(function (pa) { var l = pa.getTotalLength(); pa.style.setProperty("--len", l.toFixed(2)); });
+  })();
+  function fpFn() {
+    var f = seg(pThrough(fp), .1, .55);
+    fpPaths.forEach(function (pa, i) { pa.style.setProperty("--d", clamp(f * 1.6 - i * .15).toFixed(4)); });
+  }
+
+  // Navegación: indicador que sigue a la sección
+  var links = $$("#links a"), ind = $("#ind");
+  var navSecs = links.map(function (a) { return $(a.getAttribute("href")); });
+  var lastNav = -2;
+  function navFn() {
+    var on = -1;
+    navSecs.forEach(function (s, i) { if (s && s.getBoundingClientRect().top < vh * .45) on = i; });
+    if ($("#instalar").getBoundingClientRect().top < vh * .45) on = -1;
+    if (on === lastNav) return; lastNav = on;
+    links.forEach(function (a, i) { a.classList.toggle("on", i === on); });
+    if (on < 0) { ind.style.opacity = 0; return; }
+    var a = links[on];
+    ind.style.opacity = 1; ind.style.width = a.offsetWidth + "px"; ind.style.transform = "translateX(" + a.offsetLeft + "px)";
+  }
+
+  var scenes = [
+    [seqEl, chip], [race, raceFn], [dots, dotsFn], [bars, barsFn], [how, howFn], [brakesEl, brakesFn], [fp, fpFn]
+  ];
+  function frame() {
+    if (!reduce) {
+      morphs.forEach(function (m) { if (visible(m)) m.style.setProperty("--r", ease(pIn(m)).toFixed(4)); });
+      pars.forEach(function (e) {
+        var r = e.parentNode.getBoundingClientRect(), off = r.top + r.height / 2 - vh / 2;
+        e.style.transform = "translate3d(0," + (off * +e.dataset.par).toFixed(1) + "px,0)";
+      });
+    }
+    if (scrollY < vh * 1.5) hero();
+    scenes.forEach(function (s) { if (visible(s[0])) s[1](); });
+    countFn();
+    navFn();
+  }
+  var ticking = false;
+  addEventListener("scroll", function () { if (!ticking) { ticking = true; requestAnimationFrame(function () { ticking = false; frame(); }); } }, { passive: true });
+  addEventListener("resize", function () { vh = innerHeight; lastNav = -2; frame(); });
+  chip(); frame();
+
+  // Tareas: interacción al pasar el cursor, enfocar o tocar
+  var TAREAS = {
+    codificar: { k: ["v"], who: "Va al motor de video", nota: "15 s de video vertical de iPhone pasados a H.264 1080×1920. La CPU trabajó 5 s en vez de 263 s. Va con bitrate fijo para que el archivo no salga más grande.", cmd: "-hwaccel videotoolbox … -c:v h264_videotoolbox -b:v 12M -allow_sw 0", src: "Medido en el Mac piloto con medir.py" },
+    decodificar: { k: ["v"], who: "Va al motor de video", nota: "30 s de HEVC grabado con iPhone. La CPU trabajó 3,3 s en vez de 35–38 s. La guía de ffmpeg advierte que no siempre conviene; en este equipo convino.", cmd: "ffmpeg -nostdin -hwaccel videotoolbox -i toma.mov …", src: "Medido en el Mac piloto con medir.py" },
+    transcribir: { k: ["g", "m"], who: "Va a la GPU, con Metal", nota: "whisper.cpp con Metal y flash attention. El servidor atiende una petición a la vez: un segundo servidor no suma velocidad y carga otra copia del modelo. Llegué a tener 4 vivos y 9 GB de swap.", cmd: "whisper-server -m ggml-large-v3-turbo.bin --port 8801", src: "Medido en el Mac piloto y documentado por el mantenedor" },
+    recortar: { k: ["a", "g"], who: "Va al Neural Engine y a la GPU", nota: "Vision de macOS separa a la persona del fondo en cada fotograma, sin subir nada a internet. Así quien habla queda por encima de los gráficos del video.", cmd: "VNGenerateForegroundInstanceMaskRequest", src: "Documentación oficial de Apple" },
+    componer: { k: ["p", "m"], who: "Va a los núcleos de rendimiento", nota: "La concurrencia sale de los 10 núcleos del nivel 0. Remotion reserva por defecto la mitad de la memoria en cada render; con tres juntos se pasa de la RAM, así que la caché se fija en 2 GB por render.", cmd: "--concurrency=3 --offthreadvideo-cache-size-in-bytes=2147483648", src: "Fórmula de perfil.py y medición en el Mac piloto" },
+    laminas: { k: ["p"], who: "Va a la CPU", nota: "4 láminas a 2× con Chrome sin ventana. La GPU fue más lenta y suavizaba distinto los bordes, así que la skill manda estas láminas a la CPU.", cmd: "chrome --headless --disable-gpu --screenshot …", src: "Medido en el Mac piloto" },
+    hdr: { k: ["p"], who: "Va a la CPU, una sola vez", nota: "Es el paso sin una ruta por hardware validada: el filtro de VideoToolbox para HDR tiene un error de color reportado y el ffmpeg de este equipo no lo trae. Se convierte una vez y se guarda.", cmd: "zscale + tonemap en CPU, una vez por tramo, en caché", src: "Ticket de ffmpeg y criterio propio" },
+    lote: { k: ["e"], who: "Va a los núcleos de eficiencia", nota: "Con la prioridad de fondo de macOS, un lote largo corre en los núcleos de eficiencia y deja libres los de rendimiento para lo que estás haciendo.", cmd: "taskpolicy -c background python3 lote.py", src: "Documentación oficial de Apple" }
+  };
+  var mini = $("#mini"), mbs = $$(".mb", mini), taskBtns = $$(".task");
+  var MINI = { p: [0, 0, 59, 31], e: [61, 0, 39, 31], g: [0, 34.5, 59, 31], a: [61, 34.5, 39, 31], v: [0, 69, 59, 31], m: [61, 69, 39, 31] };
+  mbs.forEach(function (b) {
+    var f = MINI[b.dataset.k], at = function (v) { return "calc((100% - 24px) * " + v / 100 + ")"; };
+    b.style.left = "calc(12px + (100% - 24px) * " + f[0] / 100 + ")"; b.style.top = "calc(12px + (100% - 24px) * " + f[1] / 100 + ")";
+    b.style.width = at(f[2]); b.style.height = at(f[3]);
+  });
+  function pick(id) {
+    var t = TAREAS[id];
+    taskBtns.forEach(function (b) { b.classList.toggle("on", b.dataset.t === id); });
+    mini.classList.add("has");
+    mbs.forEach(function (b) { b.classList.toggle("on", t.k.indexOf(b.dataset.k) !== -1); });
+    $("#i-who").textContent = t.who; $("#i-nota").textContent = t.nota; $("#i-cmd").textContent = t.cmd; $("#i-src").textContent = t.src;
+  }
+  taskBtns.forEach(function (b) {
+    b.addEventListener("pointerenter", function (e) { if (e.pointerType === "mouse") pick(b.dataset.t); });
+    b.addEventListener("focus", function () { pick(b.dataset.t); });
+    b.addEventListener("click", function () { pick(b.dataset.t); });
+  });
+  pick("codificar");
+
+  // Brillo que sigue al cursor en las reglas
+  $$(".rule").forEach(function (r) {
+    r.addEventListener("pointermove", function (e) { var b = r.getBoundingClientRect(); r.style.setProperty("--mx", (e.clientX - b.left) + "px"); r.style.setProperty("--my", (e.clientY - b.top) + "px"); });
+  });
+
+  // Tooltip para datos
+  var tip = $("#tip");
+  function place(x, y) { var w = tip.offsetWidth, h = tip.offsetHeight; tip.style.left = clamp(x + 14, 8, innerWidth - w - 8) + "px"; tip.style.top = clamp(y - h - 12, 8, innerHeight - h - 8) + "px"; }
+  $$("[data-tip]").forEach(function (el) {
+    el.setAttribute("tabindex", "0");
+    el.addEventListener("pointerenter", function (e) { tip.textContent = el.dataset.tip; tip.classList.add("on"); place(e.clientX, e.clientY); });
+    el.addEventListener("pointermove", function (e) { place(e.clientX, e.clientY); });
+    el.addEventListener("pointerleave", function () { tip.classList.remove("on"); });
+    el.addEventListener("focus", function () { var b = el.getBoundingClientRect(); tip.textContent = el.dataset.tip; tip.classList.add("on"); place(b.left + 20, b.top); });
+    el.addEventListener("blur", function () { tip.classList.remove("on"); });
+  });
+
+  // Instalar: pestañas y copiar
+  var inst = $("#inst"), iTabs = $$(".seg button", inst), iPanes = $$(".pane", inst), copyBtn = $("#copy"), cur = 0;
+  iTabs.forEach(function (b, j) { b.addEventListener("click", function () { cur = j; iTabs.forEach(function (x, k) { x.setAttribute("aria-selected", String(k === j)); }); iPanes.forEach(function (x, k) { x.classList.toggle("on", k === j); }); }); });
+  copyBtn.addEventListener("click", function () {
+    var pane = iPanes[cur], txt = $$(".ln", pane).map(function (l) { return l.textContent; }).join("\n");
+    var lab = copyBtn.querySelector("span");
+    var ok = function () { lab.textContent = "Copiado"; setTimeout(function () { lab.textContent = "Copiar"; }, 1600); };
+    var sel = function () { var r = document.createRange(); r.selectNodeContents(pane); var s = getSelection(); s.removeAllRanges(); s.addRange(r); };
+    if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(txt).then(ok, sel); else sel();
   });
 })();
 </script>
