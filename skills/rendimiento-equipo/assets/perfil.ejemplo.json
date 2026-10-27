@@ -1,0 +1,66 @@
+{
+  "_leeme": "Formato de perfil-medido.json. Vive en ~/.local/share/rendimiento-equipo/<huella>/, no en la skill. Lo crea o actualiza medir.py --registrar; tambien se puede editar a mano (anota el porque en mediciones.md). Lo medido gana a la formula de perfil.py. estado: gana | adoptado = se usa; pendiente = sin medir, se ignora. 'gana' = ganador claro por la metrica elegida; 'adoptado' = decision tomada con otro criterio (por ejemplo menor uso de CPU). Los valores de este ejemplo son ilustrativos, no de un equipo real.",
+  "esquema": 1,
+  "huella": "000000000000",
+  "actualizado": "2026-01-01",
+  "ffmpeg": {
+    "decodificacion": {
+      "metodo": "videotoolbox",
+      "estado": "gana",
+      "fecha": "2026-01-01",
+      "nota": "metodo: videotoolbox | cpu"
+    },
+    "codificacion": {
+      "metodo": "h264_videotoolbox",
+      "bitrate_final": "12M",
+      "bitrate_vista_previa": "3500k",
+      "estado": "gana",
+      "fecha": "2026-01-01",
+      "nota": "metodo: h264_videotoolbox | libx264"
+    },
+    "hdr_sdr": {
+      "metodo": "zscale+tonemap en CPU",
+      "scale_vt": "no_validado",
+      "estado": "adoptado",
+      "fecha": "2026-01-01",
+      "nota": "scale_vt solo se usa si aqui dice \"validado\" y el ffmpeg elegido lo trae"
+    }
+  },
+  "carrusel_chrome": {
+    "flag": "--disable-gpu",
+    "estado": "gana",
+    "fecha": "2026-01-01",
+    "nota": "Chrome sin ventana para laminas; solo se recomienda si esta medido"
+  },
+  "remotion": {
+    "hardware_acceleration": {
+      "valor": "required",
+      "video_bitrate": "12M",
+      "estado": "adoptado",
+      "fecha": "2026-01-01",
+      "nota": "valor: required | if-possible | disable"
+    },
+    "gl": {
+      "valor": null,
+      "estado": "pendiente",
+      "nota": "valor: angle | null. Pendiente = no se pasa --gl"
+    },
+    "concurrencia_por_render": {
+      "1": 6,
+      "3": 3
+    }
+  },
+  "whisper": {
+    "backend": {
+      "valor": "metal",
+      "estado": "adoptado",
+      "fecha": "2026-01-01",
+      "nota": "valor: metal | coreml | cpu"
+    },
+    "servidores": {
+      "valor": 1,
+      "estado": "adoptado",
+      "nota": "informativo: siempre un solo servidor"
+    }
+  }
+}

@@ -1,0 +1,133 @@
+{
+  "skill_name": "rendimiento-equipo",
+  "formato": "Compatible con agentskills.io: 'evals' (prompt, expected_output, assertions) y 'trigger_queries' (query, should_trigger). Se agregan 'verificaciones' con comandos para lo que se puede comprobar sin juicio. Los comandos se corren desde la carpeta de la skill. Los valores numericos de los casos 1 y 4 son los del equipo piloto (huella 64245f9fa14a); en otro equipo cambian y se comparan contra la salida de perfil.py.",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "Voy a renderizar tres Reels de Remotion a la vez en mi Mac (ReelBranson, ReelDinamico y ReelValentina, proyecto en ~/Marca Personal/sistema-video). Dame los comandos para que no se cuelgue.",
+      "expected_output": "Corre diagnosticar.py y perfil.py --renders 3 antes de responder, y da tres comandos de render con la concurrencia, la caché de OffthreadVideo y el codificador por hardware que salen de perfil.py, sin --crf y sin --gl.",
+      "files": [],
+      "assertions": [
+        "Ejecuta python3 scripts/perfil.py --renders 3 (o diagnosticar.py y despues perfil.py) y no inventa los numeros",
+        "Cada comando incluye --concurrency con el valor que da perfil.py para 3 renders en paralelo (3 en el equipo piloto)",
+        "Cada comando incluye --hardware-acceleration=required y --video-bitrate=12M",
+        "Cada comando incluye --offthreadvideo-cache-size-in-bytes con un valor fijo (2147483648 en el equipo piloto)",
+        "Ningun comando incluye --crf ni --gl",
+        "Si perfil.py reporta un freno de memoria o termico activo, la respuesta serializa los renders en vez de lanzar tres"
+      ],
+      "verificaciones": [
+        {"comando": "python3 scripts/perfil.py --renders 3", "campo_json": "remotion.flags", "contiene": ["--hardware-acceleration=required", "--video-bitrate=12M", "--offthreadvideo-cache-size-in-bytes="], "no_contiene": ["--crf", "--gl"]}
+      ]
+    },
+    {
+      "id": 2,
+      "prompt": "Escribe el encargo para un subagente que va a transcribir 12 audios con Whisper y cortar los clips con ffmpeg. Que quede listo para pegar.",
+      "expected_output": "Un encargo autosuficiente que incluye el bloque para subagentes de perfil.py con rutas absolutas, un solo servidor de Whisper, apagado por PID, prohibicion de tocar OpenWhispr y pedido de evidencia.",
+      "files": [],
+      "assertions": [
+        "El encargo contiene el bloque de perfil.py con la ruta absoluta del ffmpeg elegido y los argumentos -nostdin, -hwaccel videotoolbox y h264_videotoolbox con -b:v 12M",
+        "Dice que hay un solo servidor de Whisper para todos y da el comando con -m y --port 88xx, o dice que se reutilice el propio vivo",
+        "Dice que los tiempos por palabra se leen de archivos ya calculados o se calculan una vez, no un servidor por audio",
+        "Prohibe tocar el whisper-server de OpenWhispr (--model y --host) y manda apagar por PID solo lo lanzado",
+        "Pide como devolucion el comando y su salida (evidencia), tamaños y cuanto tardo",
+        "Define rutas de entrada y salida exactas y que dos agentes no escriben el mismo archivo"
+      ],
+      "verificaciones": [
+        {"comando": "python3 scripts/perfil.py --formato json", "campo_json": "bloque_subagentes", "contiene": ["-nostdin", "videotoolbox", "un solo servidor", "OpenWhispr"]}
+      ]
+    },
+    {
+      "id": 3,
+      "prompt": "Quedaron procesos colgados de los agentes de esta mañana (servidores de Whisper, Chrome y Remotion). Apágalos.",
+      "expected_output": "Corre limpiar.py sin --aplicar, muestra la lista de propios, protegidos y en uso, y solo despues de mostrarla corre --aplicar. El servidor de OpenWhispr nunca se termina y no se usa kill -9 ni pkill.",
+      "files": [],
+      "assertions": [
+        "Primero ejecuta python3 scripts/limpiar.py sin --aplicar y presenta las tres listas",
+        "Identifica el whisper-server con --model y --host como protegido y dice que no se toca",
+        "No usa pkill, killall ni kill -9; solo limpiar.py --aplicar (SIGTERM por PID) o limpiar.py --aplicar --pid N",
+        "No termina procesos en uso (un render con su padre vivo)",
+        "Despues de aplicar, vuelve a listar para comprobar que el servidor de OpenWhispr sigue vivo"
+      ],
+      "verificaciones": [
+        {"comando": "python3 scripts/limpiar.py", "salida_contiene": ["\"modo\": \"dry-run\"", "\"protegidos\""]},
+        {"comando": "python3 scripts/limpiar.py --pid 1", "codigo_salida": 2}
+      ]
+    },
+    {
+      "id": 4,
+      "prompt": "El Mac va lento. Vi que la presión de memoria está en aviso y el swap no para de subir. ¿Lanzo tres renders más ahora?",
+      "expected_output": "Recomienda no lanzarlos en paralelo: serializar (un render a la vez) o esperar, apoyado en perfil.py (frenos), y mide la memoria con memory_pressure sin argumentos, nunca con -l o -p.",
+      "files": [],
+      "assertions": [
+        "Consulta la memoria con memory_pressure sin argumentos o con diagnosticar.py; nunca con -l ni -p",
+        "Basa la decision en la presion (nivel 2 o mayor) y en que el swap crece, no en el porcentaje de memoria libre",
+        "La recomendacion es un render a la vez (o esperar), no tres en paralelo",
+        "Menciona revisar procesos pesados huerfanos con limpiar.py (sin aplicar) antes de culpar al trabajo nuevo"
+      ],
+      "verificaciones": [
+        {"comando": "python3 scripts/diagnosticar.py --sin-estado > /tmp/diag_eval.json && python3 -c \"import json;d=json.load(open('/tmp/diag_eval.json'));d['memoria']['nivel_presion']=2;json.dump(d,open('/tmp/diag_eval.json','w'))\" && python3 scripts/perfil.py --diagnostico /tmp/diag_eval.json --renders 3", "campo_json": "remotion.renders_en_paralelo", "igual_a": 1}
+      ]
+    },
+    {
+      "id": 5,
+      "prompt": "Estoy en una laptop con Windows y una NVIDIA. Diagnóstica el equipo y dime qué flags de NVENC usar para renderizar más rápido.",
+      "expected_output": "Dice con claridad que la skill no tiene soporte medido para Windows todavía, no presenta flags de NVENC como verificados, remite a references/windows.md y propone un plan de medición.",
+      "files": [],
+      "assertions": [
+        "Declara «sin soporte medido todavía» para Windows",
+        "No entrega flags de NVENC, QSV o AMF como recomendacion medida ni como hecho verificado",
+        "Remite a references/windows.md y ofrece el plan de investigar y medir (prueba A/B con el mismo criterio)",
+        "No aplica a Windows valores medidos en el equipo piloto de macOS"
+      ],
+      "verificaciones": []
+    },
+    {
+      "id": 6,
+      "prompt": "Me compré otro Mac con un chip más nuevo. ¿Copio el perfil-medido.json del viejo para no volver a medir?",
+      "expected_output": "Explica que no: los datos van por huella del equipo, el Mac nuevo tendrá otra huella y empezará sin perfil medido (todo por fórmula), y que se corrige corriendo el diagnóstico y midiendo, sin asumir 2 niveles de CPU ni los nombres.",
+      "files": [],
+      "assertions": [
+        "Dice que no se copia el perfil medido del equipo viejo",
+        "Explica que la huella (SO, arquitectura, marca de CPU, memoria, niveles) cambia y que los datos viven en ~/.local/share/rendimiento-equipo/<huella>/",
+        "Indica correr diagnosticar.py y perfil.py en el equipo nuevo y medir con medir.py --registrar lo que importe",
+        "No afirma cuantos niveles de CPU ni que nombres tendran; manda consultarlos"
+      ],
+      "verificaciones": []
+    },
+    {
+      "id": 7,
+      "prompt": "Quiero saber si --gl=angle me conviene en Remotion. Hazme la prueba.",
+      "expected_output": "Usa medir.py remotion con al menos 3 repeticiones y --registrar, comprueba antes que nadie más esté renderizando y no cambia el flag sin un ganador claro.",
+      "files": [],
+      "assertions": [
+        "Verifica con limpiar.py (sin aplicar) o diagnosticar.py que no hay otros renders ni ffmpeg pesado en marcha, o lo pide",
+        "Corre python3 scripts/medir.py remotion con --proyecto, --composicion, --fotogramas y --repeticiones 3 o mas",
+        "Aplica el umbral de ganador claro (>=15 % mejor y diferencia visual media < 2/255) y no adopta --gl=angle si no se cumple",
+        "No ejecuta dos mediciones a la vez ni mide con otro agente renderizando"
+      ],
+      "verificaciones": [
+        {"comando": "python3 scripts/medir.py remotion --proyecto \"$HOME/Marca Personal/sistema-video\" --composicion ReelValentina --fotogramas 0-149 --solo-comandos", "salida_contiene": ["--gl=angle", "--hardware-acceleration=required", "\"base\"", "\"ambos\""]}
+      ]
+    }
+  ],
+  "trigger_queries": [
+    {"query": "voy a renderizar 4 reels de remotion a la vez en mi Mac, cómo lo configuro para que no se cuelgue?", "should_trigger": true},
+    {"query": "transcribe estos 20 audios de la charla con whisper en local y dime cuánto va a tardar", "should_trigger": true},
+    {"query": "convierte este video HDR que grabé con el iPhone a SDR y recórtalo del segundo 40 al 55", "should_trigger": true},
+    {"query": "escribe el encargo para un subagente que va a codificar 12 clips con ffmpeg y a hacer el recorte de personas con Vision", "should_trigger": true},
+    {"query": "el Mac se puso lentísimo mientras renderizaba y quedaron cosas abiertas, qué está consumiendo y cómo lo apago sin romper nada", "should_trigger": true},
+    {"query": "¿conviene usar la GPU o la CPU para sacar las láminas del carrusel con Chrome sin ventana?", "should_trigger": true},
+    {"query": "tengo 300 videos para pasar a h264, cómo lo hago aprovechando bien el chip y sin saturar la memoria", "should_trigger": true},
+    {"query": "hay un whisper-server que dejó colgado un agente, cómo sé cuál es el mío y cuál es el de la app", "should_trigger": true},
+    {"query": "voy a lanzar 3 agentes en paralelo que van a hacer renders y transcripciones, qué les pongo en el encargo", "should_trigger": true},
+    {"query": "escribe el copy del carrusel sobre la charla de Branson en el Summit, con gancho y cierre", "should_trigger": false},
+    {"query": "elige la tipografía y la paleta para la portada del reel y revisa que respete el sistema visual de la marca", "should_trigger": false},
+    {"query": "resume esta transcripción en cinco ideas para un hilo de Threads", "should_trigger": false},
+    {"query": "arregla el bug del botón de login en el panel de Hango, no guarda la sesión", "should_trigger": false},
+    {"query": "redáctale un mensaje de WhatsApp a una panadería para presentarle Hango", "should_trigger": false},
+    {"query": "haz que el texto del reel aparezca con una animación más suave en los primeros 3 segundos", "should_trigger": false},
+    {"query": "explícame en dos frases qué es Remotion y para qué sirve, sin instalar nada", "should_trigger": false},
+    {"query": "cambia el guion del video: quiero otro gancho y que el cierre invite a comentar", "should_trigger": false},
+    {"query": "convierte esta foto IMG_2041.HEIC a JPG", "should_trigger": false}
+  ]
+}

@@ -1,0 +1,483 @@
+#!/usr/bin/env python3
+"""Pruebas cortas A/B para decidir un metodo con datos de ESTE equipo.
+
+Subcomandos:
+  codificar   ffmpeg: libx264 (CPU) frente a h264_videotoolbox, con decodificacion en CPU o por hardware
+  decodificar ffmpeg: decodificar en CPU frente a -hwaccel videotoolbox
+  remotion    render corto de una composicion: base, angle, hardware y ambos
+
+Mide tiempo real y CPU (resource.getrusage de los hijos), y compara la calidad con la diferencia
+media de un fotograma (sobre 255). Intercala las repeticiones (A,B,C,A,B,C...) para repartir el ruido.
+Salida: JSON por stdout. Los archivos temporales se borran al terminar.
+
+Con --registrar:
+  - agrega el resultado a ~/.local/share/rendimiento-equipo/<huella>/mediciones.md
+  - actualiza perfil-medido.json SOLO si hay un ganador claro: al menos 15 % mejor en la metrica
+    elegida (--criterio tiempo|cpu, por defecto tiempo) y diferencia visual media menor de 2/255.
+  - no actualiza el perfil si habia otros procesos pesados en marcha (ruido), salvo --aceptar-ruido.
+
+Ejemplos:
+  python3 medir.py codificar --archivo clip.mov --segundos 5
+  python3 medir.py decodificar --archivo clip.mov --segundos 30 --repeticiones 3 --registrar
+  python3 medir.py remotion --proyecto ~/proyecto --composicion Reel --fotogramas 0-149 --repeticiones 3
+
+Codigos de salida: 0 = medicion hecha; 1 = fallo de una variante; 2 = argumentos o archivos invalidos.
+"""
+from __future__ import annotations
+
+import argparse
+import json
+import operator
+import os
+import re
+import shutil
+import statistics
+import subprocess
+import sys
+import tempfile
+import time
+from datetime import datetime
+
+try:
+    import resource  # solo existe en macOS y Linux
+except ImportError:  # Windows: main() avisa antes de usarlo
+    resource = None
+
+sys.dont_write_bytecode = True  # no ensuciar la carpeta compartida de la skill
+AQUI = os.path.dirname(os.path.abspath(__file__))
+sys.path.insert(0, AQUI)
+import diagnosticar as dg  # noqa: E402
+import perfil as pf  # noqa: E402
+
+UMBRAL_MEJORA = 0.15
+UMBRAL_VISUAL = 2.0
+BITRATE = pf.BITRATE_FINAL
+
+VAR_CODIFICAR = {
+    "x264_cpu": {"entrada": [], "salida": ["-c:v", "libx264", "-preset", "medium", "-crf", "20"]},
+    "vt_dec_cpu": {"entrada": [], "salida": ["-c:v", "h264_videotoolbox", "-b:v", "{b}", "-allow_sw", "0"]},
+    "vt_dec_hw": {"entrada": ["-hwaccel", "videotoolbox"], "salida": ["-c:v", "h264_videotoolbox", "-b:v", "{b}", "-allow_sw", "0"]},
+}
+VAR_REMOTION = {
+    "base": [],
+    "angle": ["--gl=angle"],
+    "hardware": ["--hardware-acceleration=required", "--video-bitrate={b}"],
+    "ambos": ["--gl=angle", "--hardware-acceleration=required", "--video-bitrate={b}"],
+}
+
+
+class ErrorUso(Exception):
+    """Argumento o archivo invalido: se imprime en stderr y sale con codigo 2."""
+
+
+# ---------------------------------------------------------------- medicion
+
+def correr(cmd, cwd=None, timeout=1800):
+    """Ejecuta un comando y mide tiempo real y CPU (usuario+sistema) de los hijos."""
+    antes = resource.getrusage(resource.RUSAGE_CHILDREN)
+    t0 = time.perf_counter()
+    try:
+        r = subprocess.run(cmd, cwd=cwd, stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL,
+                           stderr=subprocess.PIPE, text=True, timeout=timeout)
+        rc, err = r.returncode, r.stderr
+    except subprocess.TimeoutExpired:
+        rc, err = 124, "tiempo limite de %ss agotado" % timeout
+    real = time.perf_counter() - t0
+    despues = resource.getrusage(resource.RUSAGE_CHILDREN)
+    cpu = (despues.ru_utime - antes.ru_utime) + (despues.ru_stime - antes.ru_stime)
+    return {"real_s": round(real, 2), "cpu_s": round(cpu, 2), "rc": rc, "error": (err or "").strip()[-400:]}
+
+
+def duracion(ffmpeg, archivo):
+    r = subprocess.run([ffmpeg, "-hide_banner", "-nostdin", "-i", archivo], capture_output=True, text=True, timeout=60)
+    m = re.search(r"Duration:\s*(\d+):(\d+):([\d.]+)", r.stderr)
+    return int(m.group(1)) * 3600 + int(m.group(2)) * 60 + float(m.group(3)) if m else None
+
+
+def fotograma(ffmpeg, archivo, t, hw=False):
+    cmd = [ffmpeg, "-nostdin", "-hide_banner", "-loglevel", "error"] + (["-hwaccel", "videotoolbox"] if hw else []) + \
+          ["-ss", "%.3f" % t, "-i", archivo, "-frames:v", "1", "-pix_fmt", "rgb24", "-f", "rawvideo", "-"]
+    r = subprocess.run(cmd, capture_output=True, timeout=180)
+    return r.stdout if r.returncode == 0 else b""
+
+
+def diferencia(a, b):
+    """Diferencia absoluta media por canal, sobre 255. None si no se pueden comparar."""
+    if not a or len(a) != len(b):
+        return None
+    return round(sum(map(abs, map(operator.sub, a, b))) / len(a), 3)
+
+
+def resumir(corridas):
+    ok = [c for c in corridas if c["rc"] == 0]
+    if not ok:
+        return {"fallo": True, "corridas": corridas}
+    return {
+        "real_s": round(statistics.median(c["real_s"] for c in ok), 2),
+        "cpu_s": round(statistics.median(c["cpu_s"] for c in ok), 2),
+        "reales": [c["real_s"] for c in ok],
+        "cpus": [c["cpu_s"] for c in ok],
+        "fallidas": len(corridas) - len(ok),
+    }
+
+
+def decidir(base, cand, dif, criterio):
+    """Ganador claro: >=15 % mejor en la metrica y diferencia visual media < 2/255."""
+    m = "real_s" if criterio == "tiempo" else "cpu_s"
+    if base.get("fallo") or cand.get("fallo") or not base[m] or not cand[m]:
+        return None, None, "una de las variantes fallo"
+    mejora = 1 - cand[m] / base[m]
+    visual_ok = dif is not None and dif < UMBRAL_VISUAL
+    if not visual_ok:
+        return None, mejora, "diferencia visual %s (limite %s)" % ("no medida" if dif is None else dif, UMBRAL_VISUAL)
+    if mejora >= UMBRAL_MEJORA:
+        return "candidato", mejora, "el candidato es %.0f %% mejor en %s" % (mejora * 100, m)
+    peor = 1 - base[m] / cand[m]
+    if peor >= UMBRAL_MEJORA:
+        return "base", mejora, "la base es %.0f %% mejor en %s" % (peor * 100, m)
+    return None, mejora, "diferencia menor al %.0f %%: sin ganador claro" % (UMBRAL_MEJORA * 100)
+
+
+def comparar(res, base, cand, dif, criterio):
+    g, mejora, motivo = decidir(res[base], res[cand], dif, criterio)
+    otra = lambda m: None if res[base].get("fallo") or res[cand].get("fallo") else round(1 - res[cand][m] / res[base][m], 3)  # noqa: E731
+    return {"base": base, "candidato": cand, "mejora_real": otra("real_s"), "mejora_cpu": otra("cpu_s"),
+            "dif_visual": dif, "ganador": g, "motivo": motivo}
+
+
+def ruido():
+    """Procesos pesados ajenos que falsean una medicion (render, chrome sin ventana, ffmpeg)."""
+    vivos = [p for p in dg.procesos_pesados() if p["tipo"] in ("remotion", "chrome-headless", "ffmpeg")]
+    try:
+        carga = round(os.getloadavg()[0], 2)
+    except OSError:
+        carga = None
+    return {"hay_ruido": bool(vivos), "procesos": [{"pid": p["pid"], "tipo": p["tipo"]} for p in vivos], "carga_1min": carga}
+
+
+# ---------------------------------------------------------------- perfil y registro
+
+def hoy():
+    return datetime.now().strftime("%Y-%m-%d")
+
+
+def actualizar_perfil(huella, cambios):
+    """cambios: {("ffmpeg","codificacion"): {...}}. Escribe de forma atomica."""
+    ruta = os.path.join(dg.directorio_datos(huella), "perfil-medido.json")
+    datos = dg.leer_json(ruta) or {"esquema": 1, "huella": huella}
+    for (a, b), valor in cambios.items():
+        datos.setdefault(a, {})
+        previo = datos[a].get(b) if isinstance(datos[a].get(b), dict) else {}
+        nuevo = dict(previo)
+        nuevo.update(valor)
+        datos[a][b] = nuevo
+    datos["actualizado"] = hoy()
+    dg.escribir_json_atomico(ruta, datos)
+    return ruta
+
+
+def escribir_md(huella, titulo, ctx, filas, comparaciones, decision_txt):
+    ruta = os.path.join(dg.directorio_datos(huella), "mediciones.md")
+    os.makedirs(os.path.dirname(ruta), exist_ok=True)
+    nuevo = not os.path.exists(ruta)
+    L = []
+    if nuevo:
+        L += ["# Mediciones de este equipo", "", "Huella: `%s`. Cada bloque lo agrega `medir.py --registrar`." % huella, ""]
+    L += ["## %s · %s" % (datetime.now().strftime("%Y-%m-%d %H:%M"), titulo), "", ctx, "",
+          "| Variante | Real (s) | CPU (s) | Tamaño (MB) | Dif. visual |", "|---|---|---|---|---|"]
+    L += filas
+    L += [""] + ["- %s → %s: %s" % (c["base"], c["candidato"], c["motivo"]) for c in comparaciones]
+    L += ["", "Decisión: %s" % decision_txt, ""]
+    with open(ruta, "a", encoding="utf-8") as f:
+        f.write("\n".join(L) + "\n")
+    return ruta
+
+
+def filas_md(res, difs, tamanos):
+    out = []
+    for n, r in res.items():
+        if r.get("fallo"):
+            out.append("| %s | falló | | | |" % n)
+        else:
+            out.append("| %s | %s | %s | %s | %s |" % (n, r["real_s"], r["cpu_s"], tamanos.get(n, ""), difs.get(n, "")))
+    return out
+
+
+# ---------------------------------------------------------------- subcomandos
+
+def resolver_ffmpeg(args):
+    if args.ffmpeg:
+        ruta = os.path.expanduser(args.ffmpeg)
+    else:
+        ruta = (dg.buscar_ffmpeg([]) or {}).get("elegido")
+    if not ruta or not os.path.isfile(ruta):
+        raise ErrorUso("No encuentro ffmpeg. Pasa --ffmpeg <ruta> o define RENDIMIENTO_FFMPEG. "
+                       "Corre diagnosticar.py para ver los que hay en este equipo.")
+    return ruta
+
+
+def validar_archivo(args):
+    ruta = os.path.expanduser(args.archivo)
+    if not os.path.isfile(ruta):
+        raise ErrorUso("No existe el archivo: %r. Si la carpeta termina en espacio, pasa la ruta entre comillas "
+                       "con ese espacio incluido." % ruta)
+    return ruta
+
+
+def cmd_ffmpeg_base(ffmpeg):
+    return [ffmpeg, "-nostdin", "-y", "-hide_banner", "-loglevel", "error"]
+
+
+def medir_ffmpeg(args, modo):
+    ffmpeg = resolver_ffmpeg(args)
+    archivo = validar_archivo(args)
+    info = dg.inspeccionar_ffmpeg(ffmpeg) or {}
+    if "videotoolbox" not in info.get("hwaccels", []) or "h264_videotoolbox" not in info.get("codificadores_videotoolbox", []):
+        raise ErrorUso("Este ffmpeg (%s) no trae VideoToolbox; usa otro con --ffmpeg." % ffmpeg)
+    nombres = list(VAR_CODIFICAR) if modo == "codificar" else ["dec_cpu", "dec_hw"]
+    planes = {}
+    tmp = tempfile.mkdtemp(prefix="rendimiento-equipo-")
+    try:
+        for n in nombres:
+            if modo == "codificar":
+                v = VAR_CODIFICAR[n]
+                salida = os.path.join(tmp, n + ".mp4")
+                cmd = cmd_ffmpeg_base(ffmpeg) + v["entrada"] + ["-t", str(args.segundos), "-i", archivo, "-an", "-pix_fmt", "yuv420p"] + \
+                    [x.replace("{b}", args.bitrate) for x in v["salida"]] + [salida]
+            else:
+                salida = None
+                cmd = cmd_ffmpeg_base(ffmpeg) + (["-hwaccel", "videotoolbox"] if n == "dec_hw" else []) + \
+                    ["-t", str(args.segundos), "-i", archivo, "-an", "-f", "null", "-"]
+            planes[n] = {"cmd": cmd, "salida": salida}
+        if args.solo_comandos:
+            return {"solo_comandos": {n: p["cmd"] for n, p in planes.items()}}, None
+        ctx_ruido = ruido()
+        corridas = {n: [] for n in nombres}
+        for _ in range(args.repeticiones):
+            for n in nombres:  # intercalado
+                if planes[n]["salida"] and os.path.exists(planes[n]["salida"]):
+                    os.remove(planes[n]["salida"])
+                corridas[n].append(correr(planes[n]["cmd"], timeout=900))
+        res = {n: resumir(c) for n, c in corridas.items()}
+        fallos = [n for n, r in res.items() if r.get("fallo")]
+        tamanos, difs, comps = {}, {}, []
+        if modo == "codificar":
+            for n in nombres:
+                if not res[n].get("fallo") and os.path.exists(planes[n]["salida"]):
+                    tamanos[n] = round(os.path.getsize(planes[n]["salida"]) / 1e6, 2)
+            t_mid = max(0.0, (min(args.segundos, duracion(ffmpeg, archivo) or args.segundos)) / 2)
+
+            def frame_de(n):
+                return fotograma(ffmpeg, planes[n]["salida"], t_mid) if not res[n].get("fallo") else b""
+            f_x264, f_vtc, f_vth = frame_de("x264_cpu"), frame_de("vt_dec_cpu"), frame_de("vt_dec_hw")
+            difs["vt_dec_cpu"] = diferencia(f_x264, f_vtc)
+            difs["vt_dec_hw"] = diferencia(f_vtc, f_vth)
+            comps.append(comparar(res, "x264_cpu", "vt_dec_cpu", difs["vt_dec_cpu"], args.criterio))
+            comps.append(comparar(res, "vt_dec_cpu", "vt_dec_hw", difs["vt_dec_hw"], args.criterio))
+            clave = {("ffmpeg", "codificacion"): comps[0], ("ffmpeg", "decodificacion"): comps[1]}
+        else:
+            t_mid = max(0.0, (min(args.segundos, duracion(ffmpeg, archivo) or args.segundos)) / 2)
+            difs["dec_hw"] = diferencia(fotograma(ffmpeg, archivo, t_mid, False), fotograma(ffmpeg, archivo, t_mid, True))
+            comps.append(comparar(res, "dec_cpu", "dec_hw", difs["dec_hw"], args.criterio))
+            clave = {("ffmpeg", "decodificacion"): comps[0]}
+    finally:
+        shutil.rmtree(tmp, ignore_errors=True)
+    cambios = {}
+    for k, c in clave.items():
+        g = c["ganador"]
+        if g is None:
+            continue
+        gano_cand = g == "candidato"
+        nota = "%s (%s)" % (c["motivo"], "criterio " + args.criterio)
+        if k[1] == "codificacion":
+            cambios[k] = {"metodo": "h264_videotoolbox" if gano_cand else "libx264", "bitrate_final": args.bitrate,
+                          "bitrate_vista_previa": pf.BITRATE_PREVIA, "estado": "gana", "fecha": hoy(), "nota": nota}
+        else:
+            cambios[k] = {"metodo": "videotoolbox" if gano_cand else "cpu", "estado": "gana", "fecha": hoy(), "nota": nota}
+    ctx = {"ffmpeg": ffmpeg, "archivo": archivo, "segundos": args.segundos, "repeticiones": args.repeticiones,
+           "criterio": args.criterio, "ruido": ctx_ruido}
+    out = {"subcomando": modo, **ctx, "variantes": res, "tamanos_mb": tamanos, "dif_visual": difs, "comparaciones": comps}
+    md = (filas_md(res, difs, tamanos), comps, ctx, cambios)
+    return out, md if not fallos else None
+
+
+def medir_remotion(args):
+    proyecto = os.path.expanduser(args.proyecto)
+    if not os.path.isdir(proyecto):
+        raise ErrorUso("No existe el proyecto: %r" % proyecto)
+    cli = os.path.join(proyecto, "node_modules", ".bin", "remotion")
+    base_cmd = [cli] if os.path.exists(cli) else ["npx", "remotion"]
+    if not re.fullmatch(r"\d+-\d+", args.fotogramas):
+        raise ErrorUso("--fotogramas debe verse como 0-149")
+    ffmpeg = resolver_ffmpeg(args)
+    cpu = dg.leer_cpu()
+    niv = cpu.get("niveles") or []
+    n0 = (niv[0]["nucleos_fisicos"] if niv else None) or cpu.get("logicalcpu") or 2
+    conc = args.concurrencia or pf.concurrencia_remotion(n0, 1)
+    nombres = [v.strip() for v in args.variantes.split(",") if v.strip()]
+    for v in nombres:
+        if v not in VAR_REMOTION:
+            raise ErrorUso("Variante desconocida %r. Opciones: %s" % (v, ", ".join(VAR_REMOTION)))
+    if "base" not in nombres:
+        nombres.insert(0, "base")
+    tmp = tempfile.mkdtemp(prefix="rendimiento-equipo-")
+    planes = {}
+    for n in nombres:
+        salida = os.path.join(tmp, n + ".mp4")
+        flags = [f.replace("{b}", args.bitrate) for f in VAR_REMOTION[n]]
+        planes[n] = {"cwd": proyecto, "salida": salida, "cmd": base_cmd + [
+            "render", args.entrada, args.composicion, salida, "--frames=%s" % args.fotogramas,
+            "--concurrency=%d" % conc, "--log=error", "--overwrite"] + flags}
+    try:
+        if args.solo_comandos:
+            return {"solo_comandos": {n: p["cmd"] for n, p in planes.items()}, "cwd": proyecto}, None
+        ctx_ruido = ruido()
+        corridas = {n: [] for n in nombres}
+        for _ in range(args.repeticiones):
+            for n in nombres:
+                corridas[n].append(correr(planes[n]["cmd"], cwd=proyecto, timeout=1800))
+        res = {n: resumir(c) for n, c in corridas.items()}
+        fallos = [n for n, r in res.items() if r.get("fallo")]
+        tamanos, difs, comps = {}, {}, []
+        base_f = b""
+        if not res["base"].get("fallo"):
+            d = duracion(ffmpeg, planes["base"]["salida"]) or 1.0
+            t_mid = d / 2
+            base_f = fotograma(ffmpeg, planes["base"]["salida"], t_mid)
+        for n in nombres:
+            if not res[n].get("fallo") and os.path.exists(planes[n]["salida"]):
+                tamanos[n] = round(os.path.getsize(planes[n]["salida"]) / 1e6, 2)
+                if n != "base":
+                    difs[n] = diferencia(base_f, fotograma(ffmpeg, planes[n]["salida"], t_mid))
+        for n in nombres:
+            if n != "base":
+                comps.append(comparar(res, "base", n, difs.get(n), args.criterio))
+    finally:
+        shutil.rmtree(tmp, ignore_errors=True)
+    cambios = {}
+    by = {c["candidato"]: c for c in comps}
+    if "hardware" in by and by["hardware"]["ganador"]:
+        c = by["hardware"]
+        si = c["ganador"] == "candidato"
+        cambios[("remotion", "hardware_acceleration")] = {
+            "valor": "required" if si else "disable", "video_bitrate": args.bitrate, "estado": "gana" if args.criterio == "tiempo" else "adoptado",
+            "fecha": hoy(), "nota": "%s (criterio %s)" % (c["motivo"], args.criterio)}
+    if "angle" in by and by["angle"]["ganador"]:
+        c = by["angle"]
+        si = c["ganador"] == "candidato"
+        cambios[("remotion", "gl")] = {"valor": "angle" if si else None, "estado": "gana" if args.criterio == "tiempo" else "adoptado",
+                                       "fecha": hoy(), "nota": "%s (criterio %s)" % (c["motivo"], args.criterio)}
+    ctx = {"proyecto": proyecto, "composicion": args.composicion, "fotogramas": args.fotogramas, "concurrencia": conc,
+           "repeticiones": args.repeticiones, "criterio": args.criterio, "ruido": ctx_ruido}
+    out = {"subcomando": "remotion", **ctx, "variantes": res, "tamanos_mb": tamanos, "dif_visual": difs, "comparaciones": comps}
+    return out, ((filas_md(res, difs, tamanos), comps, ctx, cambios) if not fallos else None)
+
+
+def _contar(procesos):
+    c = {}
+    for p in procesos:
+        c[p["tipo"]] = c.get(p["tipo"], 0) + 1
+    return c
+
+
+def registrar(out, md, huella, titulo, aceptar_ruido):
+    filas, comps, ctx, cambios = md
+    reg = {"mediciones_md": None, "perfil_medido": {"actualizado": False}}
+    ruido_ok = not ctx["ruido"]["hay_ruido"] or aceptar_ruido
+    if cambios and ruido_ok:
+        decision = "perfil actualizado: " + ", ".join("%s.%s" % k for k in cambios)
+    elif cambios:
+        decision = "ganador claro, pero había otros procesos pesados (ruido): el perfil NO se actualizó. Repite sin ruido o usa --aceptar-ruido."
+    else:
+        decision = "sin ganador claro: el perfil no cambia."
+    resumen_ctx = "Equipo `%s` · %s · repeticiones %s · criterio %s · ruido: %s" % (
+        huella, ctx.get("archivo") or ctx.get("proyecto"), ctx["repeticiones"], ctx["criterio"],
+        ("sí (%s)" % ", ".join("%d %s" % (n, t) for t, n in sorted(_contar(ctx["ruido"]["procesos"]).items()))) if ctx["ruido"]["hay_ruido"] else "no")
+    reg["mediciones_md"] = escribir_md(huella, titulo, resumen_ctx, filas, comps, decision)
+    if cambios and ruido_ok:
+        reg["perfil_medido"] = {"actualizado": True, "ruta": actualizar_perfil(huella, cambios),
+                                "cambios": {"%s.%s" % k: v for k, v in cambios.items()}}
+    else:
+        reg["perfil_medido"]["motivo"] = decision
+    out["registro"] = reg
+
+
+def parser():
+    ap = argparse.ArgumentParser(
+        description="Pruebas cortas A/B (codificar, decodificar, remotion) con tiempo real, CPU y diferencia visual.",
+        formatter_class=argparse.RawDescriptionHelpFormatter, epilog=__doc__.split("Con --registrar:")[1].join(["Con --registrar:", ""]))
+    sub = ap.add_subparsers(dest="cmd", metavar="{codificar,decodificar,remotion}")
+
+    def comunes(p):
+        p.add_argument("--repeticiones", type=int, default=None, help="repeticiones por variante (por defecto 1 en ffmpeg, 3 en remotion)")
+        p.add_argument("--criterio", choices=("tiempo", "cpu"), default="tiempo", help="metrica para elegir ganador (por defecto tiempo real)")
+        p.add_argument("--bitrate", default=BITRATE, help="bitrate de los codificadores por hardware (por defecto %(default)s)")
+        p.add_argument("--ffmpeg", help="ruta de ffmpeg (por defecto el mejor encontrado por diagnosticar.py)")
+        p.add_argument("--registrar", action="store_true", help="agrega el resultado a mediciones.md y actualiza perfil-medido.json si hay ganador claro")
+        p.add_argument("--aceptar-ruido", action="store_true", help="permite actualizar el perfil aunque haya otros procesos pesados")
+        p.add_argument("--solo-comandos", action="store_true", help="muestra los comandos que correria y termina, sin ejecutar nada")
+
+    for nombre, ayuda in (("codificar", "libx264 frente a h264_videotoolbox (y decodificacion CPU u hardware)"),
+                          ("decodificar", "decodificar en CPU frente a -hwaccel videotoolbox")):
+        p = sub.add_parser(nombre, help=ayuda, description=ayuda)
+        p.add_argument("--archivo", required=True, help="video de prueba")
+        p.add_argument("--segundos", type=float, default=5 if nombre == "codificar" else 30, help="segundos a procesar (por defecto %(default)s)")
+        comunes(p)
+    p = sub.add_parser("remotion", help="render corto de una composicion con variantes base, angle, hardware y ambos",
+                       description="Render corto de una composicion. NO lo corras mientras otros agentes renderizan: el ruido invalida la medicion.")
+    p.add_argument("--proyecto", required=True, help="carpeta del proyecto Remotion")
+    p.add_argument("--composicion", required=True, help="id de la composicion")
+    p.add_argument("--fotogramas", default="0-149", help="rango de fotogramas (por defecto %(default)s)")
+    p.add_argument("--entrada", default="src/index.ts", help="punto de entrada (por defecto %(default)s)")
+    p.add_argument("--variantes", default="base,angle,hardware,ambos", help="lista separada por comas (por defecto %(default)s)")
+    p.add_argument("--concurrencia", type=int, help="--concurrency igual para todas las variantes (por defecto la formula con 1 render)")
+    comunes(p)
+    return ap
+
+
+def main(argv=None):
+    ap = parser()
+    args = ap.parse_args(argv)
+    if not args.cmd:
+        ap.print_help(sys.stderr)
+        return 2
+    if args.repeticiones is None:
+        args.repeticiones = 3 if args.cmd == "remotion" else 1
+    if args.repeticiones < 1:
+        print("error: --repeticiones debe ser 1 o mas", file=sys.stderr)
+        return 2
+    if not dg.es_macos():
+        print("error: medir.py solo tiene pruebas medidas para macOS (%s). Lee references/windows.md." % dg.SOPORTE_SIN_MEDIR, file=sys.stderr)
+        return 2
+    try:
+        if args.cmd == "remotion":
+            out, md = medir_remotion(args)
+        else:
+            out, md = medir_ffmpeg(args, args.cmd)
+    except ErrorUso as e:
+        print("error: %s" % e, file=sys.stderr)
+        return 2
+    if "solo_comandos" in out:
+        print(json.dumps(out, ensure_ascii=False, indent=2))
+        return 0
+    huella = dg.calcular_huella(dg.platform.machine(), dg.leer_cpu(), dg.sysctl_int("hw.memsize"))
+    out["huella"] = huella
+    out["fecha"] = datetime.now().astimezone().isoformat(timespec="seconds")
+    if args.registrar:
+        if md is None:
+            out["registro"] = {"mediciones_md": None, "perfil_medido": {"actualizado": False, "motivo": "una variante fallo: no se registra"}}
+        else:
+            titulo = "%s · %s" % (args.cmd, os.path.basename(out.get("archivo") or out.get("composicion") or ""))
+            registrar(out, md, huella, titulo, args.aceptar_ruido)
+    print(json.dumps(out, ensure_ascii=False, indent=2))
+    fallidas = [n for n, r in out["variantes"].items() if r.get("fallo")]
+    for n in fallidas:
+        ultimo = (out["variantes"][n]["corridas"][-1].get("error") or "sin detalle")
+        print("error: la variante %s fallo: %s" % (n, ultimo[-300:]), file=sys.stderr)
+    if out.get("ruido", {}).get("hay_ruido"):
+        print("aviso: habia otros procesos pesados en marcha; la medicion tiene ruido.", file=sys.stderr)
+    return 1 if fallidas else 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())

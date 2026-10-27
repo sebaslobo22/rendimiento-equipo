@@ -1,0 +1,5 @@
+.DS_Store
+__pycache__/
+*.pyc
+# Lo que install.sh aparta antes de enlazar
+.respaldos/
