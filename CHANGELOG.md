@@ -2,6 +2,10 @@
 
 ## Página · 27.10.2026
 
+- Sección «Antes y después» al inicio: siete mediciones del Mac piloto que pasan de un estado al otro con el scroll.
+- Chip dibujado en el estilo del anuncio del M4 Pro (paquete de vidrio y plano de líneas azules), animado: el paquete
+  se levanta, el plano se dibuja y se encienden los núcleos de cada motor. Es un dibujo propio, sin imágenes ni logo
+  de Apple.
 - `docs/index.html` rediseñada: lenguaje de la app Codex y de apple.com, escenas ligadas al scroll en ambos sentidos
   (el chip se divide en seis motores), parallax, iconos de línea y datos como gráficos animados con detalle al pasar
   el cursor.
