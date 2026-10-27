@@ -7,7 +7,7 @@ recetas genéricas.
 
 Piloto: macOS en Apple Silicon. Windows queda para una segunda fase, sin soporte medido todavía.
 
-Página: [`docs/index.html`](docs/index.html)
+Página: https://sebaslobo22.github.io/rendimiento-equipo/ (fuente en [`docs/index.html`](docs/index.html))
 
 ## Por qué la hice
 
