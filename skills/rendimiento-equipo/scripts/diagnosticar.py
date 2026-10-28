@@ -1,9 +1,10 @@
 #!/usr/bin/env python3
 """Diagnostica el equipo donde corre y devuelve un JSON por stdout.
 
-Consulta el hardware en tiempo de ejecucion (sysctl, memory_pressure, system_profiler y
-un script de Swift con Metal, VideoToolbox y CoreML). No fija valores a mano, no usa red y
-no instala nada. Solo biblioteca estandar de Python 3.
+En macOS consulta el hardware en tiempo de ejecucion (sysctl, memory_pressure, system_profiler y
+un script de Swift con Metal, VideoToolbox y CoreML). En Windows usa la API del sistema, el registro
+y PowerShell (plataforma_windows.py) y prueba que codificadores por hardware abre ffmpeg de verdad.
+No fija valores a mano, no usa red y no instala nada. Solo biblioteca estandar de Python 3.
 
 Uso tipico:
     python3 diagnosticar.py
@@ -33,6 +34,12 @@ import time
 from datetime import datetime
 
 sys.dont_write_bytecode = True
+if sys.platform == "win32":  # la consola de Windows no es UTF-8 por defecto y los nombres de equipos traen ® o ™
+    for _flujo in (sys.stdout, sys.stderr):
+        try:
+            _flujo.reconfigure(encoding="utf-8", errors="replace")
+        except (AttributeError, ValueError):
+            pass
 ESQUEMA = 1
 AQUI = os.path.dirname(os.path.abspath(__file__))
 SWIFT_ARCHIVO = os.path.join(AQUI, "capacidades_macos.swift")
@@ -40,6 +47,7 @@ SWIFT_TIEMPO_LIMITE = 90
 UMBRAL_SWAP_CRECE_MB = 256  # criterio, no medicion: crecimiento que se considera "creciendo"
 VENTANA_SWAP_S = 3600
 SOPORTE_SIN_MEDIR = "sin soporte medido todavía"
+SOPORTE_WINDOWS = "diagnóstico y mediciones listos; recomendaciones sin medir todavía"
 
 RUTAS_FFMPEG = [
     "/opt/homebrew/bin/ffmpeg",
@@ -47,12 +55,27 @@ RUTAS_FFMPEG = [
     "/opt/local/bin/ffmpeg",
     "/Applications/OpenWhispr.app/Contents/Resources/app.asar.unpacked/node_modules/ffmpeg-static/ffmpeg",
     os.path.expanduser("~/Applications/OpenWhispr.app/Contents/Resources/app.asar.unpacked/node_modules/ffmpeg-static/ffmpeg"),
+    # Windows: winget, Chocolatey y Scoop
+    os.path.expandvars(r"%LOCALAPPDATA%\Microsoft\WinGet\Links\ffmpeg.exe"),
+    r"C:\ProgramData\chocolatey\bin\ffmpeg.exe",
+    os.path.expanduser(r"~\scoop\shims\ffmpeg.exe"),
 ]
 RUTAS_WHISPER_SERVER = [
     "/opt/homebrew/bin/whisper-server",
     "/usr/local/bin/whisper-server",
     "/Applications/OpenWhispr.app/Contents/Resources/bin/whisper-server-*",
+    os.path.expandvars(r"%LOCALAPPDATA%\Programs\OpenWhispr\resources\bin\whisper-server*.exe"),
 ]
+# Windows: codificadores H.264 por hardware de cada fabricante y el de Media Foundation, en el orden en que se prueban.
+# Cada uno con el formato de pixel que acepta y sus opciones fijas (-hw_encoding 1 impide que Media Foundation caiga a software).
+CODIFICADORES_WINDOWS = {
+    "h264_nvenc": {"pix_fmt": "yuv420p", "extra": []},
+    "h264_qsv": {"pix_fmt": "nv12", "extra": []},
+    "h264_amf": {"pix_fmt": "nv12", "extra": []},
+    "h264_mf": {"pix_fmt": "nv12", "extra": ["-hw_encoding", "1"]},
+}
+# Aceleradores de decodificacion y el formato de salida que obliga a usarlos (sin el, ffmpeg cae a CPU sin avisar).
+ACELERADORES_WINDOWS = {"cuda": "cuda", "qsv": "qsv", "d3d11va": "d3d11"}
 DIRS_MODELOS_WHISPER = [
     "~/.cache/openwhispr/whisper-models",
     "~/.cache/whisper",
@@ -68,7 +91,7 @@ FILTROS_BUSCADOS = ("videotoolbox", "scale_vt", "zscale", "tonemap")
 def ejecutar(cmd, timeout=15):
     """Corre un comando sin shell. Nunca lanza: devuelve (codigo, stdout, stderr)."""
     try:
-        r = subprocess.run(cmd, capture_output=True, text=True, timeout=timeout)
+        r = subprocess.run(cmd, capture_output=True, text=True, timeout=timeout, encoding="utf-8", errors="replace")
         return r.returncode, r.stdout, r.stderr
     except FileNotFoundError:
         return 127, "", "no existe el comando: %s" % cmd[0]
@@ -93,6 +116,10 @@ def sysctl_int(clave):
 
 def es_macos():
     return sys.platform == "darwin"
+
+
+def es_windows():
+    return sys.platform == "win32"
 
 
 def directorio_datos(huella):
@@ -134,7 +161,10 @@ def a_segundos(etime):
 
 # ---------------------------------------------------------------- CPU y huella
 
-def leer_cpu():
+def leer_cpu(avisos=None):
+    if es_windows():
+        import plataforma_windows as pw
+        return pw.leer_cpu(avisos if avisos is not None else [])
     n = sysctl_int("hw.nperflevels") or 0
     niveles = []
     for i in range(n):
@@ -153,6 +183,14 @@ def leer_cpu():
         "logicalcpu": sysctl_int("hw.logicalcpu"),
         "pagesize": sysctl_int("hw.pagesize"),
     }
+
+
+def memoria_total():
+    """Bytes de memoria fisica: hw.memsize en macOS, GlobalMemoryStatusEx en Windows."""
+    if es_windows():
+        import plataforma_windows as pw
+        return pw.leer_memoria([]).get("memsize")
+    return sysctl_int("hw.memsize")
 
 
 def calcular_huella(arquitectura, cpu, memsize):
@@ -302,10 +340,12 @@ def inspeccionar_ffmpeg(ruta):
     hwaccels = [l.strip() for l in hw.splitlines()[1:] if l.strip()]
     relevantes = sorted({f for f in filtros if any(b in f for b in FILTROS_BUSCADOS)})
     vt = sorted(e for e in codificadores if "videotoolbox" in e)
+    hw = sorted(e for e in codificadores if re.search(r"_(videotoolbox|nvenc|qsv|amf|mf|vaapi|d3d12va|vulkan)$", e))
     return {
         "ruta": ruta,
         "version": m.group(1) if m else primera[:60],
         "codificadores_videotoolbox": vt,
+        "codificadores_hw": hw,  # que el ffmpeg los traiga no prueba que el equipo los abra: ver probar_video
         "libx264": "libx264" in codificadores,
         "hwaccels": hwaccels,
         "filtros_relevantes": relevantes,
@@ -316,9 +356,9 @@ def inspeccionar_ffmpeg(ruta):
 
 
 def puntaje_ffmpeg(f):
-    return (len(f["codificadores_videotoolbox"]) * 10 + (5 if f["zscale"] else 0)
+    return (len(f["codificadores_hw"]) * 10 + (5 if f["zscale"] else 0)
             + (5 if f["tonemap"] else 0) + (3 if f["libx264"] else 0)
-            + (3 if "videotoolbox" in f["hwaccels"] else 0))
+            + (3 if "videotoolbox" in f["hwaccels"] or "d3d11va" in f["hwaccels"] else 0))
 
 
 def buscar_ffmpeg(avisos):
@@ -338,11 +378,53 @@ def buscar_ffmpeg(avisos):
     elegido = max(candidatos, key=puntaje_ffmpeg)["ruta"] if candidatos else None
     ffprobe = shutil.which("ffprobe")
     if not ffprobe and elegido:
-        hermano = os.path.join(os.path.dirname(elegido), "ffprobe")
+        hermano = os.path.join(os.path.dirname(elegido), "ffprobe.exe" if es_windows() else "ffprobe")
         ffprobe = hermano if os.path.isfile(hermano) else None
     if not candidatos:
         avisos.append("No se encontro ningun ffmpeg (ni en PATH ni en rutas conocidas).")
     return {"elegido": elegido, "candidatos": candidatos, "ffprobe": ffprobe}
+
+
+def _ultima_linea(err):
+    return ((err or "").strip().splitlines() or ["sin detalle"])[-1][:200]
+
+
+def probar_video(ffmpeg, info):
+    """Windows: abre de verdad cada codificador y acelerador por hardware con un clip sintetico de 1 s.
+
+    Que el ffmpeg los traiga no basta: sin la tarjeta o el controlador, fallan al abrir. Esto solo dice
+    si abren; si convienen frente a la CPU lo decide medir.py.
+    """
+    res = {"codificadores": {}, "decodificadores": {}}
+    fuente = ["-f", "lavfi", "-i", "testsrc2=size=1280x720:rate=30:duration=1"]
+    base = [ffmpeg, "-hide_banner", "-nostdin", "-loglevel", "error", "-y"]
+    for cod, v in CODIFICADORES_WINDOWS.items():
+        if cod not in info.get("codificadores_hw", []):
+            continue
+        rc, _, err = ejecutar(base + fuente + ["-pix_fmt", v["pix_fmt"], "-c:v", cod, "-b:v", "4M"] + v["extra"] + ["-f", "null", "-"], 60)
+        res["codificadores"][cod] = {"abre": rc == 0, "detalle": None if rc == 0 else _ultima_linea(err)}
+    accels = [a for a in ACELERADORES_WINDOWS if a in info.get("hwaccels", [])]
+    if not accels:
+        return res
+    import tempfile
+    tmp = tempfile.mkdtemp(prefix="rendimiento-equipo-")
+    try:
+        clip = os.path.join(tmp, "prueba.mp4")
+        cod = "libx264" if info.get("libx264") else next((c for c, r in res["codificadores"].items() if r["abre"]), None)
+        if not cod:
+            res["nota_decodificadores"] = "sin libx264 ni codificador por hardware no hay clip H.264 para probarlos"
+            return res
+        extra = ["-pix_fmt", CODIFICADORES_WINDOWS[cod]["pix_fmt"]] + CODIFICADORES_WINDOWS[cod]["extra"] if cod in CODIFICADORES_WINDOWS else ["-pix_fmt", "yuv420p"]
+        rc, _, err = ejecutar(base + fuente + extra + ["-c:v", cod, clip], 60)
+        if rc != 0:
+            res["nota_decodificadores"] = "no se pudo crear el clip de prueba: %s" % _ultima_linea(err)
+            return res
+        for a in accels:
+            rc, _, err = ejecutar(base + ["-hwaccel", a, "-hwaccel_output_format", ACELERADORES_WINDOWS[a], "-i", clip, "-f", "null", "-"], 60)
+            res["decodificadores"][a] = {"abre": rc == 0, "detalle": None if rc == 0 else _ultima_linea(err)}
+    finally:
+        shutil.rmtree(tmp, ignore_errors=True)
+    return res
 
 
 def buscar_whisper():
@@ -360,11 +442,11 @@ def buscar_whisper():
         vistos.add(real)
         carpeta = os.path.dirname(real)
         backends = sorted({
-            re.sub(r"^libggml-|\..*$", "", os.path.basename(p))
-            for p in glob.glob(os.path.join(carpeta, "libggml-*.dylib"))
+            re.sub(r"^(?:lib)?ggml-|\..*$", "", os.path.basename(p))
+            for p in glob.glob(os.path.join(carpeta, "libggml-*.dylib")) + glob.glob(os.path.join(carpeta, "ggml-*.dll"))
         } - {"base"})
         servidores.append({"ruta": r, "backends_junto_al_binario": backends,
-                           "de_openwhispr": "OpenWhispr.app" in real})
+                           "de_openwhispr": "OpenWhispr" in real})
     modelos = []
     dirs = [os.environ.get("WHISPER_MODELS_DIR")] + DIRS_MODELOS_WHISPER
     for d in dirs:
@@ -393,10 +475,11 @@ def leer_remotion(proyecto):
     deps.update(pkg.get("dependencies", {}))
     deps.update(pkg.get("devDependencies", {}))
     info["version"] = deps.get("remotion") or deps.get("@remotion/cli")
-    binario = os.path.join(proyecto, "node_modules", ".bin", "remotion")
+    binario = os.path.join(proyecto, "node_modules", ".bin", "remotion.cmd" if es_windows() else "remotion")
     info["cli"] = binario if os.path.exists(binario) else None
     info["config"] = os.path.exists(os.path.join(proyecto, "remotion.config.ts"))
-    shells = glob.glob(os.path.join(proyecto, "node_modules", ".remotion", "chrome-headless-shell", "*", "*", "chrome-headless-shell"))
+    shell = "chrome-headless-shell.exe" if es_windows() else "chrome-headless-shell"
+    shells = glob.glob(os.path.join(proyecto, "node_modules", ".remotion", "chrome-headless-shell", "*", "*", shell))
     info["chrome_headless_shell"] = shells[0] if shells else None
     node = shutil.which("node")
     info["node"] = node
@@ -408,6 +491,14 @@ def leer_remotion(proyecto):
 
 
 def leer_chrome():
+    if es_windows():
+        for base in (os.environ.get("ProgramFiles"), os.environ.get("ProgramFiles(x86)"), os.environ.get("LOCALAPPDATA")):
+            exe = os.path.join(base or "", "Google", "Chrome", "Application", "chrome.exe")
+            if base and os.path.isfile(exe):
+                versiones = [d for d in os.listdir(os.path.dirname(exe)) if re.fullmatch(r"\d+(\.\d+)+", d)]
+                versiones.sort(key=lambda v: [int(x) for x in v.split(".")])
+                return {"ruta": exe, "version": versiones[-1] if versiones else None}
+        return {"ruta": None}
     plist = os.path.join(RUTA_CHROME, "Contents", "Info.plist")
     binario = os.path.join(RUTA_CHROME, "Contents", "MacOS", "Google Chrome")
     if not os.path.exists(binario):
@@ -434,7 +525,7 @@ def leer_swift():
 PATRONES_EXE = [
     # (tipo, regex anclado al inicio del comando: asi un "grep remotion" o este mismo script no cuentan)
     ("whisper-server", re.compile(r"^(?:\S[^\n]*?/)?whisper-server[^/\s]*(?:\s|$)")),
-    ("chrome-headless", re.compile(r"^(?:\S[^\n]*?/)?(?:chrome-headless-shell|Google Chrome(?: Helper[^/]*)?)(?:\s|$)")),
+    ("chrome-headless", re.compile(r"^(?:\S[^\n]*?/)?(?:chrome-headless-shell|chrome|Google Chrome(?: Helper[^/]*)?)(?:\s|$)")),
     ("ffmpeg", re.compile(r"^(?:\S[^\n]*?/)?ffmpeg(?:\s|$)")),
     ("remotion", re.compile(r"^(?:\S[^\n]*?/)?remotion(?:\s|$)")),                      # compositor
     ("remotion", re.compile(r"^(?:\S*/)?node(?:\s+-\S+)*\s+\S[^\n]*?(?:/\.bin/remotion|/@remotion/cli/)")),
@@ -445,13 +536,17 @@ PATRONES_EXE = [
 def tipo_de_proceso(cmd):
     for tipo, rx in PATRONES_EXE:
         if rx.search(cmd):
-            if tipo == "chrome-headless" and "Google Chrome" in cmd.split(" --")[0] and "--headless" not in cmd:
+            exe = cmd.split(" --")[0]
+            if tipo == "chrome-headless" and ("Google Chrome" in exe or re.search(r"(^|/)chrome$", exe)) and "--headless" not in cmd:
                 continue  # Chrome normal del usuario, no el que corre sin ventana
             return tipo
     return None
 
 
 def listar_procesos():
+    if es_windows():
+        import plataforma_windows as pw
+        return pw.listar_procesos()
     rc, out, _ = ejecutar(["ps", "-axo", "pid=,ppid=,etime=,command="], 15)
     tabla = {}
     for linea in out.splitlines():
@@ -484,18 +579,23 @@ def descendientes(tabla, pid):
     return resultado
 
 
+def es_huerfano(tabla, p):
+    """En macOS el huerfano pasa a launchd (PID 1); en Windows su padre simplemente ya no existe."""
+    return p["ppid"] == 1 or p["ppid"] not in tabla
+
+
 def clasificar(tabla, pid, tipo):
     """Devuelve (clase, motivo). Clases: protegido, propio, en_uso.
 
-    protegido: de OpenWhispr (usa --model y --host, o cuelga de OpenWhispr.app). Nunca se toca.
+    protegido: de OpenWhispr (usa --model y --host, o cuelga de la app OpenWhispr). Nunca se toca.
     propio:    whisper-server lanzado por un agente (-m y --port 88xx), o remotion/chrome sin
-               ventana cuyo padre es launchd (huerfano) o desciende de uno.
+               ventana huerfano (padre launchd o, en Windows, padre que ya no existe) o que desciende de uno.
     en_uso:    cualquier otro caso (por ejemplo un render con su padre vivo). Tampoco se toca.
     """
     p = tabla[pid]
     cmd = p["cmd"]
     padres = cadena_de_padres(tabla, pid)
-    de_app = any("OpenWhispr.app" in tabla[a]["cmd"] for a in padres)
+    de_app = any("OpenWhispr" in tabla[a]["cmd"] for a in padres)
     if tipo == "whisper-server":
         modelo_host = bool(re.search(r"(^|\s)--model(\s|=)", cmd) and re.search(r"(^|\s)--host(\s|=)", cmd))
         if modelo_host or de_app:
@@ -505,15 +605,15 @@ def clasificar(tabla, pid, tipo):
             return "propio", "lanzado por un agente (-m ... --port 88xx)"
         return "en_uso", "whisper-server que no encaja con el patron de agentes: no se toca"
     if de_app:
-        return "protegido", "cuelga de OpenWhispr.app"
+        return "protegido", "cuelga de la app OpenWhispr"
     if tipo in ("remotion", "chrome-headless"):
-        if p["ppid"] == 1:
+        if es_huerfano(tabla, p):
             if tipo == "remotion" and re.search(r"\bremotion\s+(render|still|studio|benchmark|preview)\b", cmd):
                 if descendientes(tabla, pid):
                     return "en_uso", "CLI de remotion sin padre pero con procesos hijos activos: puede ser un render lanzado en segundo plano"
-            return "propio", "huerfano (padre = launchd)"
+            return "propio", "huerfano (padre = launchd)" if p["ppid"] == 1 else "huerfano (su padre ya no existe)"
         for a in padres:
-            if tabla[a]["ppid"] == 1 and tipo_de_proceso(tabla[a]["cmd"]) in ("remotion", "chrome-headless"):
+            if es_huerfano(tabla, tabla[a]) and tipo_de_proceso(tabla[a]["cmd"]) in ("remotion", "chrome-headless"):
                 if tipo_de_proceso(tabla[a]["cmd"]) == "remotion" and descendientes(tabla, a):
                     break
                 return "propio", "hijo del proceso huerfano %d" % a
@@ -552,9 +652,77 @@ def procesos_pesados():
 
 # ---------------------------------------------------------------- diagnostico completo
 
-def diagnosticar(proyecto=None, guardar_estado=True, tiempo_swift=SWIFT_TIEMPO_LIMITE):
+def diagnosticar_windows(proyecto=None, guardar_estado=True, probar=True):
+    """Mismo formato que en macOS donde Windows tiene equivalente; lo que no tiene queda en None y se dice."""
+    import plataforma_windows as pw
     avisos = []
     arq = platform.machine()
+    cpu = pw.leer_cpu(avisos)
+    mem = pw.leer_memoria(avisos)
+    huella = calcular_huella(arq, cpu, mem.get("memsize"))
+    sistema = pw.leer_sistema(avisos)
+    pag = pw.paginacion(sistema)
+    memsize = mem.get("memsize")
+    memoria = {
+        "memsize": memsize,
+        "memsize_gb": round(memsize / 1024 ** 3, 1) if memsize else None,
+        "libre_porcentaje": mem.get("libre_porcentaje"),
+        "carga_porcentaje": mem.get("carga_porcentaje"),
+        "commit_usado_mb": mem.get("commit_usado_mb"),
+        "commit_limite_mb": mem.get("commit_limite_mb"),
+        "swap": pag,  # archivo de paginacion
+        "swap_creciendo": swap_creciendo(directorio_datos(huella), pag["usado_mb"] if pag else None, guardar_estado),
+        "nivel_presion": None,
+        "presion": "sin dato: Windows no publica niveles de presion de memoria como macOS",
+    }
+    gpus = pw.adaptadores(sistema)
+    reales = [g for g in gpus if not g["virtual"]]
+    principal = max(reales, key=lambda g: g["vram_mb"] or 0) if reales else (gpus[0] if gpus else None)
+    ffmpeg = buscar_ffmpeg(avisos)
+    video = None
+    if ffmpeg["elegido"] and probar:
+        info = next((c for c in ffmpeg["candidatos"] if c["ruta"] == ffmpeg["elegido"]), {})
+        video = probar_video(ffmpeg["elegido"], info)
+    elif not probar:
+        avisos.append("Pruebas de video por hardware omitidas (--sin-pruebas-video).")
+    npus = [n.get("Name") for n in sistema.get("npus", []) if n.get("Name")]
+    energia = pw.leer_energia(avisos)
+    so = sistema.get("so") or {}
+    avisos.append("Windows: %s. Lee references/windows.md." % SOPORTE_WINDOWS)
+    return {
+        "esquema": ESQUEMA,
+        "generado": datetime.now().astimezone().isoformat(timespec="seconds"),
+        "so": {"nombre": "Windows", "version": so.get("Version") or platform.version(),
+               "edicion": so.get("Caption"), "compilacion": so.get("BuildNumber")},
+        "arquitectura": arq,
+        "huella": huella,
+        "directorio_datos": directorio_datos(huella),
+        "soporte": SOPORTE_WINDOWS,
+        "cpu": cpu,
+        "memoria": memoria,
+        "gpu": {"nombre": principal["nombre"] if principal else None, "nucleos": None, "adaptadores": gpus},
+        "video": video,
+        "neural_engine": {"disponible": bool(npus), "nucleos": None, "dispositivos": npus},
+        "termico": None,  # Windows no expone un estado termico estandar
+        "bajo_consumo": energia["ahorro_energia"] if energia else None,
+        "energia": energia,
+        "herramientas": {
+            "ffmpeg": ffmpeg,
+            "whisper": buscar_whisper(),
+            "remotion": leer_remotion(proyecto),
+            "chrome": leer_chrome(),
+            "python": platform.python_version(),
+        },
+        "procesos_pesados": procesos_pesados(),
+        "avisos": avisos,
+    }
+
+
+def diagnosticar(proyecto=None, guardar_estado=True, tiempo_swift=SWIFT_TIEMPO_LIMITE, probar_video_hw=True):
+    avisos = []
+    arq = platform.machine()
+    if es_windows():
+        return diagnosticar_windows(proyecto, guardar_estado, probar_video_hw)
     if not es_macos():
         huella = hashlib.sha256(("%s|%s|%s" % (platform.system(), arq, platform.processor())).encode()).hexdigest()[:12]
         return {
@@ -628,9 +796,11 @@ def main(argv=None):
                     help="no guardar la muestra de swap en el directorio de datos")
     ap.add_argument("--tiempo-swift", type=int, default=SWIFT_TIEMPO_LIMITE,
                     help="tiempo limite en segundos para el script de Swift (por defecto %(default)s)")
+    ap.add_argument("--sin-pruebas-video", action="store_true",
+                    help="Windows: no abrir los codificadores por hardware con un clip de prueba (mas rapido, menos datos)")
     ap.add_argument("--compacto", action="store_true", help="JSON en una linea")
     args = ap.parse_args(argv)
-    d = diagnosticar(args.proyecto, not args.sin_estado, args.tiempo_swift)
+    d = diagnosticar(args.proyecto, not args.sin_estado, args.tiempo_swift, not args.sin_pruebas_video)
     print(json.dumps(d, ensure_ascii=False, indent=None if args.compacto else 2))
     for a in d.get("avisos", []):
         print("aviso: %s" % a, file=sys.stderr)

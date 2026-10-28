@@ -2,9 +2,14 @@
 """Pruebas cortas A/B para decidir un metodo con datos de ESTE equipo.
 
 Subcomandos:
-  codificar   ffmpeg: libx264 (CPU) frente a h264_videotoolbox, con decodificacion en CPU o por hardware
-  decodificar ffmpeg: decodificar en CPU frente a -hwaccel videotoolbox
-  remotion    render corto de una composicion: base, angle, hardware y ambos
+  codificar   ffmpeg: libx264 (CPU) frente a h264_videotoolbox, con decodificacion en CPU o por hardware.
+              En Windows, libx264 frente a cada codificador por hardware que abre en el equipo
+              (h264_nvenc, h264_qsv, h264_amf, h264_mf).
+  decodificar ffmpeg: decodificar en CPU frente a -hwaccel videotoolbox.
+              En Windows, CPU frente a cada acelerador que abre (cuda, qsv, d3d11va).
+  remotion    render corto de una composicion: base, angle, hardware y ambos (solo macOS por ahora)
+
+En Windows el tiempo de CPU cuenta solo el proceso de ffmpeg (GetProcessTimes), que no lanza otros.
 
 Mide tiempo real y CPU (resource.getrusage de los hijos), y compara la calidad con la diferencia
 media de un fotograma (sobre 255). Intercala las repeticiones (A,B,C,A,B,C...) para repartir el ruido.
@@ -73,19 +78,27 @@ class ErrorUso(Exception):
 # ---------------------------------------------------------------- medicion
 
 def correr(cmd, cwd=None, timeout=1800):
-    """Ejecuta un comando y mide tiempo real y CPU (usuario+sistema) de los hijos."""
-    antes = resource.getrusage(resource.RUSAGE_CHILDREN)
+    """Ejecuta un comando y mide tiempo real y CPU (usuario+sistema): de los hijos en macOS,
+    del proceso lanzado en Windows."""
+    antes = resource.getrusage(resource.RUSAGE_CHILDREN) if resource else None
     t0 = time.perf_counter()
+    p = subprocess.Popen(cmd, cwd=cwd, stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL,
+                         stderr=subprocess.PIPE, text=True, encoding="utf-8", errors="replace")
     try:
-        r = subprocess.run(cmd, cwd=cwd, stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL,
-                           stderr=subprocess.PIPE, text=True, timeout=timeout)
-        rc, err = r.returncode, r.stderr
+        _, err = p.communicate(timeout=timeout)
+        rc = p.returncode
     except subprocess.TimeoutExpired:
+        p.kill()
+        p.communicate()
         rc, err = 124, "tiempo limite de %ss agotado" % timeout
     real = time.perf_counter() - t0
-    despues = resource.getrusage(resource.RUSAGE_CHILDREN)
-    cpu = (despues.ru_utime - antes.ru_utime) + (despues.ru_stime - antes.ru_stime)
-    return {"real_s": round(real, 2), "cpu_s": round(cpu, 2), "rc": rc, "error": (err or "").strip()[-400:]}
+    if resource:
+        despues = resource.getrusage(resource.RUSAGE_CHILDREN)
+        cpu = round((despues.ru_utime - antes.ru_utime) + (despues.ru_stime - antes.ru_stime), 2)
+    else:
+        import plataforma_windows as pw
+        cpu = pw.tiempo_cpu(p)
+    return {"real_s": round(real, 2), "cpu_s": cpu, "rc": rc, "error": (err or "").strip()[-400:]}
 
 
 def duracion(ffmpeg, archivo):
@@ -95,7 +108,9 @@ def duracion(ffmpeg, archivo):
 
 
 def fotograma(ffmpeg, archivo, t, hw=False):
-    cmd = [ffmpeg, "-nostdin", "-hide_banner", "-loglevel", "error"] + (["-hwaccel", "videotoolbox"] if hw else []) + \
+    """hw: True para VideoToolbox, o el nombre de un acelerador (cuda, qsv, d3d11va)."""
+    acel = "videotoolbox" if hw is True else hw
+    cmd = [ffmpeg, "-nostdin", "-hide_banner", "-loglevel", "error"] + (["-hwaccel", acel] if acel else []) + \
           ["-ss", "%.3f" % t, "-i", archivo, "-frames:v", "1", "-pix_fmt", "rgb24", "-f", "rawvideo", "-"]
     r = subprocess.run(cmd, capture_output=True, timeout=180)
     return r.stdout if r.returncode == 0 else b""
@@ -112,11 +127,12 @@ def resumir(corridas):
     ok = [c for c in corridas if c["rc"] == 0]
     if not ok:
         return {"fallo": True, "corridas": corridas}
+    cpus = [c["cpu_s"] for c in ok if c["cpu_s"] is not None]
     return {
         "real_s": round(statistics.median(c["real_s"] for c in ok), 2),
-        "cpu_s": round(statistics.median(c["cpu_s"] for c in ok), 2),
+        "cpu_s": round(statistics.median(cpus), 2) if cpus else None,
         "reales": [c["real_s"] for c in ok],
-        "cpus": [c["cpu_s"] for c in ok],
+        "cpus": cpus,
         "fallidas": len(corridas) - len(ok),
     }
 
@@ -150,7 +166,7 @@ def ruido():
     vivos = [p for p in dg.procesos_pesados() if p["tipo"] in ("remotion", "chrome-headless", "ffmpeg")]
     try:
         carga = round(os.getloadavg()[0], 2)
-    except OSError:
+    except (OSError, AttributeError):  # Windows no tiene getloadavg
         carga = None
     return {"hay_ruido": bool(vivos), "procesos": [{"pid": p["pid"], "tipo": p["tipo"]} for p in vivos], "carga_1min": carga}
 
@@ -301,6 +317,99 @@ def medir_ffmpeg(args, modo):
     return out, md if not fallos else None
 
 
+def medir_ffmpeg_windows(args, modo):
+    """Windows: la base en CPU frente a cada metodo por hardware que abre en este equipo.
+
+    Mismo criterio que en macOS: gana el candidato al menos 15 % mejor y con diferencia visual
+    media menor de 2/255; entre varios ganadores, el mejor en la metrica elegida.
+    """
+    ffmpeg = resolver_ffmpeg(args)
+    archivo = validar_archivo(args)
+    info = dg.inspeccionar_ffmpeg(ffmpeg) or {}
+    pruebas = dg.probar_video(ffmpeg, info)
+    base = cmd_ffmpeg_base(ffmpeg)
+    entrada = ["-t", str(args.segundos), "-i", archivo, "-an"]
+    tmp = tempfile.mkdtemp(prefix="rendimiento-equipo-")
+    planes = {}
+    if modo == "codificar":
+        if not info.get("libx264"):
+            raise ErrorUso("Este ffmpeg (%s) no trae libx264, que es la base de la comparacion; usa otro con --ffmpeg." % ffmpeg)
+        cands = [c for c in dg.CODIFICADORES_WINDOWS if (pruebas["codificadores"].get(c) or {}).get("abre")]
+        if not cands:
+            raise ErrorUso("Ningun codificador por hardware abre en este equipo con este ffmpeg (%s). Probados: %s. "
+                           "Revisa el controlador de la tarjeta grafica o usa otro ffmpeg con --ffmpeg."
+                           % (ffmpeg, json.dumps(pruebas["codificadores"], ensure_ascii=False)))
+        nombre_base = "x264_cpu"
+        planes[nombre_base] = {"cmd": base + entrada + ["-pix_fmt", "yuv420p", "-c:v", "libx264", "-preset", "medium", "-crf", "20",
+                                                        os.path.join(tmp, nombre_base + ".mp4")], "salida": os.path.join(tmp, nombre_base + ".mp4")}
+        for c in cands:
+            v = dg.CODIFICADORES_WINDOWS[c]
+            salida = os.path.join(tmp, c + ".mp4")
+            planes[c] = {"cmd": base + entrada + ["-pix_fmt", v["pix_fmt"], "-c:v", c, "-b:v", args.bitrate] + v["extra"] + [salida],
+                         "salida": salida}
+    else:
+        cands = [a for a in dg.ACELERADORES_WINDOWS if (pruebas["decodificadores"].get(a) or {}).get("abre")]
+        if not cands:
+            raise ErrorUso("Ningun acelerador de decodificacion abre en este equipo con este ffmpeg (%s). Probados: %s."
+                           % (ffmpeg, json.dumps(pruebas["decodificadores"], ensure_ascii=False)))
+        nombre_base = "dec_cpu"
+        planes[nombre_base] = {"cmd": base + entrada + ["-f", "null", "-"], "salida": None}
+        for a in cands:
+            planes["dec_" + a] = {"cmd": base + ["-hwaccel", a] + entrada + ["-f", "null", "-"], "salida": None}
+    nombres = list(planes)
+    try:
+        if args.solo_comandos:
+            return {"solo_comandos": {n: p["cmd"] for n, p in planes.items()}, "pruebas_hw": pruebas}, None
+        ctx_ruido = ruido()
+        corridas = {n: [] for n in nombres}
+        for _ in range(args.repeticiones):
+            for n in nombres:  # intercalado
+                if planes[n]["salida"] and os.path.exists(planes[n]["salida"]):
+                    os.remove(planes[n]["salida"])
+                corridas[n].append(correr(planes[n]["cmd"], timeout=900))
+        res = {n: resumir(c) for n, c in corridas.items()}
+        fallos = [n for n, r in res.items() if r.get("fallo")]
+        tamanos, difs, comps = {}, {}, []
+        t_mid = max(0.0, (min(args.segundos, duracion(ffmpeg, archivo) or args.segundos)) / 2)
+        if modo == "codificar":
+            for n in nombres:
+                if not res[n].get("fallo") and os.path.exists(planes[n]["salida"]):
+                    tamanos[n] = round(os.path.getsize(planes[n]["salida"]) / 1e6, 2)
+            f_base = fotograma(ffmpeg, planes[nombre_base]["salida"], t_mid) if not res[nombre_base].get("fallo") else b""
+            for c in nombres[1:]:
+                difs[c] = diferencia(f_base, fotograma(ffmpeg, planes[c]["salida"], t_mid) if not res[c].get("fallo") else b"")
+        else:
+            f_base = fotograma(ffmpeg, archivo, t_mid)
+            for n in nombres[1:]:
+                difs[n] = diferencia(f_base, fotograma(ffmpeg, archivo, t_mid, n[len("dec_"):]))
+        for n in nombres[1:]:
+            comps.append(comparar(res, nombre_base, n, difs[n], args.criterio))
+    finally:
+        shutil.rmtree(tmp, ignore_errors=True)
+    m = "real_s" if args.criterio == "tiempo" else "cpu_s"
+    ganan = [c["candidato"] for c in comps if c["ganador"] == "candidato"]
+    clave = ("ffmpeg", "codificacion" if modo == "codificar" else "decodificacion")
+    cambios = {}
+    nota = None
+    if ganan:
+        mejor = min(ganan, key=lambda n: res[n][m])
+        metodo = mejor if modo == "codificar" else mejor[len("dec_"):]
+        nota = next(c["motivo"] for c in comps if c["candidato"] == mejor)
+    elif comps and all(c["ganador"] == "base" for c in comps):
+        metodo = "libx264" if modo == "codificar" else "cpu"
+        nota = "la CPU gano a todos los metodos por hardware"
+    if nota:
+        cambios[clave] = {"metodo": metodo, "estado": "gana", "fecha": hoy(), "nota": "%s (criterio %s)" % (nota, args.criterio)}
+        if modo == "codificar":
+            cambios[clave].update({"bitrate_final": args.bitrate, "bitrate_vista_previa": pf.BITRATE_PREVIA})
+    ctx = {"ffmpeg": ffmpeg, "archivo": archivo, "segundos": args.segundos, "repeticiones": args.repeticiones,
+           "criterio": args.criterio, "ruido": ctx_ruido}
+    out = {"subcomando": modo, **ctx, "pruebas_hw": pruebas, "variantes": res, "tamanos_mb": tamanos,
+           "dif_visual": difs, "comparaciones": comps}
+    md = (filas_md(res, difs, tamanos), comps, ctx, cambios)
+    return out, md if not fallos else None
+
+
 def medir_remotion(args):
     proyecto = os.path.expanduser(args.proyecto)
     if not os.path.isdir(proyecto):
@@ -414,8 +523,8 @@ def parser():
         p.add_argument("--aceptar-ruido", action="store_true", help="permite actualizar el perfil aunque haya otros procesos pesados")
         p.add_argument("--solo-comandos", action="store_true", help="muestra los comandos que correria y termina, sin ejecutar nada")
 
-    for nombre, ayuda in (("codificar", "libx264 frente a h264_videotoolbox (y decodificacion CPU u hardware)"),
-                          ("decodificar", "decodificar en CPU frente a -hwaccel videotoolbox")):
+    for nombre, ayuda in (("codificar", "libx264 frente al codificador por hardware (VideoToolbox; en Windows NVENC, QSV, AMF o Media Foundation)"),
+                          ("decodificar", "decodificar en CPU frente a la decodificacion por hardware (VideoToolbox; en Windows cuda, qsv o d3d11va)")):
         p = sub.add_parser(nombre, help=ayuda, description=ayuda)
         p.add_argument("--archivo", required=True, help="video de prueba")
         p.add_argument("--segundos", type=float, default=5 if nombre == "codificar" else 30, help="segundos a procesar (por defecto %(default)s)")
@@ -443,12 +552,17 @@ def main(argv=None):
     if args.repeticiones < 1:
         print("error: --repeticiones debe ser 1 o mas", file=sys.stderr)
         return 2
-    if not dg.es_macos():
-        print("error: medir.py solo tiene pruebas medidas para macOS (%s). Lee references/windows.md." % dg.SOPORTE_SIN_MEDIR, file=sys.stderr)
+    if not (dg.es_macos() or dg.es_windows()):
+        print("error: medir.py solo tiene pruebas para macOS y Windows (%s en este sistema). Lee references/windows.md." % dg.SOPORTE_SIN_MEDIR, file=sys.stderr)
+        return 2
+    if dg.es_windows() and args.cmd == "remotion":
+        print("error: en Windows, medir.py todavia no mide Remotion: solo codificar y decodificar. Lee references/windows.md.", file=sys.stderr)
         return 2
     try:
         if args.cmd == "remotion":
             out, md = medir_remotion(args)
+        elif dg.es_windows():
+            out, md = medir_ffmpeg_windows(args, args.cmd)
         else:
             out, md = medir_ffmpeg(args, args.cmd)
     except ErrorUso as e:
@@ -457,7 +571,7 @@ def main(argv=None):
     if "solo_comandos" in out:
         print(json.dumps(out, ensure_ascii=False, indent=2))
         return 0
-    huella = dg.calcular_huella(dg.platform.machine(), dg.leer_cpu(), dg.sysctl_int("hw.memsize"))
+    huella = dg.calcular_huella(dg.platform.machine(), dg.leer_cpu(), dg.memoria_total())
     out["huella"] = huella
     out["fecha"] = datetime.now().astimezone().isoformat(timespec="seconds")
     if args.registrar:

@@ -81,6 +81,10 @@ def main(argv=None):
     if args.aplicar and args.dry_run:
         print("error: --aplicar y --dry-run se contradicen; usa solo uno.", file=sys.stderr)
         return 2
+    if args.aplicar and dg.es_windows():
+        # En Windows no hay SIGTERM: os.kill cierra de golpe. Hasta probar como cierra cada proceso, solo se muestra.
+        print("error: en Windows limpiar.py todavia solo muestra. Cierra los procesos propios desde el Administrador de tareas.", file=sys.stderr)
+        return 2
 
     procs = dg.procesos_pesados()
     propios = [p for p in procs if p["clase"] == "propio"]

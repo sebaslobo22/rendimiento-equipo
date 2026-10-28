@@ -314,7 +314,8 @@ def calcular(d, renders):
     avisos = list(d.get("avisos", []))
     if d.get("soporte"):
         return {"huella": huella, "soporte": d["soporte"], "recomendaciones": None,
-                "avisos": avisos, "bloque_subagentes": None}
+                "medido": medido or None, "perfil_medido": ruta_medido,
+                "avisos": avisos, "bloque_subagentes": bloque_sin_medir(d)}
     frenos = calcular_frenos(d, medido)
     ffmpeg, a = calcular_ffmpeg(d, medido)
     avisos += a
@@ -385,10 +386,75 @@ def bloque_subagentes(d, p):
     return "\n".join(L)
 
 
+def bloque_sin_medir(d):
+    """Encargo para subagentes en un sistema sin recomendaciones medidas: solo reglas que no dependen del equipo."""
+    L = ["Rendimiento (skill rendimiento-equipo; equipo %s, %s %s: sin recomendaciones medidas):"
+         % (d.get("huella"), (d.get("so") or {}).get("nombre"), d.get("arquitectura")),
+         "- No fijes codificadores, aceleradores ni concurrencias a mano: usa los valores por defecto de cada herramienta.",
+         "- Whisper: un solo servidor para todos los agentes; un segundo no suma velocidad y duplica el modelo en memoria.",
+         "- Nunca toques procesos de OpenWhispr. Apaga por PID solo lo que lanzaste tu.",
+         "- Reporta cuanto tardo cada tarea y adjunta el comando y su salida como evidencia."]
+    return "\n".join(L)
+
+
+def resumen_sin_medir(d):
+    """Lo que el diagnostico vio en un sistema sin recomendaciones medidas (Windows)."""
+    L = []
+    cpu, mem, gpu = d.get("cpu") or {}, d.get("memoria") or {}, d.get("gpu") or {}
+    if cpu.get("niveles"):
+        L.append("  CPU            %s | %s (%s logicos)" % (cpu.get("marca"), " + ".join(
+            "%s %s" % (n["nombre"], n["nucleos_fisicos"]) for n in cpu["niveles"]), cpu.get("logicalcpu")))
+    if mem.get("memsize_gb"):
+        sw = mem.get("swap") or {}
+        L.append("  Memoria        %s GB | libre %s%% | paginacion %s de %s MB | creciendo: %s" % (
+            mem["memsize_gb"], mem.get("libre_porcentaje"), sw.get("usado_mb"), sw.get("total_mb"),
+            {True: "si", False: "no", None: "sin datos"}[mem.get("swap_creciendo")]))
+    for g in gpu.get("adaptadores") or []:
+        L.append("  GPU            %s (%s) | %s | controlador %s" % (
+            g.get("nombre"), g.get("fabricante"), ("%s MB" % g["vram_mb"]) if g.get("vram_mb") else "VRAM sin dato",
+            g.get("controlador")) + (" | virtual" if g.get("virtual") else ""))
+    vid = d.get("video") or {}
+    for titulo, clave in (("Codifica (HW)", "codificadores"), ("Decodifica (HW)", "decodificadores")):
+        r = vid.get(clave) or {}
+        if r:
+            si = [k for k, v in r.items() if v["abre"]]
+            no = [k for k, v in r.items() if not v["abre"]]
+            L.append("  %-14s abre: %s | no abre: %s" % (titulo, " ".join(si) or "ninguno", " ".join(no) or "ninguno"))
+    ne = d.get("neural_engine") or {}
+    if "dispositivos" in ne:
+        L.append("  NPU            %s" % (", ".join(ne["dispositivos"]) or "no se detecto"))
+    if d.get("energia"):
+        e = d["energia"]
+        L.append("  Energia        enchufado: %s | ahorro de energia: %s" % (
+            {True: "si", False: "no", None: "sin dato"}[e.get("enchufado")], "si" if e.get("ahorro_energia") else "no"))
+    return L
+
+
 def a_texto(d, p):
     if p.get("soporte"):
-        return "Equipo %s (%s): %s.\nNo hay recomendaciones medidas. Lee references/windows.md." % (
-            (d.get("so") or {}).get("nombre"), d.get("arquitectura"), p["soporte"])
+        so = d.get("so") or {}
+        L = ["EQUIPO  %s %s | %s | huella %s" % (so.get("nombre"), so.get("edicion") or so.get("version") or "",
+                                                  d.get("arquitectura"), d.get("huella")),
+             "  %s." % p["soporte"]]
+        L.extend(resumen_sin_medir(d))
+        if p.get("medido"):
+            L.append("")
+            L.append("MEDIDO en este equipo (%s): %s" % (p.get("perfil_medido"), json.dumps(p["medido"], ensure_ascii=False)))
+        L.append("")
+        L.append("No hay recomendaciones medidas para este sistema todavia. Para medir este equipo:")
+        L.append("  python medir.py codificar --archivo <video> --registrar")
+        L.append("  python medir.py decodificar --archivo <video> --registrar")
+        L.append("Lee references/windows.md.")
+        if p.get("avisos"):
+            L.append("")
+            L.append("AVISOS")
+            L.extend("  - " + a for a in p["avisos"])
+        L.append("")
+        L.append("BLOQUE PARA SUBAGENTES (pegar en el encargo)")
+        L.append("-" * 60)
+        L.append(p["bloque_subagentes"])
+        L.append("-" * 60)
+        return "\n".join(L)
     cpu, mem, gpu = d["cpu"], d["memoria"], d["gpu"]
     niv = " + ".join("%s %s" % (n["nombre"], n["nucleos_fisicos"]) for n in cpu["niveles"]) or "sin niveles"
     sw = mem.get("swap") or {}

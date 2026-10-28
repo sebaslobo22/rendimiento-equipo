@@ -1,0 +1,100 @@
+name: Pruebas
+
+# Pruebas de humo de la skill en Windows y en macOS: que los scripts corran, que el diagnóstico tenga
+# sentido y que los instaladores enlacen y desenlacen sin tocar nada más. Las máquinas de GitHub no
+# tienen tarjeta gráfica: aquí no se mide rendimiento, eso lo hace medir.py en equipos reales.
+
+on:
+  push:
+    branches: [main, "windows*"]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  windows:
+    runs-on: windows-latest
+    defaults:
+      run:
+        shell: pwsh
+    env:
+      SCRIPTS: skills/rendimiento-equipo/scripts
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: ffmpeg
+        run: choco install ffmpeg -y --no-progress
+      - name: diagnosticar.py
+        run: |
+          python "$env:SCRIPTS/diagnosticar.py" --sin-estado > diag.json
+          if ($LASTEXITCODE -ne 0) { exit 1 }
+          python pruebas/comprobar.py diagnostico diag.json windows
+      - name: perfil.py
+        run: python "$env:SCRIPTS/perfil.py" --diagnostico diag.json --formato texto
+      - name: limpiar.py solo muestra y se niega a aplicar
+        run: |
+          python "$env:SCRIPTS/limpiar.py"
+          if ($LASTEXITCODE -ne 0) { exit 1 }
+          python "$env:SCRIPTS/limpiar.py" --aplicar
+          if ($LASTEXITCODE -ne 2) { Write-Host "esperaba codigo 2"; exit 1 }
+          exit 0
+      - name: medir.py
+        run: |
+          python pruebas/comprobar.py cpu diag.json
+          if ($LASTEXITCODE -ne 0) { exit 1 }
+          ffmpeg -hide_banner -loglevel error -y -f lavfi -i testsrc2=size=1080x1920:rate=30:duration=4 -c:v libx264 -pix_fmt yuv420p clip.mp4
+          python "$env:SCRIPTS/medir.py" codificar --archivo clip.mp4 --segundos 3 > medir.json
+          $rc = $LASTEXITCODE
+          python pruebas/comprobar.py medir medir.json $rc diag.json
+      - name: install.ps1 en PowerShell 7
+        run: ./pruebas/instalador.ps1
+      - name: install.ps1 en Windows PowerShell 5.1
+        shell: powershell
+        run: ./pruebas/instalador.ps1
+      - name: Guardar el diagnóstico
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: diagnostico-windows
+          path: |
+            diag.json
+            medir.json
+
+  macos:
+    runs-on: macos-latest
+    env:
+      SCRIPTS: skills/rendimiento-equipo/scripts
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: ffmpeg
+        run: brew install ffmpeg
+      - name: diagnosticar.py
+        run: |
+          python "$SCRIPTS/diagnosticar.py" --sin-estado > diag.json
+          python pruebas/comprobar.py diagnostico diag.json macos
+      - name: perfil.py
+        run: python "$SCRIPTS/perfil.py" --diagnostico diag.json --renders 3 --formato texto
+      - name: medir.py
+        run: |
+          ffmpeg -hide_banner -loglevel error -y -f lavfi -i testsrc2=size=1080x1920:rate=30:duration=4 -c:v libx264 -pix_fmt yuv420p clip.mp4
+          set +e
+          python "$SCRIPTS/medir.py" codificar --archivo clip.mp4 --segundos 3 > medir.json
+          rc=$?
+          set -e
+          python pruebas/comprobar.py medir medir.json $rc diag.json
+      - name: install.sh
+        run: |
+          export HOME="$(mktemp -d)"
+          ./install.sh --prueba
+          ./install.sh
+          test -f "$HOME/.claude/skills/rendimiento-equipo/SKILL.md"
+          test -f "$HOME/.agents/skills/rendimiento-equipo/SKILL.md"
+          ./install.sh --desinstalar
+          test ! -e "$HOME/.claude/skills/rendimiento-equipo"
