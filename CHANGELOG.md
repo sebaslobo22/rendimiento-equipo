@@ -20,6 +20,10 @@
   - `references/arquitectura.md`: los saltos de cada generación con sus fuentes, qué herramienta usa cada uno,
     qué se puede detectar y qué ideas comunes no son ciertas.
 - La página muestra lo nuevo de cada chip en el selector.
+- La página tiene un recorrido para Windows: arriba del selector se elige «Mac» o «PC con Windows» (se detecta solo).
+  Con Windows cambian la portada, la sección del chip (motores de video de cada marca, qué revisa y en qué fase
+  va Windows), el antes y después (marcado como medido en Mac) y la instalación; hay un mensaje para medir y un
+  enlace para compartir el resultado.
 
 ## 1.1.0 · 28.10.2026
 

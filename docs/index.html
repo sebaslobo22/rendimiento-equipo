@@ -193,6 +193,35 @@ h2{font-size:clamp(2.1rem,1.1rem + 3.8vw,4rem);font-weight:650;letter-spacing:-.
 @media (max-width:1000px){.ba-card{grid-template-columns:1fr}.ba-sw+.ba-row+.ba-row{border-top:1px solid var(--line)}}
 @media (max-width:760px){.ba{height:auto}.ba-pin{position:static;min-height:0;padding-block:96px 40px}.ba-row{grid-template-columns:32px minmax(0,1fr) auto;gap:6px 10px}.ba-row .ico{width:32px;height:32px}.ba-val small{display:none}.ba-sw{pointer-events:none}.ba-sw button{font-size:12.5px;padding:8px 6px}}
 
+/* Recorrido de Windows: quien llega desde una PC ve lo que la skill hace ahi */
+.modo[data-m="win"] .thumb{transform:translateX(100%)}
+.motores{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;max-width:920px;margin-inline:auto}
+.motor{display:grid;gap:6px;align-content:start;padding:18px;border-radius:20px;background:var(--panel);border:1px solid var(--line);--rad:20px;min-width:0}
+.motor .ico{--c:var(--e-v)}
+.motor b{font-size:17px;font-weight:650}
+.motor .cod{font-family:var(--mono);font-size:12.5px;color:var(--accent-text)}
+.motor small{font-size:13px;color:var(--text-2)}
+.motores-nota{max-width:920px;margin:12px auto 0;text-align:center;color:var(--text-3);font-size:14px}
+.win-cols{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px;max-width:920px;margin:18px auto 0}
+.win-cols .card h3{font-size:17px;font-weight:650}
+.checks{list-style:none;margin:0;padding:0;display:grid;gap:9px}
+.checks li{display:flex;gap:10px;align-items:flex-start;font-size:14.5px;color:var(--text-2)}
+.checks svg.i{width:16px;height:16px;color:var(--ok);margin-top:3px;flex:none}
+.fases{list-style:none;margin:0;padding:0;display:grid;gap:14px;counter-reset:fase}
+.fases li{counter-increment:fase;display:grid;grid-template-columns:30px minmax(0,1fr);gap:2px 12px}
+.fases li::before{content:counter(fase);grid-row:span 2;width:30px;height:30px;border-radius:50%;display:grid;place-items:center;font-size:14px;font-weight:650;color:var(--text-3);border:1px solid var(--line-2)}
+.fases li.hecho::before{content:"\2713";color:var(--ok);border-color:var(--ok);background:color-mix(in srgb,var(--ok) 12%,transparent)}
+.fases li.ahora::before{color:var(--warn);border-color:var(--warn)}
+.fases b{font-size:15px;font-weight:600}
+.fases span{font-size:13.5px;color:var(--text-2)}
+.win-cta{max-width:920px;margin:14px auto 0;padding:20px;border-radius:20px;border:1px dashed var(--line-2);display:grid;gap:12px}
+.win-cta h3{font-size:17px;font-weight:650}
+.win-cta p{color:var(--text-2);font-size:15px}
+.win-cta .msg{margin:0;max-width:none}
+.win-cta .acciones{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+@media (max-width:900px){.motores{grid-template-columns:repeat(2,minmax(0,1fr))}.win-cols{grid-template-columns:1fr}}
+@media (max-width:420px){.motor{padding:14px}.motor .ico{width:32px;height:32px}}
+
 /* Instalar: dos caminos, apps o terminal */
 [hidden]{display:none!important}
 .modo{position:relative;display:grid;grid-template-columns:1fr 1fr;padding:5px;border-radius:20px;background:var(--panel-2);max-width:580px;margin:0 auto clamp(22px,3vw,32px)}
@@ -555,9 +584,9 @@ footer .wrap{display:flex;justify-content:space-between;gap:12px 24px;flex-wrap:
   <section class="hero" id="hero">
     <div class="wrap">
       <div class="hero-txt" id="hero-txt">
-        <a class="tag" href="#instalar"><span class="dot"></span>Skill para Claude Code y Codex · v1.2.0</a>
+        <a class="tag" href="#instalar"><span class="dot"></span>Skill para Claude Code y Codex · Mac y Windows · v1.2.0</a>
         <h1 class="grad">Cada tarea, al motor que mejor la hace.</h1>
-        <p class="sub"><b>rendimiento-equipo</b> mira tu Mac antes de un render, una transcripción o un lote, y reparte el trabajo entre la CPU, la GPU, el Neural Engine y el motor de video. Lo que mide en tu equipo manda.</p>
+        <p class="sub"><b>rendimiento-equipo</b> mira tu computadora, Mac o Windows, antes de un render, una transcripción o un lote, y reparte el trabajo entre la CPU, la GPU, el Neural Engine y el motor de video. Lo que mide en tu equipo manda.</p>
         <div class="ctas">
           <a class="btn pri" href="#instalar">Cómo instalarla <svg class="i"><use href="#i-arrow"/></svg></a>
           <a class="btn ghost" href="https://github.com/sebaslobo22/rendimiento-equipo"><svg class="i"><use href="#i-code"/></svg>Ver el código</a>
@@ -565,13 +594,13 @@ footer .wrap{display:flex;justify-content:space-between;gap:12px 24px;flex-wrap:
       </div>
 
       <div class="hero-stage" id="hero-stage">
-        <div class="float f1" data-par="0.14"><div class="card"><span class="ico" style="--c:var(--e-g)"><svg class="i"><use href="#i-gpu"/></svg></span><span><small>GPU</small><b id="h-gpu">20 núcleos</b></span></div></div>
-        <div class="float f2" data-par="0.22"><div class="card"><span class="ico" style="--c:var(--e-a)"><svg class="i"><use href="#i-spark"/></svg></span><span><small>Neural Engine</small><b id="h-ne">16 núcleos</b></span></div></div>
+        <div class="float f1" data-par="0.14"><div class="card"><span class="ico" style="--c:var(--e-g)"><svg class="i"><use href="#i-gpu"/></svg></span><span><small id="h-gpu-t">GPU</small><b id="h-gpu">20 núcleos</b></span></div></div>
+        <div class="float f2" data-par="0.22"><div class="card"><span class="ico" style="--c:var(--e-a)"><svg class="i"><use href="#i-spark"/></svg></span><span><small id="h-ne-t">Neural Engine</small><b id="h-ne">16 núcleos</b></span></div></div>
         <div class="float f3" data-par="0.18"><div class="card"><span class="ico" style="--c:var(--e-m)"><svg class="i"><use href="#i-swap"/></svg></span><span><small>Swap</small><b>Estable</b></span></div></div>
-        <div class="float f4" data-par="0.1"><div class="card"><span class="ico" style="--c:var(--ok)"><svg class="i"><use href="#i-timer"/></svg></span><span><small>Codificar 15 s</small><b id="h-enc">4,1 s en vez de 22,1</b></span></div></div>
+        <div class="float f4" data-par="0.1"><div class="card"><span class="ico" style="--c:var(--ok)"><svg class="i"><use href="#i-timer"/></svg></span><span><small id="h-enc-t">Codificar 15 s</small><b id="h-enc">4,1 s en vez de 22,1</b></span></div></div>
 
         <div class="win" id="win" role="img" aria-label="Ventana de Codex usando la skill rendimiento-equipo para renderizar tres videos">
-          <div class="win-bar"><i></i><i></i><i></i><span>Codex</span></div>
+          <div class="win-bar"><i></i><i></i><i></i><span id="h-app">Codex</span></div>
           <div class="win-body">
             <aside class="side">
               <div class="side-new"><svg class="i"><use href="#i-plus"/></svg>Nueva tarea</div>
@@ -582,11 +611,11 @@ footer .wrap{display:flex;justify-content:space-between;gap:12px 24px;flex-wrap:
               <div class="side-it"><svg class="i"><use href="#i-broom"/></svg>Limpiar procesos</div>
             </aside>
             <div class="main">
-              <div class="u">Renderiza los tres Reels en paralelo sin que se cuelgue la Mac.</div>
+              <div class="u" id="h-u">Renderiza los tres Reels en paralelo sin que se cuelgue la Mac.</div>
               <p class="ai">Primero miro el equipo con la skill <b>rendimiento-equipo</b>.</p>
-              <div class="cell"><div class="cell-h"><svg class="i"><use href="#i-term"/></svg><code>python3 scripts/diagnosticar.py</code><span class="okk"><svg class="i"><use href="#i-check"/></svg>Listo</span></div><pre id="h-diag">Apple M4 Pro · 10 Performance + 4 Efficiency · GPU 20 · Neural Engine 16 · 24 GB
+              <div class="cell"><div class="cell-h"><svg class="i"><use href="#i-term"/></svg><code id="h-c1">python3 scripts/diagnosticar.py</code><span class="okk"><svg class="i"><use href="#i-check"/></svg>Listo</span></div><pre id="h-diag">Apple M4 Pro · 10 Performance + 4 Efficiency · GPU 20 · Neural Engine 16 · 24 GB
 presión normal · swap creciendo: no · térmico nominal</pre></div>
-              <div class="cell"><div class="cell-h"><svg class="i"><use href="#i-term"/></svg><code>python3 scripts/perfil.py --renders 3</code><span class="okk"><svg class="i"><use href="#i-check"/></svg>Listo</span></div><pre id="h-perf">--concurrency=3 --hardware-acceleration=required --video-bitrate=12M
+              <div class="cell"><div class="cell-h"><svg class="i"><use href="#i-term"/></svg><code id="h-c2">python3 scripts/perfil.py --renders 3</code><span class="okk"><svg class="i"><use href="#i-check"/></svg>Listo</span></div><pre id="h-perf">--concurrency=3 --hardware-acceleration=required --video-bitrate=12M
 --offthreadvideo-cache-size-in-bytes=2147483648 · frenos: ninguno</pre></div>
               <p class="ai" id="h-ai">Lanzo los tres renders con el motor de video, 3 hilos y 2 GB de caché cada uno.</p>
               <div class="chips"><span class="chip" style="--c:var(--e-v)"><svg class="i"><use href="#i-film"/></svg>Motor de video</span><span class="chip" style="--c:var(--e-p)"><svg class="i"><use href="#i-cpu"/></svg><span id="h-hilos">3 × 3 hilos</span></span><span class="chip" style="--c:var(--e-m)"><svg class="i"><use href="#i-mem"/></svg><span id="h-cache">2 GB por render</span></span></div>
@@ -604,12 +633,56 @@ presión normal · swap creciendo: no · térmico nominal</pre></div>
       <div class="head morph">
         <span class="kicker"><svg class="i"><use href="#i-cpu"/></svg>Tu chip</span>
         <h2 class="grad" id="pick-h">¿Qué Apple Silicon tiene tu Mac?</h2>
-        <p>Elige el tuyo y la página se ajusta: el dibujo del chip, sus motores y las cifras de antes y después. Lo ves en el menú Apple, en «Acerca de esta Mac».</p>
+        <p id="pick-p">Elige el tuyo y la página se ajusta: el dibujo del chip, sus motores y las cifras de antes y después. Lo ves en el menú Apple, en «Acerca de esta Mac».</p>
       </div>
+      <div class="modo" id="so-pick" data-m="mac" role="group" aria-label="Tu computadora">
+        <span class="thumb"></span>
+        <button type="button" data-so="mac" aria-pressed="true"><svg class="i"><use href="#i-cpu"/></svg><span><b>Mac</b><small>Apple Silicon, de M1 a M6</small></span></button>
+        <button type="button" data-so="win" aria-pressed="false"><svg class="i"><use href="#i-layers"/></svg><span><b>PC con Windows</b><small>Intel, AMD o Qualcomm</small></span></button>
+      </div>
+      <div id="pick-mac">
       <div class="pick-grid" id="pick-grid" role="group" aria-label="Chip"></div>
       <div class="pick-mem" id="pick-mem" role="group" aria-label="Memoria"></div>
       <p class="pick-sum" id="pick-sum" aria-live="polite"></p>
-      <p class="pick-win">¿Usas Windows? La skill ya describe y mide tu equipo; recomienda cuando tengamos equipos medidos. <a href="https://github.com/sebaslobo22/rendimiento-equipo#windows">Ayuda a medir</a>.</p>
+      </div>
+      <div id="pick-pc" hidden>
+        <div class="motores">
+          <div class="motor"><span class="ico"><svg class="i"><use href="#i-film"/></svg></span><b>NVIDIA</b><span class="cod">NVENC</span><small>Tarjetas GeForce y RTX.</small></div>
+          <div class="motor"><span class="ico"><svg class="i"><use href="#i-film"/></svg></span><b>Intel</b><span class="cod">Quick Sync</span><small>Gráficas integradas de Intel y Arc.</small></div>
+          <div class="motor"><span class="ico"><svg class="i"><use href="#i-film"/></svg></span><b>AMD</b><span class="cod">AMF</span><small>Radeon y gráficas de Ryzen.</small></div>
+          <div class="motor"><span class="ico"><svg class="i"><use href="#i-film"/></svg></span><b>Windows</b><span class="cod">Media Foundation</span><small>El de Windows, con cualquier tarjeta.</small></div>
+        </div>
+        <p class="motores-nota">La skill abre de verdad cada motor de video que trae tu PC y mide si le gana al procesador. Lo que gana se guarda para tu equipo.</p>
+        <div class="win-cols">
+          <div class="card"><h3>Lo que revisa de tu PC</h3>
+            <ul class="checks">
+              <li><svg class="i"><use href="#i-check"/></svg><span>Los tipos de núcleo de tu procesador: rendimiento y eficiencia.</span></li>
+              <li><svg class="i"><use href="#i-check"/></svg><span>La memoria y el archivo de paginación, que es el swap de Windows.</span></li>
+              <li><svg class="i"><use href="#i-check"/></svg><span>Tus tarjetas gráficas y cuánta memoria tienen.</span></li>
+              <li><svg class="i"><use href="#i-check"/></svg><span>Si tu PC tiene chip de IA (NPU).</span></li>
+              <li><svg class="i"><use href="#i-check"/></svg><span>Si está enchufada o en ahorro de energía.</span></li>
+              <li><svg class="i"><use href="#i-check"/></svg><span>Qué motores de video abren de verdad en tu equipo.</span></li>
+            </ul>
+          </div>
+          <div class="card"><h3>En qué va Windows</h3>
+            <ol class="fases">
+              <li class="hecho"><b>Revisar y medir</b><span>Listo: diagnóstico, mediciones e instalador para Windows.</span></li>
+              <li class="ahora"><b>Medir computadoras reales</b><span>Faltan una PC con NVIDIA, una con Intel y una con AMD. Puede ser la tuya.</span></li>
+              <li><b>Recomendar</b><span>Con esas mediciones, la skill recomienda en Windows igual que en Mac.</span></li>
+            </ol>
+          </div>
+        </div>
+        <div class="win-cta" id="win-cta">
+          <h3>Ayuda a medir tu PC</h3>
+          <p>Instala la skill y pega este mensaje en Claude Code o Codex, en la carpeta de un video tuyo de unos 30 segundos:</p>
+          <p class="msg">Usa la skill rendimiento-equipo. Corre perfil.py --formato texto, después medir.py codificar y medir.py decodificar con mi video y --registrar, y muéstrame el resultado y el archivo mediciones.md.</p>
+          <div class="acciones">
+            <button class="copy" type="button" id="win-copy"><svg class="i"><use href="#i-copy"/></svg><span>Copiar mensaje</span></button>
+            <a class="btn pri" href="#instalar">Instalar en Windows <svg class="i"><use href="#i-arrow"/></svg></a>
+            <a class="btn ghost" href="https://github.com/sebaslobo22/rendimiento-equipo/issues/new?title=Medici%C3%B3n%20en%20Windows&amp;body=Pega%20aqui%20la%20salida%20de%20perfil.py%20--formato%20texto%20y%20el%20contenido%20de%20mediciones.md.%0A%0ATarjeta%20grafica%20%28NVIDIA%2C%20Intel%20o%20AMD%29%3A%0A"><svg class="i"><use href="#i-ext"/></svg>Compartir mi resultado</a>
+          </div>
+        </div>
+      </div>
     </div>
   </section>
 
@@ -1456,11 +1529,11 @@ presión normal · swap creciendo: no · térmico nominal</pre></div>
     $("#nav-chip span").textContent = c.n;
   }
 
-  function apply(id, gb, anim) {
+  function apply(id, gb, anim, sinGuardar) {
     var c = BY[id] || BY[PILOT];
     if (c.mem.indexOf(gb) < 0) gb = c.id === PILOT ? 24 : c.mem[0];
     CUR = c; GB = gb; M = modelo(c, gb); flashes = [];
-    try { localStorage.setItem(KEY, JSON.stringify({ id: c.id, gb: gb })); } catch (e) {}
+    if (!sinGuardar) try { localStorage.setItem(KEY, JSON.stringify({ id: c.id, gb: gb })); } catch (e) {}
     pintarSelector(c); aplicarPortada(c); aplicarResultados(c); aplicarChip(c); aplicarTareas(c);
     baMode(); chip(); frame();
     if (anim && !reduce) flashes.forEach(function (el) { el.classList.remove("upd"); void el.offsetWidth; el.classList.add("upd"); });
@@ -1541,6 +1614,67 @@ presión normal · swap creciendo: no · térmico nominal</pre></div>
       if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(msg.textContent).then(ok, sel); else sel();
     });
   });
+  // Sistema del visitante: la pagina se cuenta para Mac o para una PC con Windows (detectado, y se puede cambiar)
+  var soPick = $("#so-pick"), pickMac = $("#pick-mac"), pickPc = $("#pick-pc"), KEY_SO = "rendimiento-equipo:so", macPrevio = null;
+  var pickH0 = $("#pick-h").textContent, pickP0 = $("#pick-p").textContent;
+  var HERO = ["h-app", "h-u", "h-c1", "h-c2", "h-diag", "h-perf", "h-ai", "h-hilos", "h-cache", "h-gpu-t", "h-gpu", "h-ne-t", "h-ne", "h-enc-t", "h-enc"];
+  var HERO_WIN = {
+    "h-app": "Codex · ejemplo en Windows",
+    "h-u": "Renderiza los tres Reels en paralelo sin que se cuelgue la PC.",
+    "h-c1": "python scripts\\diagnosticar.py",
+    "h-diag": "Windows 11 · Intel Core Ultra 7 · 6 Performance + 10 Efficiency · NVIDIA RTX 4060 (8 GB) · NPU · 32 GB\nmotores de video que abren: NVENC, Quick Sync y Media Foundation",
+    "h-c2": "python scripts\\medir.py codificar --archivo toma.mp4",
+    "h-perf": "libx264 contra NVENC, Quick Sync y Media Foundation\ngana el más rápido sin perder calidad · se guarda para este equipo",
+    "h-ai": "Antes de renderizar, mido qué motor de video conviene en esta PC.",
+    "h-hilos": "NVENC, Quick Sync o AMF", "h-cache": "Se mide en tu PC",
+    "h-gpu-t": "Tarjeta gráfica", "h-gpu": "NVIDIA, Intel o AMD",
+    "h-ne-t": "NPU", "h-ne": "Si tu PC la tiene",
+    "h-enc-t": "Motor de video", "h-enc": "Se mide en tu PC"
+  };
+  var HERO_MAC = {};
+  HERO.forEach(function (id) { HERO_MAC[id] = $("#" + id).textContent; });
+  function aplicarSO(so, anim) {
+    soPick.dataset.m = so;
+    $$("button", soPick).forEach(function (b) { b.setAttribute("aria-pressed", String(b.dataset.so === so)); });
+    pickMac.hidden = so !== "mac"; pickPc.hidden = so !== "win";
+    if (so === "win") {
+      if (!macPrevio) macPrevio = { id: CUR.id, gb: GB };
+      apply(PILOT, 24, false, true);  // en Windows, el antes y despues muestra lo medido en el Mac piloto, sin estimar
+      flashes = [];
+      HERO.forEach(function (id) { if (HERO_WIN[id]) txt("#" + id, HERO_WIN[id]); });
+      txt("#pick-h", "Tu PC con Windows");
+      txt("#pick-p", "En Windows, la skill ya revisa tu equipo y prueba sus motores de video. Las recomendaciones llegan cuando midamos computadoras reales, y la tuya puede ser una.");
+      txt("#ba-mode", "Medido en un Mac · M4 Pro").classList.remove("est");
+      txt("#ba-p", "Estas cifras son de mi Mac. En Windows llegan cuando midamos computadoras reales: los motores de video cambian de una marca de tarjeta a otra.");
+      $("#nav-chip span").textContent = "Windows";
+      if (anim && !reduce) flashes.forEach(function (el) { el.classList.remove("upd"); void el.offsetWidth; el.classList.add("upd"); });
+    } else {
+      HERO.forEach(function (id) { $("#" + id).textContent = HERO_MAC[id]; });
+      $("#pick-h").textContent = pickH0; $("#pick-p").textContent = pickP0;
+      var v = macPrevio || { id: CUR.id, gb: GB };
+      macPrevio = null;
+      apply(v.id, v.gb, anim);
+    }
+    ponerSo(so);
+    baMode(); frame();
+  }
+  soPick.addEventListener("click", function (e) {
+    var b = e.target.closest("button[data-so]"); if (!b) return;
+    aplicarSO(b.dataset.so, true);
+    try { localStorage.setItem(KEY_SO, b.dataset.so); } catch (err) {}
+  });
+  soRow.addEventListener("click", function (e) {  // elegir Windows en la terminal tambien cuenta la pagina para Windows
+    var b = e.target.closest("button[data-so]"); if (b && b.dataset.so !== soPick.dataset.m) aplicarSO(b.dataset.so, false);
+  });
+  $("#win-copy").addEventListener("click", function () {
+    var btn = this, msg = $(".msg", $("#win-cta")), lab = $("span", btn);
+    var ok = function () { lab.textContent = "Copiado"; btn.classList.add("hecho"); setTimeout(function () { lab.textContent = "Copiar mensaje"; btn.classList.remove("hecho"); }, 1600); };
+    var sel = function () { var rg = document.createRange(); rg.selectNodeContents(msg); var s = getSelection(); s.removeAllRanges(); s.addRange(rg); };
+    if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(msg.textContent).then(ok, sel); else sel();
+  });
+  var soGuardado = null;
+  try { soGuardado = localStorage.getItem(KEY_SO); } catch (e) {}
+  aplicarSO(soGuardado === "win" || soGuardado === "mac" ? soGuardado : (/win/i.test(plat) ? "win" : "mac"), false);
 })();
 </script>
 </body>
