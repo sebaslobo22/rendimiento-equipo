@@ -193,6 +193,31 @@ h2{font-size:clamp(2.1rem,1.1rem + 3.8vw,4rem);font-weight:650;letter-spacing:-.
 @media (max-width:1000px){.ba-card{grid-template-columns:1fr}.ba-sw+.ba-row+.ba-row{border-top:1px solid var(--line)}}
 @media (max-width:760px){.ba{height:auto}.ba-pin{position:static;min-height:0;padding-block:96px 40px}.ba-row{grid-template-columns:32px minmax(0,1fr) auto;gap:6px 10px}.ba-row .ico{width:32px;height:32px}.ba-val small{display:none}.ba-sw{pointer-events:none}.ba-sw button{font-size:12.5px;padding:8px 6px}}
 
+/* Instalar: dos caminos, apps o terminal */
+[hidden]{display:none!important}
+.modo{position:relative;display:grid;grid-template-columns:1fr 1fr;padding:5px;border-radius:20px;background:var(--panel-2);max-width:580px;margin:0 auto clamp(22px,3vw,32px)}
+.modo .thumb{position:absolute;top:5px;bottom:5px;left:5px;width:calc(50% - 5px);border-radius:15px;background:var(--panel);box-shadow:0 1px 3px rgba(0,0,0,.25);transition:transform .5s var(--ease)}
+.modo[data-m="cli"] .thumb{transform:translateX(100%)}
+.modo button{position:relative;z-index:1;display:flex;align-items:center;gap:12px;padding:12px 16px;border:0;background:transparent;border-radius:15px;cursor:pointer;text-align:left;font:inherit;color:var(--text-3);transition:color .3s}
+.modo button[aria-pressed="true"]{color:var(--text)}
+.modo button svg.i{width:22px;height:22px}
+.modo button[aria-pressed="true"] svg.i{color:var(--accent-text)}
+.modo b{display:block;font-size:15px;font-weight:600}
+.modo small{display:block;font-size:12.5px;color:var(--text-3)}
+.msg{margin-left:auto;max-width:94%;overflow-wrap:anywhere;padding:12px 15px;border-radius:16px 16px 4px 16px;background:var(--panel-2);color:var(--text);font-size:14.5px;line-height:1.5}
+.msg-ai{display:flex;gap:8px;align-items:flex-start;margin-top:12px;font-size:13.5px;color:var(--text-3)}
+.msg-ai svg.i{width:16px;height:16px;color:var(--ok);margin-top:2px}
+.chat-win .pane{padding:18px}
+.pasos{list-style:none;margin:0;padding:0;display:grid;gap:10px;counter-reset:paso}
+.pasos li{counter-increment:paso;display:grid;grid-template-columns:34px minmax(0,1fr);gap:4px 14px;padding:16px;border-radius:18px;background:var(--panel);border:1px solid var(--line)}
+.pasos li::before{content:counter(paso);grid-row:span 2;width:34px;height:34px;border-radius:50%;display:grid;place-items:center;font-weight:650;font-size:15px;color:var(--accent-text);background:color-mix(in srgb,var(--accent) 14%,transparent)}
+.pasos b{font-size:15.5px;font-weight:600}
+.pasos span{font-size:14px;color:var(--text-2)}
+.install+.compat{grid-template-columns:repeat(4,minmax(0,1fr));margin-top:14px}
+@media (max-width:900px){.install+.compat{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.copy.hecho{color:var(--ok);border-color:var(--ok)}
+@media (max-width:560px){.install .copy span{display:none}.install+.compat{grid-template-columns:1fr}.modo button{padding:10px;gap:8px}.modo button svg.i{display:none}}
+
 /* Selector de chip: la página se ajusta al Apple Silicon elegido */
 @media (max-width:920px){.links{display:none}}
 .chipbtn{display:inline-flex;align-items:center;gap:6px;padding:7px 12px;border-radius:999px;font-size:13.5px;font-weight:500;color:var(--text);background:var(--panel-2);white-space:nowrap;transition:background-color .3s}
@@ -516,7 +541,7 @@ footer .wrap{display:flex;justify-content:space-between;gap:12px 24px;flex-wrap:
         <h1 class="grad">Cada tarea, al motor que mejor la hace.</h1>
         <p class="sub"><b>rendimiento-equipo</b> mira tu Mac antes de un render, una transcripción o un lote, y reparte el trabajo entre la CPU, la GPU, el Neural Engine y el motor de video. Lo que mide en tu equipo manda.</p>
         <div class="ctas">
-          <a class="btn pri" href="#instalar">Instalar en 3 comandos <svg class="i"><use href="#i-arrow"/></svg></a>
+          <a class="btn pri" href="#instalar">Cómo instalarla <svg class="i"><use href="#i-arrow"/></svg></a>
           <a class="btn ghost" href="https://github.com/sebaslobo22/rendimiento-equipo"><svg class="i"><use href="#i-code"/></svg>Ver el código</a>
         </div>
       </div>
@@ -801,13 +826,28 @@ presión normal · swap creciendo: no · térmico nominal</pre></div>
   <section class="sec" id="instalar">
     <div class="wrap">
       <div class="head morph">
-        <span class="kicker"><svg class="i"><use href="#i-term"/></svg>Instalar</span>
-        <h2 class="grad">Tres comandos y listo.</h2>
-        <p>El instalador enlaza la skill donde la buscan Claude Code y Codex. No copia archivos, no instala dependencias y no usa la red.</p>
+        <span class="kicker"><svg class="i"><use href="#i-plus"/></svg>Instalar y usar</span>
+        <h2 class="grad">Instálala una vez y pide lo de siempre.</h2>
+        <p>No es una app que abres tú: tu agente la usa cuando le pides un render, una transcripción o un lote. Elige cómo trabajas.</p>
       </div>
-      <div class="install">
-        <div class="term morph" id="inst" style="--rad:16px">
-          <div class="term-bar"><span class="lights"><i></i><i></i><i></i></span><div class="seg" role="tablist" aria-label="Comandos"><button role="tab" aria-selected="true" data-p="0">Instalar</button><button role="tab" aria-selected="false" data-p="1">Probar</button><button role="tab" aria-selected="false" data-p="2">Actualizar</button><button role="tab" aria-selected="false" data-p="3">Quitar</button></div><button class="copy" type="button" id="copy"><svg class="i"><use href="#i-copy"/></svg><span>Copiar</span></button></div>
+      <div class="modo" id="modo" data-m="app" role="group" aria-label="Cómo trabajas">
+        <span class="thumb"></span>
+        <button type="button" data-m="app" aria-pressed="true"><svg class="i"><use href="#i-finger"/></svg><span><b>Uso las apps</b><small>Claude Desktop o Codex</small></span></button>
+        <button type="button" data-m="cli" aria-pressed="false"><svg class="i"><use href="#i-term"/></svg><span><b>Uso la terminal</b><small>Claude Code o Codex CLI</small></span></button>
+      </div>
+      <div class="install" id="install">
+        <div class="term chat-win morph" data-para="app" style="--rad:16px">
+          <div class="term-bar"><span class="lights"><i></i><i></i><i></i></span><div class="seg" role="tablist" aria-label="Mensajes para tu agente"><button role="tab" aria-selected="true">Instalar</button><button role="tab" aria-selected="false">Probar</button><button role="tab" aria-selected="false">Actualizar</button><button role="tab" aria-selected="false">Quitar</button></div><button class="copy" type="button" aria-label="Copiar"><svg class="i"><use href="#i-copy"/></svg><span>Copiar</span></button></div>
+          <div class="panes">
+            <div class="pane on"><p class="msg">Instala la skill rendimiento-equipo. Clona https://github.com/sebaslobo22/rendimiento-equipo en ~/rendimiento-equipo, muéstrame qué hará ./install.sh --prueba y, si te digo que sí, ejecuta ./install.sh.</p><p class="msg-ai"><svg class="i"><use href="#i-check"/></svg><span>El agente descarga la skill, te enseña lo que va a enlazar y te pide permiso antes de instalarla.</span></p></div>
+            <div class="pane"><p class="msg">Usa la skill rendimiento-equipo para revisar mi Mac y dime qué recomienda para renders y transcripciones.</p><p class="msg-ai"><svg class="i"><use href="#i-check"/></svg><span>Corre el diagnóstico y te dice qué motor usar para cada tarea, con los frenos que vea activos.</span></p></div>
+            <div class="pane"><p class="msg">Actualiza la skill rendimiento-equipo con git pull en ~/rendimiento-equipo.</p><p class="msg-ai"><svg class="i"><use href="#i-check"/></svg><span>Baja la última versión. No hace falta volver a instalarla.</span></p></div>
+            <div class="pane"><p class="msg">Desinstala la skill rendimiento-equipo con ~/rendimiento-equipo/install.sh --desinstalar.</p><p class="msg-ai"><svg class="i"><use href="#i-check"/></svg><span>Quita solo los enlaces de la skill. La carpeta ~/rendimiento-equipo queda donde está.</span></p></div>
+          </div>
+          <p class="inst-foot">Copia el mensaje y pégalo en tu agente. Necesita Python 3: si macOS te pide instalar las herramientas de desarrollo de Apple, acepta.</p>
+        </div>
+        <div class="term morph" data-para="cli" style="--rad:16px" hidden>
+          <div class="term-bar"><span class="lights"><i></i><i></i><i></i></span><div class="seg" role="tablist" aria-label="Comandos"><button role="tab" aria-selected="true" data-p="0">Instalar</button><button role="tab" aria-selected="false" data-p="1">Probar</button><button role="tab" aria-selected="false" data-p="2">Actualizar</button><button role="tab" aria-selected="false" data-p="3">Quitar</button></div><button class="copy" type="button" aria-label="Copiar"><svg class="i"><use href="#i-copy"/></svg><span>Copiar</span></button></div>
           <div class="panes">
             <div class="pane on"><pre><span class="ln">git clone https://github.com/sebaslobo22/rendimiento-equipo.git ~/rendimiento-equipo</span><span class="ln">cd ~/rendimiento-equipo</span><span class="ln">./install.sh</span></pre></div>
             <div class="pane"><pre><span class="ln">python3 ~/rendimiento-equipo/skills/rendimiento-equipo/scripts/perfil.py --formato texto</span></pre></div>
@@ -816,13 +856,24 @@ presión normal · swap creciendo: no · térmico nominal</pre></div>
           </div>
           <p class="inst-foot">Queda enlazada en <span class="k-code">~/.claude/skills/</span> y <span class="k-code">~/.agents/skills/</span>. Abre una sesión nueva y pide un render o una transcripción: la skill se activa sola.</p>
         </div>
+        <ol class="pasos" data-para="app">
+          <li><b>Abre Claude Desktop en la pestaña Code, o la app de Codex.</b><span>Tienen que trabajar en tu Mac. El chat normal de Claude y las tareas en la nube de Codex no ven tu equipo.</span></li>
+          <li><b>Pega el mensaje y acepta cuando te pida permiso.</b><span>El agente descarga la skill y la instala. Tú no escribes ningún comando.</span></li>
+          <li><b>Abre una conversación nueva y pide lo de siempre.</b><span>Por ejemplo: «convierte estos 3 videos a vertical». La skill revisa tu Mac y elige el motor.</span></li>
+        </ol>
+        <ol class="pasos" data-para="cli" hidden>
+          <li><b>Pega los tres comandos.</b><span><span class="k-code">install.sh</span> enlaza la skill donde la buscan Claude Code y Codex. No copia archivos, no instala dependencias y no usa la red.</span></li>
+          <li><b>Abre una sesión nueva de <span class="k-code">claude</span> o <span class="k-code">codex</span>.</b><span>Las skills se cargan al empezar la sesión.</span></li>
+          <li><b>Pide lo de siempre.</b><span>Se activa sola con renders, transcripciones, conversiones y lotes. En Claude Code también la llamas con <span class="k-code">/rendimiento-equipo</span>.</span></li>
+        </ol>
+      </div>
         <div class="compat">
           <div class="cp morph" style="--c:var(--ok)"><span class="st"></span><b>macOS en Apple Silicon</b><span>Diagnóstico completo. Medido en un M4 Pro de 24 GB.</span></div>
           <div class="cp morph" style="--c:var(--warn)"><span class="st"></span><b>macOS sin herramientas de Xcode</b><span>Diagnóstico parcial, con aviso. Se completa con <span class="k-code">xcode-select --install</span>.</span></div>
           <div class="cp morph" style="--c:var(--text-3)"><span class="st"></span><b>Windows</b><span>Segunda fase. Hoy responde «sin soporte medido todavía».</span></div>
           <div class="cp morph" style="--c:var(--text-4)"><span class="st"></span><b>Linux</b><span>Sin soporte.</span></div>
         </div>
-      </div>
+      <p class="note morph"><svg class="i"><use href="#i-person"/></svg><span>Te sirve si usas Claude Code o Codex en una Mac con Apple Silicon para video, audio, Remotion o lotes de archivos. Si solo chateas con una IA en el navegador, no hace nada.</span></p>
     </div>
   </section>
 
@@ -1394,16 +1445,29 @@ presión normal · swap creciendo: no · térmico nominal</pre></div>
     el.addEventListener("blur", function () { tip.classList.remove("on"); });
   });
 
-  // Instalar: pestañas y copiar
-  var inst = $("#inst"), iTabs = $$(".seg button", inst), iPanes = $$(".pane", inst), copyBtn = $("#copy"), cur = 0;
-  iTabs.forEach(function (b, j) { b.addEventListener("click", function () { cur = j; iTabs.forEach(function (x, k) { x.setAttribute("aria-selected", String(k === j)); }); iPanes.forEach(function (x, k) { x.classList.toggle("on", k === j); }); }); });
-  copyBtn.addEventListener("click", function () {
-    var pane = iPanes[cur], txt = $$(".ln", pane).map(function (l) { return l.textContent; }).join("\n");
-    var lab = copyBtn.querySelector("span");
-    var ok = function () { lab.textContent = "Copiado"; setTimeout(function () { lab.textContent = "Copiar"; }, 1600); };
-    var sel = function () { var r = document.createRange(); r.selectNodeContents(pane); var s = getSelection(); s.removeAllRanges(); s.addRange(r); };
-    if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(txt).then(ok, sel); else sel();
+  // Instalar: dos caminos (apps o terminal), cada uno con pestañas y botón de copiar
+  $$(".install .term").forEach(function (win) {
+    var tabs = $$(".seg button", win), panes = $$(".pane", win), copyBtn = $(".copy", win), cur = 0;
+    tabs.forEach(function (b, j) { b.addEventListener("click", function () { cur = j; tabs.forEach(function (x, k) { x.setAttribute("aria-selected", String(k === j)); }); panes.forEach(function (x, k) { x.classList.toggle("on", k === j); }); }); });
+    copyBtn.addEventListener("click", function () {
+      var pane = panes[cur], msg = $(".msg", pane), txt = msg ? msg.textContent : $$(".ln", pane).map(function (l) { return l.textContent; }).join("\n");
+      var lab = copyBtn.querySelector("span");
+      var ok = function () { lab.textContent = "Copiado"; copyBtn.classList.add("hecho"); setTimeout(function () { lab.textContent = "Copiar"; copyBtn.classList.remove("hecho"); }, 1600); };
+      var sel = function () { var r = document.createRange(); r.selectNodeContents(msg || pane); var s = getSelection(); s.removeAllRanges(); s.addRange(r); };
+      if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(txt).then(ok, sel); else sel();
+    });
   });
+  var modo = $("#modo"), install = $("#install");
+  function ponerModo(m, guardar) {
+    modo.dataset.m = m;
+    $$("button", modo).forEach(function (b) { b.setAttribute("aria-pressed", String(b.dataset.m === m)); });
+    $$("[data-para]", install).forEach(function (el) { el.hidden = el.dataset.para !== m; });
+    if (guardar) try { localStorage.setItem("rendimiento-equipo:modo", m); } catch (e) {}
+  }
+  modo.addEventListener("click", function (e) { var b = e.target.closest("button[data-m]"); if (b) ponerModo(b.dataset.m, true); });
+  var modoGuardado = null;
+  try { modoGuardado = localStorage.getItem("rendimiento-equipo:modo"); } catch (e) {}
+  ponerModo(modoGuardado === "cli" ? "cli" : "app", false);
 })();
 </script>
 </body>

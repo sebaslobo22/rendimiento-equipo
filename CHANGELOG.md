@@ -10,6 +10,9 @@
 
 ## Página · 27.10.2026
 
+- «Instalar y usar» con dos caminos: quien usa las apps (Claude Desktop en la pestaña Code, o Codex) copia un
+  mensaje y el agente instala la skill; quien usa la terminal tiene los comandos. Cada camino trae sus tres pasos,
+  y la sección dice para quién sirve la skill. El README sigue el mismo orden.
 - Selector de Apple Silicon, del M1 al M6 (20 chips): la página cambia el dibujo del chip, sus motores, el ejemplo
   de la portada, las tareas y el antes y después. Solo el M4 Pro está medido. En los demás chips, las cifras son
   estimaciones marcadas con «≈»: escalan lo medido en el piloto con los promedios de Geekbench 7 de cada chip.

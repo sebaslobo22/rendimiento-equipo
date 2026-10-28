@@ -28,6 +28,23 @@ Son cifras de un solo equipo. En el tuyo, `medir.py` las vuelve a medir antes de
 
 ## Instalar
 
+Te sirve si usas Claude Code o Codex en una Mac con Apple Silicon para video, audio, Remotion o lotes de archivos.
+Si solo chateas con una IA en el navegador, no hace nada.
+
+### Desde las apps (Claude Desktop o Codex)
+
+Abre Claude Desktop en la pestaña Code, o la app de Codex. Tienen que trabajar en tu Mac: el chat normal de Claude
+y las tareas en la nube de Codex no ven tu equipo. Pega este mensaje y acepta cuando el agente te pida permiso:
+
+```text
+Instala la skill rendimiento-equipo. Clona https://github.com/sebaslobo22/rendimiento-equipo en ~/rendimiento-equipo, muéstrame qué hará ./install.sh --prueba y, si te digo que sí, ejecuta ./install.sh.
+```
+
+Después abre una conversación nueva y pide lo de siempre, por ejemplo «convierte estos 3 videos a vertical». Para
+actualizarla, pídele «Actualiza la skill rendimiento-equipo con git pull en ~/rendimiento-equipo».
+
+### Desde la terminal
+
 ```bash
 git clone https://github.com/sebaslobo22/rendimiento-equipo.git ~/rendimiento-equipo
 cd ~/rendimiento-equipo
