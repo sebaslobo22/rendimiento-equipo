@@ -28,6 +28,15 @@ comprobación local (`--help`, `man`, ejecución).
 | https://developer.apple.com/documentation/apple-silicon/addressing-architectural-differences-in-your-macos-code (HTTP 200) | Oficial | Consultar capacidades en tiempo de ejecución; niveles de CPU |
 | https://developer.apple.com/documentation/apple-silicon/porting-your-metal-code-to-apple-silicon (HTTP 200) | Oficial | Metal: memoria unificada, tamaños recomendados |
 | https://developer.apple.com/documentation/apple-silicon/tuning-your-code-s-performance-for-apple-silicon (HTTP 200) | Oficial | QoS y reparto entre núcleos de rendimiento y de eficiencia |
+| Comunicados de Apple de cada chip, de M1 a M6 (enlaces en `arquitectura.md`) | Oficial | Saltos de arquitectura por generación (28/10/2026) |
+| https://developer.apple.com/metal/Metal-Feature-Set-Tables.pdf | Oficial | Familia Metal de cada chip: M1 apple7, M2 apple8, M3 y M4 apple9, serie M5 apple10 |
+| https://www.apple.com/macbook-pro/specs/ y https://www.apple.com/mac-studio/specs/ | Oficial | Motores de medios por nivel (codificación, decodificación, ProRes) |
+| https://github.com/FFmpeg/FFmpeg/blob/n8.0/libavcodec/hwaccels.h | Oficial | Decodificación AV1 con VideoToolbox desde ffmpeg 8.0 (no está en 7.1; comprobado en el código) |
+| https://github.com/FFmpeg/FFmpeg/blob/master/Changelog | Oficial | `prores_videotoolbox` desde ffmpeg 5.0 |
+| https://github.com/ggml-org/whisper.cpp/blob/master/ggml/src/ggml-metal/ggml-metal-device.m | Oficial | Ruta de tensores de Metal 4 para M5 y posteriores en whisper.cpp (desde v1.8.3) |
+| https://www.remotion.dev/docs/hardware-acceleration | Oficial | `--hardware-acceleration`: ProRes desde 4.0.228, H.264 y H.265 desde 4.0.236 |
+| https://projects.blender.org/blender/blender/pulls/114296 | Oficial | Blender Cycles activa MetalRT solo desde M3 |
+| `medir.py paralelo` en el M4 Pro piloto (27/10/2026) | Medición | Una codificación: 6,6 s de video por segundo; dos: 5,7; cuatro: 6,0 |
 | WWDC20 sesiones 10009 y 10010 | Oficial | HDR a SDR con AVFoundation y `AVAssetExportSession` |
 | `man taskpolicy`, `man memory_pressure`, `sysctl`, `system_profiler` en el equipo piloto | Oficial (local) | Opciones de QoS; advertencia sobre `-l` y `-p`; claves de sysctl |
 | APIs de Swift: `MTLDevice`, `VTCopyVideoEncoderList`, `VTIsHardwareDecodeSupported`, `MLComputeDevice`, `ProcessInfo.thermalState` | Oficial | Ejecutadas en el piloto desde `capacidades_macos.swift` |

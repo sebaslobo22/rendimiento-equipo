@@ -555,7 +555,7 @@ footer .wrap{display:flex;justify-content:space-between;gap:12px 24px;flex-wrap:
   <section class="hero" id="hero">
     <div class="wrap">
       <div class="hero-txt" id="hero-txt">
-        <a class="tag" href="#instalar"><span class="dot"></span>Skill para Claude Code y Codex · v1.1.0</a>
+        <a class="tag" href="#instalar"><span class="dot"></span>Skill para Claude Code y Codex · v1.2.0</a>
         <h1 class="grad">Cada tarea, al motor que mejor la hace.</h1>
         <p class="sub"><b>rendimiento-equipo</b> mira tu Mac antes de un render, una transcripción o un lote, y reparte el trabajo entre la CPU, la GPU, el Neural Engine y el motor de video. Lo que mide en tu equipo manda.</p>
         <div class="ctas">
@@ -943,7 +943,7 @@ presión normal · swap creciendo: no · térmico nominal</pre></div>
 </main>
 
 <footer>
-  <div class="wrap"><span>rendimiento-equipo v1.1.0 · Licencia MIT</span><span>Hecha por Sebastián Lobo · 27.10.2026</span></div>
+  <div class="wrap"><span>rendimiento-equipo v1.2.0 · Licencia MIT</span><span>Hecha por Sebastián Lobo · 27.10.2026</span></div>
 </footer>
 
 <div class="tip" id="tip" role="tooltip"></div>
@@ -1316,6 +1316,21 @@ presión normal · swap creciendo: no · térmico nominal</pre></div>
   function flash(el) { if (el) flashes.push(el); return el; }
   function txt(sel, t) { var el = $(sel); if (el.textContent !== String(t)) { el.textContent = t; flash(el); } return el; }
 
+  // Saltos de arquitectura de cada generacion, segun Apple (detalle y fuentes en references/arquitectura.md)
+  var NOVEDADES = {
+    M1: "Primer motor de medios del Mac: H.264 y HEVC por hardware",
+    M2: "ProRes por hardware en el chip base y video 8K",
+    M3: "Dynamic Caching, trazado de rayos y mallas por hardware, y AV1 por hardware",
+    M4: "Trazado de rayos el doble de rápido, sobre la misma base que M3",
+    M5: "Un Neural Accelerator en cada núcleo de la GPU",
+    M6: "2 nm, Neural Engine doble y tres niveles de CPU"
+  };
+  var NOVEDADES_NIVEL = {
+    "M1 Pro": "Primeros motores de ProRes", "M1 Max": "Primeros motores de ProRes y 2 de codificación",
+    "M1 Ultra": "UltraFusion: dos M1 Max en un chip", "M5 Pro": "Dos dies, y núcleos súper y de rendimiento",
+    "M5 Max": "Dos dies, y núcleos súper y de rendimiento", "M5 Ultra": "Cuatro dies"
+  };
+  function novedad(c) { return (NOVEDADES_NIVEL[c.n] ? NOVEDADES_NIVEL[c.n] + ". " : "") + (NOVEDADES[c.g] || "Sin datos de Apple todavía"); }
   function motores(c) { return c.vq ? "codifica y lee video por hardware; Apple no publica cuántos motores" : c.enc + " de codificación y " + c.dec + " de lectura" + (c.pr ? ", más ProRes" : "") + (c.av1 ? ". Lee AV1" : ""); }
 
   function aplicarPortada(c) {
@@ -1377,6 +1392,7 @@ presión normal · swap creciendo: no · térmico nominal</pre></div>
     txt('.lbl[data-k="m"] em', M.cache + " de caché por render");
     txt('.lbl[data-k="e"] em', c.e ? "Lotes de fondo" : "Este chip no tiene");
     var specs = [
+      ["Lo nuevo en el " + c.n, novedad(c)],
       ["CPU de " + nCpu(c) + " núcleos", cpuTxt(c)],
       ["GPU de " + c.gpu + " núcleos", M.med ? "Metal, familia apple9" : c.rt ? "Metal, con trazado de rayos por hardware" : "Metal"],
       [c.ne2 ? "Neural Engine doble de 16 núcleos" : "Neural Engine de " + c.ne + " núcleos", "Core ML y Vision" + (c.tops ? " · " + num(c.tops, c.tops % 1 ? 1 : 0) + " TOPS según Apple" : "")],

@@ -20,7 +20,7 @@ comando suele ser `python` o `py -3` en lugar de `python3`, y el paso 2 no recom
 2. `python3 scripts/perfil.py --renders N --formato texto`, con N = cuántos renders irán en paralelo. Entrega
    recomendaciones, los frenos activos y un **bloque para subagentes** ya relleno.
 3. Aplica las recomendaciones y pega el bloque en cada encargo a un subagente (no heredan skills ni contexto).
-4. Si vas a cambiar un método: `python3 scripts/medir.py codificar|decodificar|remotion ... --registrar`, con nadie
+4. Si vas a cambiar un método: `python3 scripts/medir.py codificar|decodificar|remotion|paralelo ... --registrar`, con nadie
    más renderizando. Solo actualiza el perfil con un ganador claro (≥15 % mejor y diferencia visual <2/255).
 5. Al terminar: `python3 scripts/limpiar.py` (solo muestra) y luego `python3 scripts/limpiar.py --aplicar`.
 
@@ -28,7 +28,8 @@ comando suele ser `python` o `py -3` en lugar de `python3`, y el paso 2 no recom
 
 ## Reglas que más se rompen
 
-1. No fijes valores de hardware: consúltalos. Otro chip trae otros núcleos, niveles, motores y nombres.
+1. No fijes valores de hardware: consúltalos. Otro chip trae otros núcleos, niveles, motores y nombres. Las
+   capacidades de cada generación se deciden por lo detectado, no por el nombre del chip (`references/arquitectura.md`).
 2. `memory_pressure` sin argumentos: con `-l` o `-p` aplica presión real y altera lo que quieres medir.
 3. Mira la presión y si el swap crece, no la memoria libre: Apple dice que «libre» no es una estadística útil.
 4. `--crf` desactiva el hardware en Remotion: cae a libx264 sin avisar. Con hardware se usa `--video-bitrate`.
@@ -41,12 +42,15 @@ comando suele ser `python` o `py -3` en lugar de `python3`, y el paso 2 no recom
 11. Con un freno activo (presión ≥2, swap creciendo, térmico serious o critical) se serializa o se baja a la mitad.
 12. Nunca tocar los procesos protegidos (el whisper-server de OpenWhispr usa `--model` y `--host`); cada agente
     apaga por PID solo lo que lanzó.
+13. Más codificaciones por hardware a la vez no suman con un solo motor de video: respeta el máximo de `perfil.py`
+    (sección ARQUITECTURA) y, si no está medido, mídelo con `medir.py paralelo`.
 
 ## Cuándo leer qué
 
 | Si necesitas... | Lee |
 |---|---|
 | Saber qué API o comando da cada capacidad, qué tarea va a qué motor, QoS, térmico | `references/macos.md` |
+| Qué trae cada generación (M1 a M6), qué herramienta lo usa y cómo se detecta | `references/arquitectura.md` |
 | Argumentos de ffmpeg, bitrates, HDR a SDR, qué ffmpeg usar | `references/ffmpeg.md` |
 | Flags de Remotion, concurrencia, caché, `--gl`, cómo medirlo | `references/remotion.md` |
 | Lanzar, reutilizar o apagar el servidor de transcripción; Core ML o Metal | `references/whisper.md` |

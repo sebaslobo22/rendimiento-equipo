@@ -102,8 +102,19 @@ scripts también se corren a mano desde `skills/rendimiento-equipo/`:
 | Script | Qué hace |
 |---|---|
 | `scripts/diagnosticar.py` | JSON del equipo: CPU por niveles, memoria y presión, GPU y familia Metal, codificadores y decodificadores por hardware, Neural Engine, estado térmico y procesos pesados vivos. |
-| `scripts/perfil.py --renders N --formato texto` | Recomendaciones para N renders en paralelo, frenos activos y un bloque listo para pegar en el encargo de cada subagente. |
+| `scripts/perfil.py --renders N --formato texto` | Recomendaciones para N renders en paralelo, frenos activos, qué trae la arquitectura de tu chip y qué hace la skill con cada cosa, y un bloque listo para pegar en el encargo de cada subagente. |
 | `scripts/medir.py codificar\|decodificar\|remotion` | Compara dos métodos en tu equipo. Con `--registrar` anota al ganador si mejora al menos un 15 % sin diferencia visual (menos de 2/255). |
+| `scripts/medir.py paralelo` | Cuántas codificaciones por hardware rinden a la vez. Los chips Max y Ultra traen 2 y 4 motores de video, y ninguna API lo dice. |
+
+### Cada generación, a fondo
+
+La skill tiene en cuenta los saltos de arquitectura de cada generación, de M1 a M6. Por ejemplo, el ProRes por
+hardware, la decodificación AV1 desde M3, los varios motores de video de los Max y Ultra, y los Neural
+Accelerators de la GPU desde M5.
+
+Decide por lo que el equipo declara, no por el nombre del chip. Por eso un chip que todavía no existe recibe las
+reglas que le correspondan, y si trae algo desconocido, la skill pide medirlo. El detalle, con fuentes, está en
+[`references/arquitectura.md`](skills/rendimiento-equipo/references/arquitectura.md).
 | `scripts/limpiar.py` | Lista los procesos que lanzaron los agentes y siguen vivos. Con `--aplicar` los apaga por PID. Nunca toca los protegidos ni los que están en uso. |
 
 Todos aceptan `--help` y devuelven 0 si todo fue bien o 2 si los argumentos no sirven.
@@ -148,10 +159,10 @@ Comparte la salida de `perfil.py` y `mediciones.md`. El detalle de qué lee y c�
 ```
 skills/rendimiento-equipo/
   SKILL.md                 lo que lee el agente (67 líneas, lo esencial arriba)
-  scripts/                 diagnosticar, perfil, medir, limpiar, la consulta en Swift y plataforma_windows
-  references/              macos, ffmpeg, remotion, whisper, memoria, agentes, windows, fuentes
+  scripts/                 diagnosticar, perfil, medir, limpiar, arquitectura, la consulta en Swift y plataforma_windows
+  references/              macos, arquitectura, ffmpeg, remotion, whisper, memoria, agentes, windows, fuentes
   evals/evals.json         consultas de disparo y casos de comportamiento
-  assets/perfil.ejemplo.json
+  assets/                  perfil.ejemplo.json y chips_apple.json (tabla de Apple de referencia)
 install.sh                 instalador para macOS
 install.ps1                instalador para Windows
 pruebas/                   pruebas de humo que corre GitHub Actions en Windows y macOS

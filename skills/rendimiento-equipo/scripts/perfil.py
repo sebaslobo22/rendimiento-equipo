@@ -19,6 +19,7 @@ from __future__ import annotations
 import argparse
 import json
 import os
+import re
 import socket
 import sys
 
@@ -211,6 +212,16 @@ def nucleos_para_render(cpu):
     return total, [n.get("nombre") or "nivel %s" % n.get("indice", 0) for n in rapidos]
 
 
+REMOTION_H264_HW = (4, 0, 236)  # --hardware-acceleration con H.264 y H.265 (ProRes desde 4.0.228), segun Remotion
+
+
+def version_remotion(d):
+    """Version de Remotion del proyecto inspeccionado (--proyecto), como tupla, o None si no se sabe."""
+    v = ((d.get("herramientas") or {}).get("remotion") or {}).get("version")
+    m = re.search(r"(\d+)\.(\d+)\.(\d+)", v or "")
+    return tuple(int(x) for x in m.groups()) if m else None
+
+
 def concurrencia_remotion(nucleos, renders):
     unico = max(1, round(nucleos * FRACCION_UN_RENDER))
     reparto = max(1, int(nucleos * FRACCION_TOTAL) // max(1, renders))
@@ -241,7 +252,10 @@ def calcular_remotion(d, medido, renders, frenos):
     # Codificador por hardware
     hw = m.get("hardware_acceleration")
     hw_enc = hw_codifica(d, "avc1")
-    if vale(hw):
+    rv = version_remotion(d)
+    if rv and rv < REMOTION_H264_HW and not vale(hw):
+        o_hw = "formula (Remotion %s: codifica H.264 por hardware desde 4.0.236; actualiza el proyecto)" % ".".join(map(str, rv))
+    elif vale(hw):
         valor = hw.get("valor", "required")
         if valor in ("required", "if-possible"):
             flags += ["--hardware-acceleration=%s" % valor,
@@ -381,7 +395,7 @@ def bloque_subagentes(d, p):
         L.append("- HDR a SDR: %s." % f["hdr_a_sdr"]["metodo"])
         dpc = f.get("decodificacion_por_codec") or {}
         if dpc:
-            L.append("- Lectura por codec: %s." % ", ".join("%s %s" % (k, "por hardware" if v != "cpu" else "en CPU") for k, v in dpc.items()))
+            L.append("- Lectura por codec: %s." % ", ".join("%s %s" % (k, "por hardware" if v == "videotoolbox" else "en CPU") for k, v in dpc.items()))
         L.append("- Intermedios ProRes: %s." % " ".join(f["prores"]["args"]))
         cp = p["arquitectura"]["codificaciones_paralelas"]
         if cp.get("valor"):
@@ -513,7 +527,10 @@ def a_texto(d, p):
         L.append("  HDR a SDR      %s" % f["hdr_a_sdr"]["metodo"])
         dpc = f.get("decodificacion_por_codec") or {}
         if dpc:
-            L.append("  por codec      %s" % " | ".join("%s %s" % (k, "HW" if v != "cpu" else "CPU") for k, v in dpc.items()))
+            L.append("  por codec      %s" % " | ".join("%s %s" % (k, "HW" if v == "videotoolbox" else "CPU") for k, v in dpc.items()))
+            for k, v in dpc.items():
+                if v.startswith("cpu ("):
+                    L.append("  %-14s %s: %s" % ("", k, v[5:-1]))
         L.append("  ProRes         %s [%s]" % (" ".join(f["prores"]["args"]), f["prores"]["origen"]))
     else:
         L.append("  no disponible")

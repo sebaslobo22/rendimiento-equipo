@@ -1,5 +1,26 @@
 # Cambios
 
+## 1.2.0 · 28.10.2026
+
+- La skill tiene en cuenta los saltos de arquitectura de cada generación de Apple Silicon, de M1 a M6. Decide por
+  lo que el equipo declara, no por el nombre del chip: un chip nuevo con las mismas capacidades recibe las mismas
+  reglas, y uno con una familia Metal más nueva que apple10 se marca para medir.
+  - `arquitectura.py`: qué trae el equipo y qué hace la skill con cada cosa. Lo muestra `perfil.py` en la
+    sección ARQUITECTURA.
+  - `capacidades_macos.swift` informa las familias de versión de Metal (metal3, metal4) y el trazado de rayos, y
+    suma ProRes RAW. `diagnosticar.py` lee todas las extensiones de la CPU (SME, SME2…) sin lista fija.
+  - `perfil.py` recomienda ProRes con el motor de ProRes (`prores_videotoolbox`) y la lectura por codec, según lo
+    que decodifica el chip y la versión de ffmpeg: AV1 por hardware solo con ffmpeg 8.0 o posterior.
+    - Con un Remotion anterior a 4.0.236 no pide codificar por hardware.
+    - Da el máximo de codificaciones por hardware a la vez.
+  - `medir.py paralelo` mide cuántas codificaciones por hardware rinden a la vez: los Max y Ultra traen 2 y 4
+    motores, y ninguna API lo dice. En el M4 Pro piloto, dos a la vez rinden 13 % menos que una. Con menos de
+    5 s por copia muestra el resultado, pero no lo registra.
+  - `assets/chips_apple.json`: la tabla de Apple, solo como referencia para lo que no se puede detectar.
+  - `references/arquitectura.md`: los saltos de cada generación con sus fuentes, qué herramienta usa cada uno,
+    qué se puede detectar y qué ideas comunes no son ciertas.
+- La página muestra lo nuevo de cada chip en el selector.
+
 ## 1.1.0 · 28.10.2026
 
 - Windows, primera fase: diagnóstico y mediciones, sin recomendaciones hasta medir equipos reales.
