@@ -76,6 +76,19 @@ def medir(ruta, codigo, ruta_diag):
     print("OK medir (codigo %s): %s" % (codigo, {k: (v.get("real_s"), v.get("cpu_s"), v.get("fallo")) for k, v in out["variantes"].items()}))
 
 
+def paralelo(ruta, codigo):
+    codigo = int(codigo)
+    if codigo not in (0, 1):
+        falla("medir.py paralelo salio con %s" % codigo)
+    out = leer(ruta)
+    uno = out["variantes"].get("1") or {}
+    if uno.get("fallo"):
+        falla("una sola codificacion fallo: %r" % uno)
+    if out.get("elegido") is None or "1" not in out.get("escalado", {}):
+        falla("sin escalado ni eleccion: %r" % out)
+    print("OK paralelo: rinde %s, elige %s" % (out["escalado"], out["elegido"]))
+
+
 def cpu(ruta_diag):
     import medir as m
     ffmpeg = leer(ruta_diag)["herramientas"]["ffmpeg"]["elegido"]
@@ -90,4 +103,4 @@ def cpu(ruta_diag):
 
 if __name__ == "__main__":
     modo, resto = sys.argv[1], sys.argv[2:]
-    {"diagnostico": diagnostico, "medir": medir, "cpu": cpu}[modo](*resto)
+    {"diagnostico": diagnostico, "medir": medir, "cpu": cpu, "paralelo": paralelo}[modo](*resto)

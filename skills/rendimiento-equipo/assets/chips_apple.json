@@ -1,0 +1,424 @@
+{
+ "_leeme": "Datos que publica Apple de cada chip (configuracion mayor de cada nivel), verificados el 27.10.2026 en apple.com/newsroom y support.apple.com. Solo son referencia para lo que ninguna API dice, como cuantos motores de codificacion de video hay. Lo detectado en el equipo y lo medido con medir.py mandan sobre esta tabla. null = Apple no lo publica. nucleos_rapidos = rendimiento hasta M4, super desde M5.",
+ "verificado": "2026-10-27",
+ "chips": {
+  "M1": {
+   "anio": 2020,
+   "nucleos_rapidos": 4,
+   "nucleos_rendimiento_nuevos": 0,
+   "nucleos_eficiencia": 4,
+   "gpu": 8,
+   "neural_engine": 16,
+   "neural_engine_doble": false,
+   "tops": 11,
+   "ancho_banda_gbs": null,
+   "memoria_gb": [
+    8,
+    16
+   ],
+   "enc": null,
+   "dec": null,
+   "prores": 0,
+   "av1_decodifica": false,
+   "trazado_rayos_hw": false
+  },
+  "M1 Pro": {
+   "anio": 2021,
+   "nucleos_rapidos": 8,
+   "nucleos_rendimiento_nuevos": 0,
+   "nucleos_eficiencia": 2,
+   "gpu": 16,
+   "neural_engine": 16,
+   "neural_engine_doble": false,
+   "tops": null,
+   "ancho_banda_gbs": 200,
+   "memoria_gb": [
+    16,
+    32
+   ],
+   "enc": 1,
+   "dec": 1,
+   "prores": 1,
+   "av1_decodifica": false,
+   "trazado_rayos_hw": false
+  },
+  "M1 Max": {
+   "anio": 2021,
+   "nucleos_rapidos": 8,
+   "nucleos_rendimiento_nuevos": 0,
+   "nucleos_eficiencia": 2,
+   "gpu": 32,
+   "neural_engine": 16,
+   "neural_engine_doble": false,
+   "tops": null,
+   "ancho_banda_gbs": 400,
+   "memoria_gb": [
+    32,
+    64
+   ],
+   "enc": 2,
+   "dec": 1,
+   "prores": 2,
+   "av1_decodifica": false,
+   "trazado_rayos_hw": false
+  },
+  "M1 Ultra": {
+   "anio": 2022,
+   "nucleos_rapidos": 16,
+   "nucleos_rendimiento_nuevos": 0,
+   "nucleos_eficiencia": 4,
+   "gpu": 64,
+   "neural_engine": 32,
+   "neural_engine_doble": false,
+   "tops": 22,
+   "ancho_banda_gbs": 800,
+   "memoria_gb": [
+    64,
+    128
+   ],
+   "enc": 4,
+   "dec": 2,
+   "prores": 4,
+   "av1_decodifica": false,
+   "trazado_rayos_hw": false
+  },
+  "M2": {
+   "anio": 2022,
+   "nucleos_rapidos": 4,
+   "nucleos_rendimiento_nuevos": 0,
+   "nucleos_eficiencia": 4,
+   "gpu": 10,
+   "neural_engine": 16,
+   "neural_engine_doble": false,
+   "tops": 15.8,
+   "ancho_banda_gbs": 100,
+   "memoria_gb": [
+    8,
+    16,
+    24
+   ],
+   "enc": 1,
+   "dec": 1,
+   "prores": 1,
+   "av1_decodifica": false,
+   "trazado_rayos_hw": false
+  },
+  "M2 Pro": {
+   "anio": 2023,
+   "nucleos_rapidos": 8,
+   "nucleos_rendimiento_nuevos": 0,
+   "nucleos_eficiencia": 4,
+   "gpu": 19,
+   "neural_engine": 16,
+   "neural_engine_doble": false,
+   "tops": 15.8,
+   "ancho_banda_gbs": 200,
+   "memoria_gb": [
+    16,
+    32
+   ],
+   "enc": 1,
+   "dec": 1,
+   "prores": 1,
+   "av1_decodifica": false,
+   "trazado_rayos_hw": false
+  },
+  "M2 Max": {
+   "anio": 2023,
+   "nucleos_rapidos": 8,
+   "nucleos_rendimiento_nuevos": 0,
+   "nucleos_eficiencia": 4,
+   "gpu": 38,
+   "neural_engine": 16,
+   "neural_engine_doble": false,
+   "tops": 15.8,
+   "ancho_banda_gbs": 400,
+   "memoria_gb": [
+    32,
+    64,
+    96
+   ],
+   "enc": 2,
+   "dec": 1,
+   "prores": 2,
+   "av1_decodifica": false,
+   "trazado_rayos_hw": false
+  },
+  "M2 Ultra": {
+   "anio": 2023,
+   "nucleos_rapidos": 16,
+   "nucleos_rendimiento_nuevos": 0,
+   "nucleos_eficiencia": 8,
+   "gpu": 76,
+   "neural_engine": 32,
+   "neural_engine_doble": false,
+   "tops": 31.6,
+   "ancho_banda_gbs": 800,
+   "memoria_gb": [
+    64,
+    128,
+    192
+   ],
+   "enc": 4,
+   "dec": 2,
+   "prores": 4,
+   "av1_decodifica": false,
+   "trazado_rayos_hw": false
+  },
+  "M3": {
+   "anio": 2023,
+   "nucleos_rapidos": 4,
+   "nucleos_rendimiento_nuevos": 0,
+   "nucleos_eficiencia": 4,
+   "gpu": 10,
+   "neural_engine": 16,
+   "neural_engine_doble": false,
+   "tops": null,
+   "ancho_banda_gbs": 100,
+   "memoria_gb": [
+    8,
+    16,
+    24
+   ],
+   "enc": 1,
+   "dec": 1,
+   "prores": 1,
+   "av1_decodifica": true,
+   "trazado_rayos_hw": true
+  },
+  "M3 Pro": {
+   "anio": 2023,
+   "nucleos_rapidos": 6,
+   "nucleos_rendimiento_nuevos": 0,
+   "nucleos_eficiencia": 6,
+   "gpu": 18,
+   "neural_engine": 16,
+   "neural_engine_doble": false,
+   "tops": null,
+   "ancho_banda_gbs": 150,
+   "memoria_gb": [
+    18,
+    36
+   ],
+   "enc": 1,
+   "dec": 1,
+   "prores": 1,
+   "av1_decodifica": true,
+   "trazado_rayos_hw": true
+  },
+  "M3 Max": {
+   "anio": 2023,
+   "nucleos_rapidos": 12,
+   "nucleos_rendimiento_nuevos": 0,
+   "nucleos_eficiencia": 4,
+   "gpu": 40,
+   "neural_engine": 16,
+   "neural_engine_doble": false,
+   "tops": null,
+   "ancho_banda_gbs": 400,
+   "memoria_gb": [
+    36,
+    48,
+    64,
+    96,
+    128
+   ],
+   "enc": 2,
+   "dec": 1,
+   "prores": 2,
+   "av1_decodifica": true,
+   "trazado_rayos_hw": true
+  },
+  "M3 Ultra": {
+   "anio": 2025,
+   "nucleos_rapidos": 24,
+   "nucleos_rendimiento_nuevos": 0,
+   "nucleos_eficiencia": 8,
+   "gpu": 80,
+   "neural_engine": 32,
+   "neural_engine_doble": false,
+   "tops": null,
+   "ancho_banda_gbs": 819,
+   "memoria_gb": [
+    96,
+    256,
+    512
+   ],
+   "enc": 4,
+   "dec": 2,
+   "prores": 4,
+   "av1_decodifica": true,
+   "trazado_rayos_hw": true
+  },
+  "M4": {
+   "anio": 2024,
+   "nucleos_rapidos": 4,
+   "nucleos_rendimiento_nuevos": 0,
+   "nucleos_eficiencia": 6,
+   "gpu": 10,
+   "neural_engine": 16,
+   "neural_engine_doble": false,
+   "tops": 38,
+   "ancho_banda_gbs": 120,
+   "memoria_gb": [
+    16,
+    24,
+    32
+   ],
+   "enc": 1,
+   "dec": 1,
+   "prores": 1,
+   "av1_decodifica": true,
+   "trazado_rayos_hw": true
+  },
+  "M4 Pro": {
+   "anio": 2024,
+   "nucleos_rapidos": 10,
+   "nucleos_rendimiento_nuevos": 0,
+   "nucleos_eficiencia": 4,
+   "gpu": 20,
+   "neural_engine": 16,
+   "neural_engine_doble": false,
+   "tops": null,
+   "ancho_banda_gbs": 273,
+   "memoria_gb": [
+    24,
+    48,
+    64
+   ],
+   "enc": 1,
+   "dec": 1,
+   "prores": 1,
+   "av1_decodifica": true,
+   "trazado_rayos_hw": true
+  },
+  "M4 Max": {
+   "anio": 2024,
+   "nucleos_rapidos": 12,
+   "nucleos_rendimiento_nuevos": 0,
+   "nucleos_eficiencia": 4,
+   "gpu": 40,
+   "neural_engine": 16,
+   "neural_engine_doble": false,
+   "tops": null,
+   "ancho_banda_gbs": 546,
+   "memoria_gb": [
+    36,
+    48,
+    64,
+    128
+   ],
+   "enc": 2,
+   "dec": 1,
+   "prores": 2,
+   "av1_decodifica": true,
+   "trazado_rayos_hw": true
+  },
+  "M5": {
+   "anio": 2025,
+   "nucleos_rapidos": 4,
+   "nucleos_rendimiento_nuevos": 0,
+   "nucleos_eficiencia": 6,
+   "gpu": 10,
+   "neural_engine": 16,
+   "neural_engine_doble": false,
+   "tops": null,
+   "ancho_banda_gbs": 153,
+   "memoria_gb": [
+    16,
+    24,
+    32
+   ],
+   "enc": 1,
+   "dec": 1,
+   "prores": 1,
+   "av1_decodifica": true,
+   "trazado_rayos_hw": true
+  },
+  "M5 Pro": {
+   "anio": 2026,
+   "nucleos_rapidos": 6,
+   "nucleos_rendimiento_nuevos": 12,
+   "nucleos_eficiencia": 0,
+   "gpu": 20,
+   "neural_engine": 16,
+   "neural_engine_doble": false,
+   "tops": null,
+   "ancho_banda_gbs": 307,
+   "memoria_gb": [
+    24,
+    48,
+    64
+   ],
+   "enc": 1,
+   "dec": 1,
+   "prores": 1,
+   "av1_decodifica": true,
+   "trazado_rayos_hw": true
+  },
+  "M5 Max": {
+   "anio": 2026,
+   "nucleos_rapidos": 6,
+   "nucleos_rendimiento_nuevos": 12,
+   "nucleos_eficiencia": 0,
+   "gpu": 40,
+   "neural_engine": 16,
+   "neural_engine_doble": false,
+   "tops": null,
+   "ancho_banda_gbs": 614,
+   "memoria_gb": [
+    36,
+    48,
+    64,
+    128
+   ],
+   "enc": 2,
+   "dec": 1,
+   "prores": 2,
+   "av1_decodifica": true,
+   "trazado_rayos_hw": true
+  },
+  "M5 Ultra": {
+   "anio": 2026,
+   "nucleos_rapidos": 12,
+   "nucleos_rendimiento_nuevos": 24,
+   "nucleos_eficiencia": 0,
+   "gpu": 80,
+   "neural_engine": 32,
+   "neural_engine_doble": false,
+   "tops": null,
+   "ancho_banda_gbs": 1200,
+   "memoria_gb": [
+    96,
+    256,
+    512
+   ],
+   "enc": 4,
+   "dec": 2,
+   "prores": 4,
+   "av1_decodifica": true,
+   "trazado_rayos_hw": true
+  },
+  "M6": {
+   "anio": 2026,
+   "nucleos_rapidos": 2,
+   "nucleos_rendimiento_nuevos": 4,
+   "nucleos_eficiencia": 6,
+   "gpu": 12,
+   "neural_engine": 16,
+   "neural_engine_doble": true,
+   "tops": null,
+   "ancho_banda_gbs": 170,
+   "memoria_gb": [
+    16,
+    24,
+    32
+   ],
+   "enc": 1,
+   "dec": 1,
+   "prores": 1,
+   "av1_decodifica": true,
+   "trazado_rayos_hw": true
+  }
+ }
+}

@@ -8,6 +8,8 @@ Subcomandos:
   decodificar ffmpeg: decodificar en CPU frente a -hwaccel videotoolbox.
               En Windows, CPU frente a cada acelerador que abre (cuda, qsv, d3d11va).
   remotion    render corto de una composicion: base, angle, hardware y ambos (solo macOS por ahora)
+  paralelo    cuantas codificaciones por hardware rinden a la vez (1, 2, 4...): los chips Max y Ultra traen
+              2 y 4 motores de codificacion y ninguna API dice cuantos hay
 
 En Windows el tiempo de CPU sale de un Job Object, que suma el proceso y sus hijos: el ffmpeg de Chocolatey o
 Scoop es un atajo que lanza el ffmpeg real como hijo.
@@ -78,33 +80,49 @@ class ErrorUso(Exception):
 
 # ---------------------------------------------------------------- medicion
 
-def correr(cmd, cwd=None, timeout=1800):
-    """Ejecuta un comando y mide tiempo real y CPU (usuario+sistema): de los hijos en macOS,
-    del proceso lanzado en Windows."""
-    antes = resource.getrusage(resource.RUSAGE_CHILDREN) if resource else None
-    t0 = time.perf_counter()
+def _lanzar(cmd, cwd=None):
     kw = dict(cwd=cwd, stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL, stderr=subprocess.PIPE,
               text=True, encoding="utf-8", errors="replace")
     if resource:
-        p = subprocess.Popen(cmd, **kw)
-    else:
-        import plataforma_windows as pw
-        p = pw.lanzar_contado(cmd, **kw)  # Job Object: cuenta tambien los hijos (atajos de Chocolatey o Scoop)
-    try:
-        _, err = p.communicate(timeout=timeout)
-        rc = p.returncode
-    except subprocess.TimeoutExpired:
-        p.kill()
-        p.communicate()
-        rc, err = 124, "tiempo limite de %ss agotado" % timeout
+        return subprocess.Popen(cmd, **kw)
+    import plataforma_windows as pw
+    return pw.lanzar_contado(cmd, **kw)  # Job Object: cuenta tambien los hijos (atajos de Chocolatey o Scoop)
+
+
+def correr_varios(cmds, cwd=None, timeout=1800):
+    """Lanza todos los comandos a la vez y mide desde el arranque hasta que termina el ultimo.
+
+    CPU (usuario+sistema) sumada de todos: de los hijos en macOS, de cada arbol de procesos en Windows.
+    """
+    antes = resource.getrusage(resource.RUSAGE_CHILDREN) if resource else None
+    t0 = time.perf_counter()
+    procs = [_lanzar(c, cwd) for c in cmds]
+    rc, errores = 0, []
+    for p in procs:
+        try:
+            _, err = p.communicate(timeout=max(1.0, t0 + timeout - time.perf_counter()))
+            prc = p.returncode
+        except subprocess.TimeoutExpired:
+            p.kill()
+            p.communicate()
+            prc, err = 124, "tiempo limite de %ss agotado" % timeout
+        if prc != 0:
+            rc = rc or prc
+            errores.append((err or "").strip())
     real = time.perf_counter() - t0
     if resource:
         despues = resource.getrusage(resource.RUSAGE_CHILDREN)
         cpu = round((despues.ru_utime - antes.ru_utime) + (despues.ru_stime - antes.ru_stime), 2)
     else:
         import plataforma_windows as pw
-        cpu = pw.tiempo_cpu(p)
-    return {"real_s": round(real, 2), "cpu_s": cpu, "rc": rc, "error": (err or "").strip()[-400:]}
+        partes = [pw.tiempo_cpu(p) for p in procs]
+        cpu = None if None in partes else round(sum(partes), 2)
+    return {"real_s": round(real, 2), "cpu_s": cpu, "rc": rc, "error": " | ".join(errores)[-400:]}
+
+
+def correr(cmd, cwd=None, timeout=1800):
+    """Ejecuta un comando y mide tiempo real y CPU (usuario+sistema)."""
+    return correr_varios([cmd], cwd, timeout)
 
 
 def duracion(ffmpeg, archivo):
@@ -416,6 +434,90 @@ def medir_ffmpeg_windows(args, modo):
     return out, md if not fallos else None
 
 
+def medir_paralelo(args):
+    """Cuantas codificaciones por hardware rinden a la vez.
+
+    Los chips Max y Ultra traen 2 y 4 motores de codificacion de video, pero ninguna API dice cuantos hay:
+    se mide. La misma codificacion corre con 1, 2 y 4 copias a la vez y se compara cuantos segundos de video
+    salen por segundo real. Se adopta el mayor numero de copias que rinde al menos 15 % mas que el anterior.
+    """
+    ffmpeg = resolver_ffmpeg(args)
+    archivo = validar_archivo(args)
+    info = dg.inspeccionar_ffmpeg(ffmpeg) or {}
+    if dg.es_windows():
+        pruebas = dg.probar_video(ffmpeg, info)
+        cod = next((c for c in dg.CODIFICADORES_WINDOWS if (pruebas["codificadores"].get(c) or {}).get("abre")), None)
+        if not cod:
+            raise ErrorUso("Ningun codificador por hardware abre en este equipo con este ffmpeg (%s)." % ffmpeg)
+        v = dg.CODIFICADORES_WINDOWS[cod]
+        entrada, salida = [], ["-pix_fmt", v["pix_fmt"], "-c:v", cod, "-b:v", args.bitrate] + v["extra"]
+    else:
+        if "h264_videotoolbox" not in info.get("codificadores_videotoolbox", []):
+            raise ErrorUso("Este ffmpeg (%s) no trae h264_videotoolbox; usa otro con --ffmpeg." % ffmpeg)
+        cod = "h264_videotoolbox"
+        entrada = ["-hwaccel", "videotoolbox"] if "videotoolbox" in info.get("hwaccels", []) else []
+        salida = ["-c:v", cod, "-b:v", args.bitrate, "-allow_sw", "0"]
+    try:
+        niveles = sorted({int(x) for x in args.niveles.split(",") if x.strip()})
+    except ValueError:
+        raise ErrorUso("--niveles debe ser una lista de enteros, por ejemplo 1,2,4")
+    if not niveles or niveles[0] != 1 or niveles[-1] > 16:
+        raise ErrorUso("--niveles debe empezar en 1 y no pasar de 16, por ejemplo 1,2,4")
+    tmp = tempfile.mkdtemp(prefix="rendimiento-equipo-")
+
+    def comando(i):
+        return cmd_ffmpeg_base(ffmpeg) + entrada + ["-t", str(args.segundos), "-i", archivo, "-an"] + salida + \
+            [os.path.join(tmp, "copia%d.mp4" % i)]
+    try:
+        if args.solo_comandos:
+            return {"solo_comandos": {str(n): [comando(i) for i in range(n)] for n in niveles}}, None
+        ctx_ruido = ruido()
+        corridas = {n: [] for n in niveles}
+        for _ in range(args.repeticiones):
+            for n in niveles:  # intercalado
+                corridas[n].append(correr_varios([comando(i) for i in range(n)], timeout=1800))
+        res = {n: resumir(c) for n, c in corridas.items()}
+    finally:
+        shutil.rmtree(tmp, ignore_errors=True)
+    seg = min(args.segundos, duracion(ffmpeg, archivo) or args.segundos)
+    ritmo = {n: round(n * seg / res[n]["real_s"], 2) for n in niveles if not res[n].get("fallo") and res[n]["real_s"]}
+    escalado = {n: round(r / ritmo[1], 2) for n, r in ritmo.items()} if 1 in ritmo else {}
+    cambios, comps, elegido = {}, [], None
+    if 1 in ritmo:
+        elegido = 1
+        for n in niveles[1:]:
+            mejora = ritmo[n] / ritmo[elegido] - 1 if n in ritmo else None
+            gana = mejora is not None and mejora >= UMBRAL_MEJORA
+            comps.append({"base": "%d a la vez" % elegido, "candidato": "%d a la vez" % n, "ganador": "candidato" if gana else None,
+                          "motivo": ("falló" if mejora is None else "rinde %.0f %% más" % (mejora * 100) if gana else
+                                     "rinde %.0f %% menos" % (-mejora * 100) if mejora < 0 else
+                                     "rinde %.0f %% más: no llega al 15 %%" % (mejora * 100))})
+            if not gana:
+                break
+            elegido = n
+        cambios[("video", "codificaciones_paralelas")] = {
+            "valor": elegido, "codificador": cod, "escalado": {str(n): e for n, e in escalado.items()},
+            "estado": "gana", "fecha": hoy(),
+            "nota": "mayor numero de codificaciones a la vez que rinde al menos 15 % mas que el anterior"}
+    filas = []
+    for n in niveles:
+        r = res[n]
+        filas.append("| %d a la vez | %s | %s | | %s |" % (n, "falló" if r.get("fallo") else r["real_s"],
+                                                         "" if r.get("fallo") else r["cpu_s"],
+                                                         ("rinde %s×" % num_es(escalado[n])) if n in escalado else ""))
+    ctx = {"ffmpeg": ffmpeg, "archivo": archivo, "segundos": args.segundos, "repeticiones": args.repeticiones,
+           "criterio": "tiempo", "ruido": ctx_ruido}
+    out = {"subcomando": "paralelo", **ctx, "codificador": cod, "variantes": {str(n): r for n, r in res.items()},
+           "segundos_de_video_por_segundo": {str(n): r for n, r in ritmo.items()},
+           "escalado": {str(n): e for n, e in escalado.items()}, "elegido": elegido, "comparaciones": comps}
+    fallos = [n for n, r in res.items() if r.get("fallo")]
+    return out, ((filas, comps, ctx, cambios) if not fallos else None)
+
+
+def num_es(x):
+    return ("%.2f" % x).replace(".", ",")
+
+
 def medir_remotion(args):
     proyecto = os.path.expanduser(args.proyecto)
     if not os.path.isdir(proyecto):
@@ -516,12 +618,12 @@ def registrar(out, md, huella, titulo, aceptar_ruido):
 
 def parser():
     ap = argparse.ArgumentParser(
-        description="Pruebas cortas A/B (codificar, decodificar, remotion) con tiempo real, CPU y diferencia visual.",
+        description="Pruebas cortas A/B (codificar, decodificar, remotion, paralelo) con tiempo real, CPU y diferencia visual.",
         formatter_class=argparse.RawDescriptionHelpFormatter, epilog=__doc__.split("Con --registrar:")[1].join(["Con --registrar:", ""]))
-    sub = ap.add_subparsers(dest="cmd", metavar="{codificar,decodificar,remotion}")
+    sub = ap.add_subparsers(dest="cmd", metavar="{codificar,decodificar,remotion,paralelo}")
 
     def comunes(p):
-        p.add_argument("--repeticiones", type=int, default=None, help="repeticiones por variante (por defecto 1 en ffmpeg, 3 en remotion)")
+        p.add_argument("--repeticiones", type=int, default=None, help="repeticiones por variante (por defecto 1 en ffmpeg, 2 en paralelo, 3 en remotion)")
         p.add_argument("--criterio", choices=("tiempo", "cpu"), default="tiempo", help="metrica para elegir ganador (por defecto tiempo real)")
         p.add_argument("--bitrate", default=BITRATE, help="bitrate de los codificadores por hardware (por defecto %(default)s)")
         p.add_argument("--ffmpeg", help="ruta de ffmpeg (por defecto el mejor encontrado por diagnosticar.py)")
@@ -544,6 +646,12 @@ def parser():
     p.add_argument("--variantes", default="base,angle,hardware,ambos", help="lista separada por comas (por defecto %(default)s)")
     p.add_argument("--concurrencia", type=int, help="--concurrency igual para todas las variantes (por defecto la formula con 1 render)")
     comunes(p)
+    p = sub.add_parser("paralelo", help="cuantas codificaciones por hardware rinden a la vez (1, 2, 4...)",
+                       description="La misma codificacion con 1, 2, 4... copias a la vez. NO lo corras con otros renders en marcha.")
+    p.add_argument("--archivo", required=True, help="video de prueba")
+    p.add_argument("--segundos", type=float, default=10, help="segundos a codificar en cada copia (por defecto %(default)s)")
+    p.add_argument("--niveles", default="1,2,4", help="copias a la vez que se prueban, empezando en 1 (por defecto %(default)s)")
+    comunes(p)
     return ap
 
 
@@ -554,7 +662,7 @@ def main(argv=None):
         ap.print_help(sys.stderr)
         return 2
     if args.repeticiones is None:
-        args.repeticiones = 3 if args.cmd == "remotion" else 1
+        args.repeticiones = {"remotion": 3, "paralelo": 2}.get(args.cmd, 1)
     if args.repeticiones < 1:
         print("error: --repeticiones debe ser 1 o mas", file=sys.stderr)
         return 2
@@ -567,6 +675,8 @@ def main(argv=None):
     try:
         if args.cmd == "remotion":
             out, md = medir_remotion(args)
+        elif args.cmd == "paralelo":
+            out, md = medir_paralelo(args)
         elif dg.es_windows():
             out, md = medir_ffmpeg_windows(args, args.cmd)
         else:

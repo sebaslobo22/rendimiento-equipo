@@ -6,7 +6,6 @@ name: Pruebas
 
 on:
   push:
-    branches: [main, "windows*"]
   pull_request:
   workflow_dispatch:
 
@@ -87,8 +86,11 @@ jobs:
           set +e
           python "$SCRIPTS/medir.py" codificar --archivo clip.mp4 --segundos 3 > medir.json
           rc=$?
+          python "$SCRIPTS/medir.py" paralelo --archivo clip.mp4 --segundos 2 --niveles 1,2 --repeticiones 1 > paralelo.json
+          rcp=$?
           set -e
           python pruebas/comprobar.py medir medir.json $rc diag.json
+          python pruebas/comprobar.py paralelo paralelo.json $rcp
       - name: install.sh
         run: |
           export HOME="$(mktemp -d)"

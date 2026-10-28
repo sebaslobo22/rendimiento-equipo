@@ -46,6 +46,17 @@ if let dev = MTLCreateSystemDefaultDevice() {
     }
     metal["familias_apple"] = soportadas
     metal["familia_apple_maxima"] = mejor > 0 ? "apple\(mejor)" : NSNull()
+    // Familias de version de Metal (metal3 = 5001, metal4 = 5002...). Por numero y no por nombre:
+    // un SDK viejo no conoce .metal4 y el script dejaria de compilar.
+    var versiones: [String] = []
+    for raw in 5001...5010 {
+        if let fam = MTLGPUFamily(rawValue: raw), dev.supportsFamily(fam) { versiones.append("metal\(raw - 4998)") }
+    }
+    metal["familias_metal"] = versiones
+    // Que la API exista no prueba que haya hardware dedicado: en M1 y M2 el trazado de rayos corre en
+    // los nucleos normales. El salto se lee en la familia (apple9 en adelante), no aqui.
+    metal["supportsRaytracing"] = dev.supportsRaytracing
+    metal["supportsRaytracingFromRender"] = dev.supportsRaytracingFromRender
     salida["metal"] = metal
 } else {
     avisos.append("Metal: no hay dispositivo Metal disponible")
@@ -83,7 +94,7 @@ if st == noErr, let arr = listaCodificadores as? [[String: Any]] {
 
 let decodificadores: [(String, String)] = [
     ("h264", "avc1"), ("hevc", "hvc1"), ("prores", "apcn"), ("prores_4444", "ap4h"),
-    ("av1", "av01"), ("vp9", "vp09"),
+    ("prores_raw", "aprn"), ("av1", "av01"), ("vp9", "vp09"),
 ]
 var dec: [String: Bool] = [:]
 for (nombre, cc) in decodificadores {

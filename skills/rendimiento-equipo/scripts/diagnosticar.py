@@ -182,7 +182,16 @@ def leer_cpu(avisos=None):
         "niveles": niveles,  # el nivel 0 es el mas rapido; no se asume cuantos hay ni como se llaman
         "logicalcpu": sysctl_int("hw.logicalcpu"),
         "pagesize": sysctl_int("hw.pagesize"),
+        "extensiones": leer_extensiones_arm(),
     }
+
+
+def leer_extensiones_arm():
+    """Extensiones de la CPU que el sistema declara (hw.optional.arm.FEAT_*), sin lista fija: las nuevas aparecen solas."""
+    rc, out, _ = ejecutar(["sysctl", "hw.optional.arm"], 5)
+    if rc != 0:
+        return None
+    return sorted(m.group(1) for m in re.finditer(r"^hw\.optional\.arm\.(FEAT_\w+):\s*1\s*$", out, re.M))
 
 
 def memoria_total():

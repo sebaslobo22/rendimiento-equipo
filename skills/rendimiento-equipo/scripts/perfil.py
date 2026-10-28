@@ -26,6 +26,7 @@ sys.dont_write_bytecode = True  # no ensuciar la carpeta compartida de la skill
 AQUI = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, AQUI)
 import diagnosticar as dg  # noqa: E402
+import arquitectura as arq  # noqa: E402
 
 # Criterios (no son mediciones): salen de la regla de la skill anterior y de la doc de Remotion.
 # Se pueden sustituir con lo medido (npx remotion benchmark --concurrencies) en perfil-medido.json.
@@ -169,6 +170,13 @@ def calcular_ffmpeg(d, medido):
         hdr_txt = "zscale+tonemap en CPU, una sola vez por tramo, guardado y reutilizado"
         if not (info["zscale"] and info["tonemap"]):
             avisos.append("Este ffmpeg no trae zscale o tonemap: el paso HDR a SDR necesita otro ffmpeg.")
+
+    # ProRes para intermedios: el motor de ProRes si el chip lo trae (M1 Pro/Max, y los base desde M2)
+    if hw_codifica(d, "apcn") and "prores_videotoolbox" in info["codificadores_videotoolbox"]:
+        prores = {"args": ["-c:v", "prores_videotoolbox", "-profile:v", "hq", "-allow_sw", "0"], "hardware": True, "origen": "formula (detectado)"}
+    else:
+        prores = {"args": ["-c:v", "prores_ks", "-profile:v", "3"], "hardware": False,
+                  "origen": "formula (sin motor de ProRes detectado)" if hw_codifica(d, "apcn") is False else "formula"}
     return {
         "disponible": True,
         "binario": info["ruta"],
@@ -179,6 +187,8 @@ def calcular_ffmpeg(d, medido):
         "args_final": final,
         "args_vista_previa": previa,
         "hdr_a_sdr": {"metodo": hdr_txt, "origen": origen(hdr) if scale_vt_ok else "formula"},
+        "decodificacion_por_codec": arq.decodificacion_por_codec(d, usa_dec),
+        "prores": prores,
         "ejemplo": " ".join([info["ruta"]] + entrada + ["-i", "ENTRADA"] + final + ["SALIDA.mp4"]),
     }, avisos
 
@@ -351,6 +361,7 @@ def calcular(d, renders):
         "segmentacion": segm,
         "carrusel_chrome": chrome_rec,
         "lotes": {"qos_fondo": "taskpolicy -c utility <comando>" if (d.get("herramientas") or {}).get("taskpolicy") else None},
+        "arquitectura": {"saltos": arq.saltos(d), "codificaciones_paralelas": arq.codificaciones_paralelas(d, medido)},
         "avisos": avisos,
     }
     perfil["bloque_subagentes"] = bloque_subagentes(d, perfil)
@@ -368,6 +379,15 @@ def bloque_subagentes(d, p):
                  % (f["binario"], dec, " ".join(f["args_final"]) or "(sin codificador)",
                     " ".join(f["args_vista_previa"]) or "(sin codificador)"))
         L.append("- HDR a SDR: %s." % f["hdr_a_sdr"]["metodo"])
+        dpc = f.get("decodificacion_por_codec") or {}
+        if dpc:
+            L.append("- Lectura por codec: %s." % ", ".join("%s %s" % (k, "por hardware" if v != "cpu" else "en CPU") for k, v in dpc.items()))
+        L.append("- Intermedios ProRes: %s." % " ".join(f["prores"]["args"]))
+        cp = p["arquitectura"]["codificaciones_paralelas"]
+        if cp.get("valor"):
+            L.append("- Codificaciones por hardware a la vez: %d como maximo (%s); mas no rinde mas." % (cp["valor"], cp["origen"]))
+        elif cp.get("referencia"):
+            L.append("- Codificaciones por hardware a la vez: sin medir (%s). Sin medir, no lances mas que esa cantidad." % cp["referencia"])
     L.append("- Remotion (renders en paralelo: %d), cada render con: %s. Sin --crf junto al hardware."
              % (r["renders_en_paralelo"], " ".join(r["flags"])))
     if w.get("disponible"):
@@ -491,8 +511,24 @@ def a_texto(d, p):
         L.append("  final          %s" % " ".join(f["args_final"]))
         L.append("  vista previa   %s" % " ".join(f["args_vista_previa"]))
         L.append("  HDR a SDR      %s" % f["hdr_a_sdr"]["metodo"])
+        dpc = f.get("decodificacion_por_codec") or {}
+        if dpc:
+            L.append("  por codec      %s" % " | ".join("%s %s" % (k, "HW" if v != "cpu" else "CPU") for k, v in dpc.items()))
+        L.append("  ProRes         %s [%s]" % (" ".join(f["prores"]["args"]), f["prores"]["origen"]))
     else:
         L.append("  no disponible")
+    a = p["arquitectura"]
+    cp = a["codificaciones_paralelas"]
+    L.append("")
+    L.append("ARQUITECTURA  (lo que trae este chip y que hace la skill con cada cosa)")
+    for s in a["saltos"]:
+        L.append("  %-14s %s" % (s["modulo"], s["salto"]))
+        L.append("  %-14s -> %s [%s]" % ("", s["uso"], s["nivel"]))
+    if cp.get("valor"):
+        L.append("  %-14s %d a la vez como maximo [%s]%s" % ("Codif. HW", cp["valor"], cp["origen"],
+                 (" | rinde: " + ", ".join("%s=%sx" % (k, v) for k, v in sorted(cp["escalado"].items(), key=lambda x: int(x[0])))) if cp.get("escalado") else ""))
+    else:
+        L.append("  %-14s sin medir%s. Mide: %s" % ("Codif. HW", (" (" + cp["referencia"] + ")") if cp.get("referencia") else "", cp["medir"]))
     r = p["remotion"]
     L.append("")
     L.append("REMOTION  %d render(es) pedidos, %d en paralelo" % (r["renders_pedidos"], r["renders_en_paralelo"]))
