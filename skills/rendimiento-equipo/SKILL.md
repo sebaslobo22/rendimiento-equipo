@@ -1,6 +1,6 @@
 ---
 name: rendimiento-equipo
-description: Diagnostica el equipo donde corre (CPU por niveles, GPU, Neural Engine, motores de video, memoria, estado térmico) y recomienda cómo ejecutar trabajo pesado en él, usando lo medido en ese equipo por encima de lo genérico. Cubre video con ffmpeg y Remotion, transcripción local con whisper.cpp, segmentación con Vision, lotes y agentes en paralelo. Úsala antes de lanzar renders, transcripciones, conversiones, recortes o procesos en lote, y al escribir el encargo de un subagente que los vaya a hacer, aunque nadie hable de rendimiento. Piloto: macOS en Apple Silicon; Windows queda sin soporte medido todavía. No la uses para escribir contenido, diseño visual ni el método editorial de carruseles y reels (eso es carrusel-editorial-lobo y expediente-lobo).
+description: Diagnostica el equipo donde corre (CPU por niveles, GPU, Neural Engine, motores de video, memoria, estado térmico) y recomienda cómo ejecutar trabajo pesado en él, usando lo medido en ese equipo por encima de lo genérico. Cubre video con ffmpeg y Remotion, transcripción local con whisper.cpp, segmentación con Vision, lotes y agentes en paralelo. Úsala antes de lanzar renders, transcripciones, conversiones, recortes o procesos en lote, y al escribir el encargo de un subagente que los vaya a hacer, aunque nadie hable de rendimiento. Piloto: macOS en Apple Silicon. En Windows diagnostica y mide, pero no recomienda nada hasta tener mediciones de equipos reales. No la uses para escribir contenido, diseño visual ni el método editorial de carruseles y reels (eso es carrusel-editorial-lobo y expediente-lobo).
 ---
 
 # Rendimiento del equipo
@@ -12,7 +12,8 @@ huella cambia y se empieza de cero sin heredar nada falso.
 
 ## Flujo
 
-Rutas relativas a la carpeta de esta skill. Necesita Python 3; no instala nada ni usa red.
+Rutas relativas a la carpeta de esta skill. Necesita Python 3; no instala nada ni usa red. En Windows el
+comando suele ser `python` o `py -3` en lugar de `python3`, y el paso 2 no recomienda: lee `references/windows.md`.
 
 1. `python3 scripts/diagnosticar.py` (con `--proyecto <ruta>` si hay un proyecto Remotion). Entrega un JSON del
    equipo. Si falta Swift sigue sin Metal, video, Neural Engine y térmico, y lo dice en `avisos`.
@@ -51,7 +52,7 @@ Rutas relativas a la carpeta de esta skill. Necesita Python 3; no instala nada n
 | Lanzar, reutilizar o apagar el servidor de transcripción; Core ML o Metal | `references/whisper.md` |
 | Entender presión de memoria, swap y los frenos | `references/memoria.md` |
 | Escribir encargos para subagentes, repartir trabajo, verificar, limpiar | `references/agentes.md` |
-| Trabajar en Windows (fase 2, sin soporte medido) | `references/windows.md` |
+| Trabajar en Windows (diagnóstico y mediciones; sin recomendaciones todavía) | `references/windows.md` |
 | Ver de dónde sale cada afirmación y qué tan fuerte es | `references/fuentes.md` |
 | Formato del perfil medido que crea `medir.py` | `assets/perfil.ejemplo.json` |
 | Probar la skill (consultas de disparo y casos de comportamiento) | `evals/evals.json` |
@@ -61,7 +62,10 @@ Rutas relativas a la carpeta de esta skill. Necesita Python 3; no instala nada n
 - Sin Swift (`xcode-select --install`): el diagnóstico sigue incompleto y `perfil.py` usa ffmpeg como respaldo,
   con aviso. Con `-allow_sw 0` ffmpeg falla en vez de caer a CPU sin avisar.
 - Sin perfil medido para esta huella: todo viene de fórmula y `perfil.py` lo dice. Se corrige midiendo.
-- Sistema que no es macOS: `diagnosticar.py` responde «sin soporte medido todavía» y no hay recomendaciones.
+- Windows: `diagnosticar.py` describe el equipo y prueba qué codificadores por hardware abren; `medir.py` compara
+  codificar y decodificar; `perfil.py` resume sin recomendar y da un bloque para subagentes con las reglas que no
+  dependen del equipo. `limpiar.py` solo muestra. Remotion no se mide todavía.
+- Otro sistema (Linux): `diagnosticar.py` responde «sin soporte medido todavía» y no hay recomendaciones.
 - Un proceso que `limpiar.py` marca como protegido o en uso no se toca con ninguna opción, ni con `--pid`.
 - Para registrar una decisión a mano, edita `perfil-medido.json` con el formato de `assets/perfil.ejemplo.json`
   y anota el porqué en `mediciones.md`.

@@ -1,5 +1,19 @@
 # Cambios
 
+## 1.1.0 · 28.10.2026
+
+- Windows, primera fase: diagnóstico y mediciones, sin recomendaciones hasta medir equipos reales.
+  - `diagnosticar.py` lee en Windows los núcleos por clase de eficiencia, la memoria, el archivo de paginación, los
+    adaptadores de video con su VRAM, la NPU y el ahorro de energía (`plataforma_windows.py`, solo biblioteca
+    estándar). Abre de verdad cada codificador y acelerador por hardware con un clip de 1 s.
+  - `medir.py` compara libx264 con NVENC, QSV, AMF y Media Foundation, y la decodificación en CPU con cuda, qsv y
+    d3d11va. En Windows mide la CPU con `GetProcessTimes`. Remotion todavía no se mide en Windows.
+  - `perfil.py` resume el diagnóstico sin recomendar y entrega las reglas que no dependen del equipo.
+  - `limpiar.py` en Windows solo muestra.
+  - `install.ps1` enlaza con junctions, sin administrador, y funciona en Windows PowerShell 5.1 y PowerShell 7.
+- Pruebas de humo en GitHub Actions para Windows y macOS (`pruebas/`).
+- macOS sin cambios de comportamiento: misma huella y mismas recomendaciones en el Mac piloto.
+
 ## 1.0.1 · 27.10.2026
 
 - `perfil.py` reparte Remotion con todos los núcleos que no son de eficiencia, no solo con el nivel 0. Desde el

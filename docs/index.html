@@ -457,6 +457,12 @@ h2{font-size:clamp(2.1rem,1.1rem + 3.8vw,4rem);font-weight:650;letter-spacing:-.
 .install .pane.on{display:block}
 .install .pane .ln{opacity:1;transform:none}
 .install .pane .ln::before{content:"$ ";color:var(--text-3)}
+.install .pane[data-so="win"] .ln::before{content:"PS> "}
+.so-row{grid-column:1/-1;display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.so-row .seg{margin-left:0}
+.so-row .seg button[aria-pressed="true"]{background:var(--panel);color:var(--text);box-shadow:0 1px 2px rgba(0,0,0,.2)}
+.so-row .lab{font-size:12px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:var(--text-3)}
+.pick-win{margin:14px auto 0;max-width:46em;text-align:center;color:var(--text-3);font-size:14px}
 .copy{display:inline-flex;align-items:center;gap:6px;font:500 12.5px var(--sans);color:var(--text-2);background:transparent;border:1px solid var(--line-2);border-radius:8px;padding:5px 10px;cursor:pointer}
 .copy:hover{color:var(--text);border-color:var(--text-3)}
 .copy svg.i{width:14px;height:14px}
@@ -549,7 +555,7 @@ footer .wrap{display:flex;justify-content:space-between;gap:12px 24px;flex-wrap:
   <section class="hero" id="hero">
     <div class="wrap">
       <div class="hero-txt" id="hero-txt">
-        <a class="tag" href="#instalar"><span class="dot"></span>Skill para Claude Code y Codex · v1.0.1</a>
+        <a class="tag" href="#instalar"><span class="dot"></span>Skill para Claude Code y Codex · v1.1.0</a>
         <h1 class="grad">Cada tarea, al motor que mejor la hace.</h1>
         <p class="sub"><b>rendimiento-equipo</b> mira tu Mac antes de un render, una transcripción o un lote, y reparte el trabajo entre la CPU, la GPU, el Neural Engine y el motor de video. Lo que mide en tu equipo manda.</p>
         <div class="ctas">
@@ -603,6 +609,7 @@ presión normal · swap creciendo: no · térmico nominal</pre></div>
       <div class="pick-grid" id="pick-grid" role="group" aria-label="Chip"></div>
       <div class="pick-mem" id="pick-mem" role="group" aria-label="Memoria"></div>
       <p class="pick-sum" id="pick-sum" aria-live="polite"></p>
+      <p class="pick-win">¿Usas Windows? La skill ya describe y mide tu equipo; recomienda cuando tengamos equipos medidos. <a href="https://github.com/sebaslobo22/rendimiento-equipo#windows">Ayuda a medir</a>.</p>
     </div>
   </section>
 
@@ -851,30 +858,35 @@ presión normal · swap creciendo: no · térmico nominal</pre></div>
         <div class="term chat-win morph" data-para="app" style="--rad:16px">
           <div class="term-bar"><span class="lights"><i></i><i></i><i></i></span><div class="seg" role="tablist" aria-label="Mensajes para tu agente"><button role="tab" aria-selected="true">Instalar</button><button role="tab" aria-selected="false">Probar</button><button role="tab" aria-selected="false">Actualizar</button><button role="tab" aria-selected="false">Quitar</button></div><button class="copy" type="button" aria-label="Copiar"><svg class="i"><use href="#i-copy"/></svg><span>Copiar</span></button></div>
           <div class="panes">
-            <div class="pane on"><p class="msg">Instala la skill rendimiento-equipo. Clona https://github.com/sebaslobo22/rendimiento-equipo en ~/rendimiento-equipo, muéstrame qué hará ./install.sh --prueba y, si te digo que sí, ejecuta ./install.sh.</p><p class="msg-ai"><svg class="i"><use href="#i-check"/></svg><span>El agente descarga la skill, te enseña lo que va a enlazar y te pide permiso antes de instalarla.</span></p></div>
+            <div class="pane on"><p class="msg">Instala la skill rendimiento-equipo. Clona https://github.com/sebaslobo22/rendimiento-equipo en la carpeta rendimiento-equipo de mi usuario, muéstrame qué hará el instalador en modo de prueba (./install.sh --prueba en Mac, .\install.ps1 -Prueba en Windows) y, si te digo que sí, ejecútalo.</p><p class="msg-ai"><svg class="i"><use href="#i-check"/></svg><span>El agente descarga la skill, te enseña lo que va a enlazar y te pide permiso antes de instalarla.</span></p></div>
             <div class="pane"><p class="msg">Usa la skill rendimiento-equipo para revisar mi Mac y dime qué recomienda para renders y transcripciones.</p><p class="msg-ai"><svg class="i"><use href="#i-check"/></svg><span>Corre el diagnóstico y te dice qué motor usar para cada tarea, con los frenos que vea activos.</span></p></div>
             <div class="pane"><p class="msg">Actualiza la skill rendimiento-equipo con git pull en ~/rendimiento-equipo.</p><p class="msg-ai"><svg class="i"><use href="#i-check"/></svg><span>Baja la última versión. No hace falta volver a instalarla.</span></p></div>
-            <div class="pane"><p class="msg">Desinstala la skill rendimiento-equipo con ~/rendimiento-equipo/install.sh --desinstalar.</p><p class="msg-ai"><svg class="i"><use href="#i-check"/></svg><span>Quita solo los enlaces de la skill. La carpeta ~/rendimiento-equipo queda donde está.</span></p></div>
+            <div class="pane"><p class="msg">Desinstala la skill rendimiento-equipo con su instalador en la carpeta rendimiento-equipo de mi usuario (./install.sh --desinstalar en Mac, .\install.ps1 -Desinstalar en Windows).</p><p class="msg-ai"><svg class="i"><use href="#i-check"/></svg><span>Quita solo los enlaces de la skill. La carpeta ~/rendimiento-equipo queda donde está.</span></p></div>
           </div>
           <p class="inst-foot">Copia el mensaje y pégalo en tu agente. Necesita Python 3: si macOS te pide instalar las herramientas de desarrollo de Apple, acepta.</p>
         </div>
-        <div class="term morph" data-para="cli" style="--rad:16px" hidden>
+        <div class="so-row" data-para="cli" hidden><span class="lab">Tu sistema</span><div class="seg" role="group" aria-label="Sistema"><button type="button" data-so="mac" aria-pressed="true">macOS</button><button type="button" data-so="win" aria-pressed="false">Windows</button></div></div>
+        <div class="term morph" data-para="cli" data-so="mac" style="--rad:16px" hidden>
           <div class="term-bar"><span class="lights"><i></i><i></i><i></i></span><div class="seg" role="tablist" aria-label="Comandos"><button role="tab" aria-selected="true" data-p="0">Instalar</button><button role="tab" aria-selected="false" data-p="1">Probar</button><button role="tab" aria-selected="false" data-p="2">Actualizar</button><button role="tab" aria-selected="false" data-p="3">Quitar</button></div><button class="copy" type="button" aria-label="Copiar"><svg class="i"><use href="#i-copy"/></svg><span>Copiar</span></button></div>
           <div class="panes">
-            <div class="pane on"><pre><span class="ln">git clone https://github.com/sebaslobo22/rendimiento-equipo.git ~/rendimiento-equipo</span><span class="ln">cd ~/rendimiento-equipo</span><span class="ln">./install.sh</span></pre></div>
-            <div class="pane"><pre><span class="ln">python3 ~/rendimiento-equipo/skills/rendimiento-equipo/scripts/perfil.py --formato texto</span></pre></div>
-            <div class="pane"><pre><span class="ln">cd ~/rendimiento-equipo &amp;&amp; git pull</span></pre></div>
-            <div class="pane"><pre><span class="ln">~/rendimiento-equipo/install.sh --desinstalar</span></pre></div>
+            <div class="pane on" data-so="mac"><pre><span class="ln">git clone https://github.com/sebaslobo22/rendimiento-equipo.git ~/rendimiento-equipo</span><span class="ln">cd ~/rendimiento-equipo</span><span class="ln">./install.sh</span></pre></div>
+            <div class="pane" data-so="mac"><pre><span class="ln">python3 ~/rendimiento-equipo/skills/rendimiento-equipo/scripts/perfil.py --formato texto</span></pre></div>
+            <div class="pane" data-so="mac"><pre><span class="ln">cd ~/rendimiento-equipo &amp;&amp; git pull</span></pre></div>
+            <div class="pane" data-so="mac"><pre><span class="ln">~/rendimiento-equipo/install.sh --desinstalar</span></pre></div>
+            <div class="pane" data-so="win"><pre><span class="ln">git clone https://github.com/sebaslobo22/rendimiento-equipo.git $HOME\rendimiento-equipo</span><span class="ln">cd $HOME\rendimiento-equipo</span><span class="ln">.\install.ps1</span></pre></div>
+            <div class="pane" data-so="win"><pre><span class="ln">python $HOME\rendimiento-equipo\skills\rendimiento-equipo\scripts\perfil.py --formato texto</span></pre></div>
+            <div class="pane" data-so="win"><pre><span class="ln">cd $HOME\rendimiento-equipo; git pull</span></pre></div>
+            <div class="pane" data-so="win"><pre><span class="ln">$HOME\rendimiento-equipo\install.ps1 -Desinstalar</span></pre></div>
           </div>
           <p class="inst-foot">Queda enlazada en <span class="k-code">~/.claude/skills/</span> y <span class="k-code">~/.agents/skills/</span>. Abre una sesión nueva y pide un render o una transcripción: la skill se activa sola.</p>
         </div>
         <ol class="pasos" data-para="app">
-          <li><b>Abre Claude Desktop en la pestaña Code, o la app de Codex.</b><span>Tienen que trabajar en tu Mac. El chat normal de Claude y las tareas en la nube de Codex no ven tu equipo.</span></li>
+          <li><b>Abre Claude Desktop en la pestaña Code, o la app de Codex.</b><span>Tienen que trabajar en tu equipo, Mac o Windows. El chat normal de Claude y las tareas en la nube de Codex no lo ven.</span></li>
           <li><b>Pega el mensaje y acepta cuando te pida permiso.</b><span>El agente descarga la skill y la instala. Tú no escribes ningún comando.</span></li>
           <li><b>Abre una conversación nueva y pide lo de siempre.</b><span>La skill revisa tu Mac y elige el motor. Si no sabes por dónde empezar, abajo tienes tres pruebas.</span></li>
         </ol>
         <ol class="pasos" data-para="cli" hidden>
-          <li><b>Pega los tres comandos.</b><span><span class="k-code">install.sh</span> enlaza la skill donde la buscan Claude Code y Codex. No copia archivos, no instala dependencias y no usa la red.</span></li>
+          <li><b>Pega los tres comandos.</b><span>El instalador (<span class="k-code">install.sh</span> o <span class="k-code">install.ps1</span>) enlaza la skill donde la buscan Claude Code y Codex. No copia archivos, no instala dependencias y no usa la red.</span></li>
           <li><b>Abre una sesión nueva de <span class="k-code">claude</span> o <span class="k-code">codex</span>.</b><span>Las skills se cargan al empezar la sesión.</span></li>
           <li><b>Pide lo de siempre.</b><span>Se activa sola con renders, transcripciones, conversiones y lotes. En Claude Code también la llamas con <span class="k-code">/rendimiento-equipo</span>. Abajo, tres pruebas para empezar.</span></li>
         </ol>
@@ -891,7 +903,7 @@ presión normal · swap creciendo: no · térmico nominal</pre></div>
         <div class="compat">
           <div class="cp morph" style="--c:var(--ok)"><span class="st"></span><b>macOS en Apple Silicon</b><span>Diagnóstico completo. Medido en un M4 Pro de 24 GB.</span></div>
           <div class="cp morph" style="--c:var(--warn)"><span class="st"></span><b>macOS sin herramientas de Xcode</b><span>Diagnóstico parcial, con aviso. Se completa con <span class="k-code">xcode-select --install</span>.</span></div>
-          <div class="cp morph" style="--c:var(--text-3)"><span class="st"></span><b>Windows</b><span>Segunda fase. Hoy responde «sin soporte medido todavía».</span></div>
+          <div class="cp morph" style="--c:var(--text-3)"><span class="st"></span><b>Windows 10 y 11</b><span>Diagnóstico y mediciones listos. Recomienda cuando haya equipos medidos.</span></div>
           <div class="cp morph" style="--c:var(--text-4)"><span class="st"></span><b>Linux</b><span>Sin soporte.</span></div>
         </div>
       <p class="note morph"><svg class="i"><use href="#i-person"/></svg><span>Te sirve si usas Claude Code o Codex en una Mac con Apple Silicon para video, audio, Remotion o lotes de archivos. Si solo chateas con una IA en el navegador, no hace nada.</span></p>
@@ -931,7 +943,7 @@ presión normal · swap creciendo: no · térmico nominal</pre></div>
 </main>
 
 <footer>
-  <div class="wrap"><span>rendimiento-equipo v1.0.1 · Licencia MIT</span><span>Hecha por Sebastián Lobo · 27.10.2026</span></div>
+  <div class="wrap"><span>rendimiento-equipo v1.1.0 · Licencia MIT</span><span>Hecha por Sebastián Lobo · 27.10.2026</span></div>
 </footer>
 
 <div class="tip" id="tip" role="tooltip"></div>
@@ -1470,10 +1482,12 @@ presión normal · swap creciendo: no · térmico nominal</pre></div>
 
   // Instalar: dos caminos (apps o terminal), cada uno con pestañas y botón de copiar
   $$(".install .term").forEach(function (win) {
-    var tabs = $$(".seg button", win), panes = $$(".pane", win), copyBtn = $(".copy", win), cur = 0;
-    tabs.forEach(function (b, j) { b.addEventListener("click", function () { cur = j; tabs.forEach(function (x, k) { x.setAttribute("aria-selected", String(k === j)); }); panes.forEach(function (x, k) { x.classList.toggle("on", k === j); }); }); });
+    var tabs = $$(".seg button", win), copyBtn = $(".copy", win), cur = 0;
+    function panes() { return $$(".pane", win).filter(function (p) { return !p.dataset.so || p.dataset.so === win.dataset.so; }); }
+    win._mostrar = function (j) { cur = j; tabs.forEach(function (x, k) { x.setAttribute("aria-selected", String(k === j)); }); $$(".pane", win).forEach(function (x) { x.classList.remove("on"); }); panes()[j].classList.add("on"); };
+    tabs.forEach(function (b, j) { b.addEventListener("click", function () { win._mostrar(j); }); });
     copyBtn.addEventListener("click", function () {
-      var pane = panes[cur], msg = $(".msg", pane), txt = msg ? msg.textContent : $$(".ln", pane).map(function (l) { return l.textContent; }).join("\n");
+      var pane = panes()[cur], msg = $(".msg", pane), txt = msg ? msg.textContent : $$(".ln", pane).map(function (l) { return l.textContent; }).join("\n");
       var lab = copyBtn.querySelector("span");
       var ok = function () { lab.textContent = "Copiado"; copyBtn.classList.add("hecho"); setTimeout(function () { lab.textContent = "Copiar"; copyBtn.classList.remove("hecho"); }, 1600); };
       var sel = function () { var r = document.createRange(); r.selectNodeContents(msg || pane); var s = getSelection(); s.removeAllRanges(); s.addRange(r); };
@@ -1491,6 +1505,16 @@ presión normal · swap creciendo: no · térmico nominal</pre></div>
   var modoGuardado = null;
   try { modoGuardado = localStorage.getItem("rendimiento-equipo:modo"); } catch (e) {}
   ponerModo(modoGuardado === "cli" ? "cli" : "app", false);
+  // Terminal: macOS o Windows. Arranca en el sistema de quien visita, si el navegador lo dice.
+  var soRow = $(".so-row", install), termCli = $('.term[data-para="cli"]', install);
+  function ponerSo(so) {
+    termCli.dataset.so = so;
+    $$("button", soRow).forEach(function (b) { b.setAttribute("aria-pressed", String(b.dataset.so === so)); });
+    termCli._mostrar(0);
+  }
+  soRow.addEventListener("click", function (e) { var b = e.target.closest("button[data-so]"); if (b) ponerSo(b.dataset.so); });
+  var plat = (navigator.userAgentData && navigator.userAgentData.platform) || navigator.platform || navigator.userAgent || "";
+  ponerSo(/win/i.test(plat) ? "win" : "mac");
 
   // Primeros pasos: copiar el mensaje de cada prueba
   $$(".pp-card .copy").forEach(function (btn) {

@@ -5,7 +5,8 @@ recortes, lotes, agentes en paralelo) y manda cada tarea al motor que mejor la h
 eficiencia, GPU, Neural Engine o motor de video. Guarda lo que mide en cada máquina y lo usa por encima de las
 recetas genéricas.
 
-Piloto: macOS en Apple Silicon. Windows queda para una segunda fase, sin soporte medido todavía.
+Piloto: macOS en Apple Silicon. En Windows ya diagnostica y mide, pero no recomienda nada hasta tener mediciones
+de equipos reales ([cómo ayudar](#windows)).
 
 Página: https://sebaslobo22.github.io/rendimiento-equipo/ (fuente en [`docs/index.html`](docs/index.html))
 
@@ -29,15 +30,16 @@ Son cifras de un solo equipo. En el tuyo, `medir.py` las vuelve a medir antes de
 ## Instalar
 
 Te sirve si usas Claude Code o Codex en una Mac con Apple Silicon para video, audio, Remotion o lotes de archivos.
-Si solo chateas con una IA en el navegador, no hace nada.
+En Windows describe y mide el equipo, sin recomendar todavía. Si solo chateas con una IA en el navegador, no hace
+nada.
 
 ### Desde las apps (Claude Desktop o Codex)
 
-Abre Claude Desktop en la pestaña Code, o la app de Codex. Tienen que trabajar en tu Mac: el chat normal de Claude
-y las tareas en la nube de Codex no ven tu equipo. Pega este mensaje y acepta cuando el agente te pida permiso:
+Abre Claude Desktop en la pestaña Code, o la app de Codex. Tienen que trabajar en tu equipo: el chat normal de
+Claude y las tareas en la nube de Codex no lo ven. Pega este mensaje y acepta cuando el agente te pida permiso:
 
 ```text
-Instala la skill rendimiento-equipo. Clona https://github.com/sebaslobo22/rendimiento-equipo en ~/rendimiento-equipo, muéstrame qué hará ./install.sh --prueba y, si te digo que sí, ejecuta ./install.sh.
+Instala la skill rendimiento-equipo. Clona https://github.com/sebaslobo22/rendimiento-equipo en la carpeta rendimiento-equipo de mi usuario, muéstrame qué hará el instalador en modo de prueba (./install.sh --prueba en Mac, .\install.ps1 -Prueba en Windows) y, si te digo que sí, ejecútalo.
 ```
 
 Después abre una conversación nueva y pide lo de siempre, por ejemplo «convierte estos 3 videos a vertical». Para
@@ -64,6 +66,20 @@ cd ~/rendimiento-equipo
 Requisitos: Python 3. Para el diagnóstico completo (Metal, motores de video, Neural Engine y estado térmico) hacen
 falta las herramientas de línea de comandos de Xcode (`xcode-select --install`). Sin ellas funciona con menos
 datos y lo avisa.
+
+### Desde PowerShell, en Windows
+
+```powershell
+git clone https://github.com/sebaslobo22/rendimiento-equipo.git $HOME\rendimiento-equipo
+cd $HOME\rendimiento-equipo
+.\install.ps1
+```
+
+`install.ps1` hace lo mismo con *junctions* en `%USERPROFILE%\.claude\skills` y `%USERPROFILE%\.agents\skills`,
+sin pedir permisos de administrador. Opciones: `-Destino`, `-Prueba`, `-Desinstalar`. Si Windows bloquea el
+script, usa `powershell -ExecutionPolicy Bypass -File .\install.ps1`. Windows no trae Python: instálalo desde
+python.org o con `winget install Python.Python.3.12`. Para medir video hace falta ffmpeg
+(`winget install Gyan.FFmpeg`).
 
 ## Primeros pasos
 
@@ -111,19 +127,34 @@ recomienda serializar o bajar la concurrencia a la mitad.
 |---|---|
 | macOS en Apple Silicon | Diagnóstico completo. Medido en un M4 Pro de 24 GB. |
 | macOS sin herramientas de Xcode | Diagnóstico parcial, con aviso. |
-| Windows | Segunda fase. Responde «sin soporte medido todavía». |
+| Windows 10 y 11 | Diagnóstico y mediciones. Sin recomendaciones hasta medir equipos reales. Probado en las máquinas Windows de GitHub, que no tienen tarjeta gráfica. |
 | Linux | Sin soporte. |
+
+## Windows
+
+Para recomendar en Windows faltan mediciones en equipos reales: al menos uno con tarjeta NVIDIA, uno con gráfica
+Intel y uno con AMD. Si tienes uno y quieres ayudar, instala la skill y pega esto en Claude Code o Codex, en la
+carpeta de un video tuyo de unos 30 s:
+
+```text
+Usa la skill rendimiento-equipo. Corre perfil.py --formato texto, después medir.py codificar y medir.py decodificar con mi video y --registrar, y muéstrame el resultado y el archivo mediciones.md.
+```
+
+Comparte la salida de `perfil.py` y `mediciones.md`. El detalle de qué lee y cómo está en
+[`references/windows.md`](skills/rendimiento-equipo/references/windows.md).
 
 ## Estructura
 
 ```
 skills/rendimiento-equipo/
   SKILL.md                 lo que lee el agente (67 líneas, lo esencial arriba)
-  scripts/                 diagnosticar, perfil, medir, limpiar y la consulta en Swift
+  scripts/                 diagnosticar, perfil, medir, limpiar, la consulta en Swift y plataforma_windows
   references/              macos, ffmpeg, remotion, whisper, memoria, agentes, windows, fuentes
   evals/evals.json         consultas de disparo y casos de comportamiento
   assets/perfil.ejemplo.json
-install.sh
+install.sh                 instalador para macOS
+install.ps1                instalador para Windows
+pruebas/                   pruebas de humo que corre GitHub Actions en Windows y macOS
 docs/index.html            la página del proyecto
 ```
 
@@ -142,4 +173,5 @@ MIT. Ver [LICENSE](LICENSE).
 
 **In English.** A skill for Claude Code and Codex that inspects the machine before heavy local work (video encoding,
 transcription, segmentation, batches, parallel agents), routes each task to the engine that does it best, and keeps
-per-machine measurements outside the repo. Pilot: macOS on Apple Silicon. The skill and its docs are in Spanish.
+per-machine measurements outside the repo. Pilot: macOS on Apple Silicon. On Windows it diagnoses and measures,
+but makes no recommendations until real machines are measured. The skill and its docs are in Spanish.
