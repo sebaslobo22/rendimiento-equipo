@@ -495,10 +495,14 @@ def medir_paralelo(args):
             if not gana:
                 break
             elegido = n
-        cambios[("video", "codificaciones_paralelas")] = {
-            "valor": elegido, "codificador": cod, "escalado": {str(n): e for n, e in escalado.items()},
-            "estado": "gana", "fecha": hoy(),
-            "nota": "mayor numero de codificaciones a la vez que rinde al menos 15 % mas que el anterior"}
+        if seg >= 5:  # con clips cortos el arranque de ffmpeg pesa y las copias a la vez parecen rendir mas de lo que rinden
+            cambios[("video", "codificaciones_paralelas")] = {
+                "valor": elegido, "codificador": cod, "escalado": {str(n): e for n, e in escalado.items()},
+                "estado": "gana", "fecha": hoy(),
+                "nota": "mayor numero de codificaciones a la vez que rinde al menos 15 % mas que el anterior"}
+        else:
+            comps.append({"base": "registro", "candidato": "perfil", "ganador": None,
+                          "motivo": "menos de 5 s por copia: el arranque de ffmpeg exagera el resultado, no se registra"})
     filas = []
     for n in niveles:
         r = res[n]
