@@ -9,7 +9,8 @@ Subcomandos:
               En Windows, CPU frente a cada acelerador que abre (cuda, qsv, d3d11va).
   remotion    render corto de una composicion: base, angle, hardware y ambos (solo macOS por ahora)
 
-En Windows el tiempo de CPU cuenta solo el proceso de ffmpeg (GetProcessTimes), que no lanza otros.
+En Windows el tiempo de CPU sale de un Job Object, que suma el proceso y sus hijos: el ffmpeg de Chocolatey o
+Scoop es un atajo que lanza el ffmpeg real como hijo.
 
 Mide tiempo real y CPU (resource.getrusage de los hijos), y compara la calidad con la diferencia
 media de un fotograma (sobre 255). Intercala las repeticiones (A,B,C,A,B,C...) para repartir el ruido.
@@ -82,8 +83,13 @@ def correr(cmd, cwd=None, timeout=1800):
     del proceso lanzado en Windows."""
     antes = resource.getrusage(resource.RUSAGE_CHILDREN) if resource else None
     t0 = time.perf_counter()
-    p = subprocess.Popen(cmd, cwd=cwd, stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL,
-                         stderr=subprocess.PIPE, text=True, encoding="utf-8", errors="replace")
+    kw = dict(cwd=cwd, stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL, stderr=subprocess.PIPE,
+              text=True, encoding="utf-8", errors="replace")
+    if resource:
+        p = subprocess.Popen(cmd, **kw)
+    else:
+        import plataforma_windows as pw
+        p = pw.lanzar_contado(cmd, **kw)  # Job Object: cuenta tambien los hijos (atajos de Chocolatey o Scoop)
     try:
         _, err = p.communicate(timeout=timeout)
         rc = p.returncode

@@ -83,6 +83,8 @@ def cpu(ruta_diag):
                   "testsrc2=size=1280x720:rate=30:duration=3", "-c:v", "libx264", "-f", "null", "-"])
     if r["rc"] != 0 or not r["cpu_s"] or r["cpu_s"] <= 0:
         falla("correr() no midio CPU: %r" % r)
+    if r["cpu_s"] < 0.5 * r["real_s"]:  # libx264 usa al menos un nucleo entero: menos es medir un atajo y no ffmpeg
+        falla("CPU sospechosamente baja para libx264: %r" % r)
     print("OK cpu: %r" % r)
 
 

@@ -296,11 +296,67 @@ def listar_procesos():
 
 # ---------------------------------------------------------------- tiempo de CPU para medir.py
 
-def tiempo_cpu(proceso):
-    """Segundos de CPU (usuario + nucleo) de un subprocess.Popen ya terminado. None si no se puede.
+CREAR_SUSPENDIDO = 0x00000004
+CONTABILIDAD_BASICA = 1  # JobObjectBasicAccountingInformation
 
-    Cuenta solo ese proceso, no sus hijos: alcanza para ffmpeg, que no lanza otros.
+
+class _Contabilidad(ctypes.Structure):
+    _fields_ = [("TotalUserTime", ctypes.c_longlong), ("TotalKernelTime", ctypes.c_longlong),
+                ("ThisPeriodTotalUserTime", ctypes.c_longlong), ("ThisPeriodTotalKernelTime", ctypes.c_longlong),
+                ("TotalPageFaultCount", wintypes.DWORD), ("TotalProcesses", wintypes.DWORD),
+                ("ActiveProcesses", wintypes.DWORD), ("TotalTerminatedProcesses", wintypes.DWORD)]
+
+
+def lanzar_contado(cmd, **kw):
+    """subprocess.Popen dentro de un Job Object, para que el tiempo de CPU cuente tambien a los hijos.
+
+    Hace falta porque el ffmpeg de Chocolatey o Scoop es un atajo que lanza el ffmpeg real como hijo:
+    sin esto se mediria solo el atajo. El proceso nace suspendido, entra al trabajo y recien ahi arranca,
+    asi ningun hijo se escapa. Si algo falla, cae a un Popen normal.
     """
+    try:
+        k32 = _kernel32()
+        ntdll = ctypes.WinDLL("ntdll")
+        k32.CreateJobObjectW.argtypes = [ctypes.c_void_p, wintypes.LPCWSTR]
+        k32.CreateJobObjectW.restype = wintypes.HANDLE
+        k32.AssignProcessToJobObject.argtypes = [wintypes.HANDLE, wintypes.HANDLE]
+        k32.AssignProcessToJobObject.restype = wintypes.BOOL
+        ntdll.NtResumeProcess.argtypes = [wintypes.HANDLE]
+        ntdll.NtResumeProcess.restype = ctypes.c_long
+        trabajo = k32.CreateJobObjectW(None, None)
+    except (OSError, AttributeError):
+        return subprocess.Popen(cmd, **kw)
+    if not trabajo:
+        return subprocess.Popen(cmd, **kw)
+    p = subprocess.Popen(cmd, creationflags=CREAR_SUSPENDIDO, **kw)
+    asignado = bool(k32.AssignProcessToJobObject(trabajo, wintypes.HANDLE(int(p._handle))))
+    if ntdll.NtResumeProcess(wintypes.HANDLE(int(p._handle))) != 0:  # no arranco: no dejarlo colgado
+        p.kill()
+        k32.CloseHandle(trabajo)
+        return subprocess.Popen(cmd, **kw)
+    if asignado:
+        p._trabajo = trabajo
+    else:
+        k32.CloseHandle(trabajo)
+    return p
+
+
+def tiempo_cpu(proceso):
+    """Segundos de CPU (usuario + nucleo) de un proceso ya terminado y de sus hijos. None si no se puede.
+
+    Con lanzar_contado lee el Job Object (incluye hijos); si no, solo el proceso (GetProcessTimes).
+    """
+    trabajo = getattr(proceso, "_trabajo", None)
+    if trabajo:
+        k32 = _kernel32()
+        k32.QueryInformationJobObject.argtypes = [wintypes.HANDLE, ctypes.c_int, ctypes.c_void_p, wintypes.DWORD, ctypes.c_void_p]
+        k32.QueryInformationJobObject.restype = wintypes.BOOL
+        info = _Contabilidad()
+        ok = k32.QueryInformationJobObject(trabajo, CONTABILIDAD_BASICA, ctypes.byref(info), ctypes.sizeof(info), None)
+        k32.CloseHandle(trabajo)
+        proceso._trabajo = None
+        if ok:
+            return round((info.TotalUserTime + info.TotalKernelTime) / 1e7, 2)
     ft = [wintypes.FILETIME() for _ in range(4)]
     try:
         k32 = _kernel32()

@@ -27,7 +27,7 @@ todo el chip, y en Windows cada equipo mezcla procesador, tarjeta gráfica y con
 | Estado térmico | Windows no tiene uno estándar: queda en `null`. | — |
 | Ahorro de energía | `GetSystemPowerStatus`. | Oficial |
 | Procesos pesados | CIM `Win32_Process`. Un proceso es huérfano si su padre ya no existe (Windows no los pasa a otro padre). | Criterio |
-| Tiempo de CPU en `medir.py` | `GetProcessTimes` del proceso de ffmpeg (no cuenta hijos; ffmpeg no lanza otros). | Oficial |
+| Tiempo de CPU en `medir.py` | Un Job Object suma el proceso y sus hijos. Hace falta: el ffmpeg de Chocolatey o Scoop es un atajo que lanza el real como hijo, y medir solo el atajo dio 0,03 s de CPU para 0,68 s reales en la máquina de GitHub. | Oficial + medición |
 
 Que un ffmpeg traiga un codificador no prueba que el equipo lo abra: sin la tarjeta o su controlador, falla al
 abrir. Por eso `diagnosticar.py` lo abre con un clip de prueba. Que abra tampoco prueba que convenga: eso lo
