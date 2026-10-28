@@ -8,9 +8,12 @@ Medición / Criterio. Enlaces en `fuentes.md`.
 - Por defecto Remotion usa la mitad de los hilos. Subirla demasiado produce «Target closed» o SIGKILL (Oficial).
   Se mide con `npx remotion benchmark --concurrencies` (Oficial).
 - Fórmula de `perfil.py` (Criterio, heredada de una regla práctica; se sustituye con lo medido):
-  - un render solo: `round(núcleos del nivel 0 × 0,6)`;
-  - varios en paralelo: `núcleos del nivel 0 × 0,9 ÷ renders`, y se toma el menor de los dos.
-  Los «núcleos del nivel 0» salen de `hw.perflevel0.physicalcpu`; no se asume cuántos niveles hay.
+  - un render solo: `round(núcleos para render × 0,6)`;
+  - varios en paralelo: `núcleos para render × 0,9 ÷ renders`, y se toma el menor de los dos.
+  Los «núcleos para render» son la suma de `hw.perflevelN.physicalcpu` de cada nivel cuyo nombre no es
+  «Efficiency». Hasta el M4 eso es el nivel 0. Desde el M5 Pro, Apple tiene chips con dos niveles rápidos
+  (súper y rendimiento) y se suman los dos (Oficial: Apple dice que los de rendimiento se unen a los súper en
+  trabajo multihilo). Si algún nivel no trae nombre, se usa solo el nivel 0. No se asume cuántos niveles hay.
 - Para fijar un valor medido: en `perfil-medido.json`, `remotion.concurrencia_por_render` = `{"1": 6, "3": 3}`
   (la clave es el número de renders en paralelo). Lo medido gana a la fórmula.
 - Frenos: memoria (presión ≥2 o swap creciendo) → un render a la vez; térmico serious o critical → mitad de

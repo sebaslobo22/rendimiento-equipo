@@ -18,7 +18,7 @@ Nivel de evidencia: Oficial (docs de Apple) salvo donde se indica. Enlaces en `f
 
 | Capacidad | Cómo se consulta | Nota |
 |---|---|---|
-| Niveles de CPU | `sysctl hw.nperflevels`; para cada N: `hw.perflevelN.{name,physicalcpu,logicalcpu,cpusperl2}` | El nivel 0 es el más rápido. No asumir 2 niveles ni que el 1 se llame «Efficiency» (hay reportes de chips con «Super» y «Performance»). |
+| Niveles de CPU | `sysctl hw.nperflevels`; para cada N: `hw.perflevelN.{name,physicalcpu,logicalcpu,cpusperl2}` | El nivel 0 es el más rápido. No asumir 2 niveles ni que el 1 se llame «Efficiency»: desde el M5 Pro Apple tiene núcleos súper y de rendimiento, con o sin eficiencia. `perfil.py` suma para Remotion los niveles que no se llaman «Efficiency». |
 | Núcleos lógicos, página, memoria | `hw.logicalcpu`, `hw.pagesize`, `hw.memsize` | |
 | Marca y modelo | `machdep.cpu.brand_string`, `hw.model` | Solo informativos. No decidir por nombre de chip. |
 | Núcleos de GPU | `system_profiler SPDisplaysDataType -json` → `sppci_cores` | Tarda ~0,2 s. |

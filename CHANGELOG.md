@@ -1,5 +1,13 @@
 # Cambios
 
+## 1.0.1 · 27.10.2026
+
+- `perfil.py` reparte Remotion con todos los núcleos que no son de eficiencia, no solo con el nivel 0. Desde el
+  M5 Pro, Apple tiene núcleos súper y de rendimiento, y antes solo contaban los súper: en un M5 Pro con 3 renders
+  daba `--concurrency=1`; ahora da 5. En chips de dos niveles (hasta el M4) el resultado no cambia. Si algún nivel
+  no trae nombre, sigue usando solo el nivel 0. `medir.py` usa la misma cuenta.
+- La salida de `perfil.py` cambia `nucleos_nivel0` por `nucleos_para_render` y `niveles_para_render`.
+
 ## Página · 27.10.2026
 
 - Selector de Apple Silicon, del M1 al M6 (20 chips): la página cambia el dibujo del chip, sus motores, el ejemplo

@@ -310,10 +310,7 @@ def medir_remotion(args):
     if not re.fullmatch(r"\d+-\d+", args.fotogramas):
         raise ErrorUso("--fotogramas debe verse como 0-149")
     ffmpeg = resolver_ffmpeg(args)
-    cpu = dg.leer_cpu()
-    niv = cpu.get("niveles") or []
-    n0 = (niv[0]["nucleos_fisicos"] if niv else None) or cpu.get("logicalcpu") or 2
-    conc = args.concurrencia or pf.concurrencia_remotion(n0, 1)
+    conc = args.concurrencia or pf.concurrencia_remotion(pf.nucleos_para_render(dg.leer_cpu())[0], 1)
     nombres = [v.strip() for v in args.variantes.split(",") if v.strip()]
     for v in nombres:
         if v not in VAR_REMOTION:

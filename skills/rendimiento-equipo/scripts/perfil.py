@@ -29,8 +29,8 @@ import diagnosticar as dg  # noqa: E402
 
 # Criterios (no son mediciones): salen de la regla de la skill anterior y de la doc de Remotion.
 # Se pueden sustituir con lo medido (npx remotion benchmark --concurrencies) en perfil-medido.json.
-FRACCION_UN_RENDER = 0.6    # de los nucleos del nivel 0 que usa un render solo
-FRACCION_TOTAL = 0.9        # de los nucleos del nivel 0 que se reparten entre renders en paralelo
+FRACCION_UN_RENDER = 0.6    # de los nucleos para render (ver nucleos_para_render) que usa un render solo
+FRACCION_TOTAL = 0.9        # de los nucleos para render que se reparten entre renders en paralelo
 FRACCION_CACHE = 0.25       # de la memoria total para las cache de OffthreadVideo, repartida entre renders
 BITRATE_FINAL = "12M"
 BITRATE_PREVIA = "3500k"
@@ -183,17 +183,33 @@ def calcular_ffmpeg(d, medido):
     }, avisos
 
 
-def concurrencia_remotion(nucleos_n0, renders):
-    unico = max(1, round(nucleos_n0 * FRACCION_UN_RENDER))
-    reparto = max(1, int(nucleos_n0 * FRACCION_TOTAL) // max(1, renders))
+def nucleos_para_render(cpu):
+    """Nucleos fisicos de los niveles que no son de eficiencia, y sus nombres.
+
+    Hasta el M4 eran el nivel 0 ("Performance"). Desde el M5 Pro hay chips con dos niveles rapidos
+    ("Super" y "Performance", con o sin "Efficiency") y Remotion aprovecha los dos. Si algun nivel
+    no trae nombre no se puede saber cual es de eficiencia, y se usa solo el nivel 0.
+    """
+    niveles = cpu.get("niveles") or []
+    if not niveles:
+        return cpu.get("logicalcpu") or 2, []
+    if all(n.get("nombre") for n in niveles):
+        rapidos = [n for n in niveles if "efficien" not in n["nombre"].lower()] or niveles[:1]
+    else:
+        rapidos = niveles[:1]
+    total = sum(n.get("nucleos_fisicos") or 0 for n in rapidos) or cpu.get("logicalcpu") or 2
+    return total, [n.get("nombre") or "nivel %s" % n.get("indice", 0) for n in rapidos]
+
+
+def concurrencia_remotion(nucleos, renders):
+    unico = max(1, round(nucleos * FRACCION_UN_RENDER))
+    reparto = max(1, int(nucleos * FRACCION_TOTAL) // max(1, renders))
     return min(unico, reparto)
 
 
 def calcular_remotion(d, medido, renders, frenos):
     m = medido.get("remotion", {})
-    cpu = d.get("cpu") or {}
-    niveles = cpu.get("niveles") or []
-    n0 = (niveles[0].get("nucleos_fisicos") if niveles else None) or cpu.get("logicalcpu") or 2
+    nucleos, niveles_render = nucleos_para_render(d.get("cpu") or {})
     efectivos = renders
     notas = []
     if frenos["memoria"]["activo"]:
@@ -206,7 +222,7 @@ def calcular_remotion(d, medido, renders, frenos):
     if isinstance(mc, int) and mc > 0:
         conc, o_conc = mc, "medido"
     else:
-        conc, o_conc = concurrencia_remotion(n0, efectivos), "formula"
+        conc, o_conc = concurrencia_remotion(nucleos, efectivos), "formula"
     if frenos["termico"]["activo"]:
         conc = max(1, conc // 2)
         notas.append("freno termico (%s): mitad de concurrencia" % frenos["termico"]["estado"])
@@ -244,7 +260,8 @@ def calcular_remotion(d, medido, renders, frenos):
     return {
         "renders_pedidos": renders,
         "renders_en_paralelo": efectivos,
-        "nucleos_nivel0": n0,
+        "nucleos_para_render": nucleos,
+        "niveles_para_render": niveles_render,
         "concurrencia_por_render": conc,
         "origen_concurrencia": o_conc,
         "flags": flags,
@@ -413,7 +430,9 @@ def a_texto(d, p):
     r = p["remotion"]
     L.append("")
     L.append("REMOTION  %d render(es) pedidos, %d en paralelo" % (r["renders_pedidos"], r["renders_en_paralelo"]))
-    L.append("  concurrencia   %d por render (nucleos nivel 0: %d) [%s]" % (r["concurrencia_por_render"], r["nucleos_nivel0"], r["origen_concurrencia"]))
+    L.append("  concurrencia   %d por render (nucleos para render: %d, %s) [%s]" % (
+        r["concurrencia_por_render"], r["nucleos_para_render"], " + ".join(r["niveles_para_render"]) or "sin niveles",
+        r["origen_concurrencia"]))
     L.append("  flags          %s" % " ".join(r["flags"]))
     L.append("  hardware       %s" % r["hardware_acceleration"])
     L.append("  --gl           %s" % r["gl"])
