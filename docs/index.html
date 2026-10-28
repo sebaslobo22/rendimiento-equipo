@@ -193,6 +193,43 @@ h2{font-size:clamp(2.1rem,1.1rem + 3.8vw,4rem);font-weight:650;letter-spacing:-.
 @media (max-width:1000px){.ba-card{grid-template-columns:1fr}.ba-sw+.ba-row+.ba-row{border-top:1px solid var(--line)}}
 @media (max-width:760px){.ba{height:auto}.ba-pin{position:static;min-height:0;padding-block:96px 40px}.ba-row{grid-template-columns:32px minmax(0,1fr) auto;gap:6px 10px}.ba-row .ico{width:32px;height:32px}.ba-val small{display:none}.ba-sw{pointer-events:none}.ba-sw button{font-size:12.5px;padding:8px 6px}}
 
+/* Selector de chip: la página se ajusta al Apple Silicon elegido */
+@media (max-width:920px){.links{display:none}}
+.chipbtn{display:inline-flex;align-items:center;gap:6px;padding:7px 12px;border-radius:999px;font-size:13.5px;font-weight:500;color:var(--text);background:var(--panel-2);white-space:nowrap;transition:background-color .3s}
+.chipbtn:hover{text-decoration:none;background:var(--panel-3)}
+.chipbtn svg.i{width:15px;height:15px;color:var(--accent-text)}
+@media (max-width:480px){.brand .bt{display:none}.brand{padding-right:4px}}
+.pick{padding-block:clamp(64px,8vw,110px) clamp(28px,4vw,60px)}
+.pick .head{margin-bottom:clamp(26px,4vw,40px)}
+.pick-grid{display:grid;grid-template-columns:auto repeat(4,minmax(0,1fr));gap:clamp(6px,1.1vw,10px);max-width:680px;margin-inline:auto;align-items:center}
+.pick-grid .yr{font-size:12px;font-weight:600;letter-spacing:.06em;color:var(--text-3);font-variant-numeric:tabular-nums;padding-right:6px;white-space:nowrap}
+.tile{position:relative;aspect-ratio:2/1;border:0;padding:0;border-radius:clamp(8px,1.3vw,14px);cursor:pointer;display:grid;place-content:center;justify-items:center;gap:3px;overflow:hidden;color:#c6dbf0;font-family:var(--sans);
+  background:radial-gradient(125% 115% at var(--bx) var(--by),#9ad8ff 0%,#4a92ff 12%,#1f48f2 27%,rgba(26,44,180,.55) 46%,transparent 70%),radial-gradient(90% 80% at 100% 0%,rgba(52,86,214,.45),transparent 62%),linear-gradient(155deg,#23232d 0%,#18181f 55%,#101017 100%);
+  box-shadow:inset 0 0 0 1px rgba(255,255,255,.14),inset 0 1px 0 rgba(255,255,255,.22);
+  filter:saturate(.15) brightness(.6);transition:filter .45s var(--ease),transform .45s var(--ease),box-shadow .3s}
+.tile:hover{filter:saturate(.7) brightness(.88);transform:translateY(-2px)}
+.tile[aria-pressed="true"]{filter:none;transform:translateY(-2px);animation:bloom 9s ease-in-out infinite alternate;box-shadow:inset 0 0 0 1px rgba(255,255,255,.3),inset 0 1px 0 rgba(255,255,255,.32),0 0 0 2px var(--accent),0 10px 28px rgba(30,80,255,.26)}
+.tile b{font-size:clamp(15px,.6rem + 1.5vw,28px);font-weight:600;line-height:1;letter-spacing:-.01em}
+.tile span{font-size:clamp(7.5px,.38rem + .4vw,11px);font-weight:600;letter-spacing:.1em;text-transform:uppercase;line-height:1}
+.tile i{position:absolute;top:7px;left:8px;font:600 9px/1 var(--sans);letter-spacing:.08em;text-transform:uppercase;font-style:normal;color:#42dec2}
+.tile.gap{background:none;box-shadow:none;border:1px dashed var(--line);filter:none;cursor:default}
+.pick-mem{display:flex;flex-wrap:wrap;justify-content:center;align-items:center;gap:8px;margin-top:clamp(20px,3vw,28px)}
+.pick-mem .lab{font-size:12px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:var(--text-3);margin-right:4px}
+.pill{font:500 13.5px var(--sans);color:var(--text-2);background:var(--panel);border:1px solid var(--line-2);padding:7px 13px;border-radius:999px;cursor:pointer;font-variant-numeric:tabular-nums;transition:background-color .3s,color .3s,border-color .3s}
+.pill:hover{color:var(--text);border-color:var(--text-3)}
+.pill[aria-pressed="true"]{background:var(--text);color:var(--bg);border-color:var(--text)}
+.pick-sum{margin:18px auto 0;max-width:48em;text-align:center;color:var(--text-2);font-size:15px;display:flex;flex-wrap:wrap;justify-content:center;align-items:center;gap:8px 12px}
+.mode{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:600;padding:4px 10px;border-radius:999px;color:var(--ok);background:color-mix(in srgb,var(--ok) 14%,transparent);white-space:nowrap}
+.mode::before{content:"";width:6px;height:6px;border-radius:50%;background:currentColor}
+.mode.est{color:var(--warn);background:color-mix(in srgb,var(--warn) 16%,transparent)}
+.kick-row{display:flex;flex-wrap:wrap;justify-content:center;align-items:center;gap:10px}
+.ba-row.na .ba-bar i,.ba-row.na .ba-val small{opacity:0}
+.ultra{position:absolute;right:1%;top:-3%;z-index:2;font:600 11.5px/1 var(--sans);letter-spacing:.1em;text-transform:uppercase;color:#c6dbf0;padding:6px 10px;border-radius:999px;background:rgba(31,72,242,.35);border:1px solid rgba(124,196,255,.4);opacity:var(--k)}
+.upd{animation:upd .7s var(--ease)}
+@keyframes upd{from{opacity:.15;filter:blur(6px)}to{opacity:1;filter:none}}
+@media (max-width:560px){.tile{aspect-ratio:16/10}.pick-grid{grid-template-columns:repeat(4,minmax(0,1fr))}.pick-grid .yr,.tile i{display:none}}
+@media (prefers-reduced-motion: reduce){.upd,.tile[aria-pressed="true"]{animation:none}.tile{transition:none}}
+
 /* Chip: arte en el lenguaje del anuncio del M4 Pro, dibujado aquí (vidrio con resplandor azul y plano de líneas) */
 @property --bx{syntax:"<percentage>";inherits:false;initial-value:0%}
 @property --by{syntax:"<percentage>";inherits:false;initial-value:100%}
@@ -461,11 +498,12 @@ footer .wrap{display:flex;justify-content:space-between;gap:12px 24px;flex-wrap:
 <div class="ambient" aria-hidden="true"><i></i><i></i></div>
 
 <nav class="nav" aria-label="Principal">
-  <a class="brand" href="#inicio"><span class="logo"><svg class="i"><use href="#i-cpu"/></svg></span>rendimiento-equipo</a>
+  <a class="brand" href="#inicio"><span class="logo"><svg class="i"><use href="#i-cpu"/></svg></span><span class="bt">rendimiento-equipo</span></a>
   <div class="links" id="links">
     <span class="ind" id="ind"></span>
     <a href="#resultados">Resultados</a><a href="#chip">Chip</a><a href="#tareas">Tareas</a><a href="#medido">Medido</a><a href="#como">Cómo</a>
   </div>
+  <a class="chipbtn" href="#tu-chip" id="nav-chip" title="Cambiar de chip"><svg class="i"><use href="#i-cpu"/></svg><span>M4 Pro</span></a>
   <a class="btn pri" href="#instalar">Instalar</a>
 </nav>
 
@@ -484,10 +522,10 @@ footer .wrap{display:flex;justify-content:space-between;gap:12px 24px;flex-wrap:
       </div>
 
       <div class="hero-stage" id="hero-stage">
-        <div class="float f1" data-par="0.14"><div class="card"><span class="ico" style="--c:var(--e-v)"><svg class="i"><use href="#i-film"/></svg></span><span><small>Motor de video</small><b>12 codificadores</b></span></div></div>
-        <div class="float f2" data-par="0.22"><div class="card"><span class="ico" style="--c:var(--e-a)"><svg class="i"><use href="#i-spark"/></svg></span><span><small>Neural Engine</small><b>16 núcleos</b></span></div></div>
+        <div class="float f1" data-par="0.14"><div class="card"><span class="ico" style="--c:var(--e-g)"><svg class="i"><use href="#i-gpu"/></svg></span><span><small>GPU</small><b id="h-gpu">20 núcleos</b></span></div></div>
+        <div class="float f2" data-par="0.22"><div class="card"><span class="ico" style="--c:var(--e-a)"><svg class="i"><use href="#i-spark"/></svg></span><span><small>Neural Engine</small><b id="h-ne">16 núcleos</b></span></div></div>
         <div class="float f3" data-par="0.18"><div class="card"><span class="ico" style="--c:var(--e-m)"><svg class="i"><use href="#i-swap"/></svg></span><span><small>Swap</small><b>Estable</b></span></div></div>
-        <div class="float f4" data-par="0.1"><div class="card"><span class="ico" style="--c:var(--ok)"><svg class="i"><use href="#i-timer"/></svg></span><span><small>Codificar 15 s</small><b>4,1 s en vez de 22,1</b></span></div></div>
+        <div class="float f4" data-par="0.1"><div class="card"><span class="ico" style="--c:var(--ok)"><svg class="i"><use href="#i-timer"/></svg></span><span><small>Codificar 15 s</small><b id="h-enc">4,1 s en vez de 22,1</b></span></div></div>
 
         <div class="win" id="win" role="img" aria-label="Ventana de Codex usando la skill rendimiento-equipo para renderizar tres videos">
           <div class="win-bar"><i></i><i></i><i></i><span>Codex</span></div>
@@ -503,12 +541,12 @@ footer .wrap{display:flex;justify-content:space-between;gap:12px 24px;flex-wrap:
             <div class="main">
               <div class="u">Renderiza los tres Reels en paralelo sin que se cuelgue la Mac.</div>
               <p class="ai">Primero miro el equipo con la skill <b>rendimiento-equipo</b>.</p>
-              <div class="cell"><div class="cell-h"><svg class="i"><use href="#i-term"/></svg><code>python3 scripts/diagnosticar.py</code><span class="okk"><svg class="i"><use href="#i-check"/></svg>Listo</span></div><pre>Apple M4 Pro · 10 Performance + 4 Efficiency · GPU 20 · Neural Engine 16 · 24 GB
+              <div class="cell"><div class="cell-h"><svg class="i"><use href="#i-term"/></svg><code>python3 scripts/diagnosticar.py</code><span class="okk"><svg class="i"><use href="#i-check"/></svg>Listo</span></div><pre id="h-diag">Apple M4 Pro · 10 Performance + 4 Efficiency · GPU 20 · Neural Engine 16 · 24 GB
 presión normal · swap creciendo: no · térmico nominal</pre></div>
-              <div class="cell"><div class="cell-h"><svg class="i"><use href="#i-term"/></svg><code>python3 scripts/perfil.py --renders 3</code><span class="okk"><svg class="i"><use href="#i-check"/></svg>Listo</span></div><pre>--concurrency=3 --hardware-acceleration=required --video-bitrate=12M
+              <div class="cell"><div class="cell-h"><svg class="i"><use href="#i-term"/></svg><code>python3 scripts/perfil.py --renders 3</code><span class="okk"><svg class="i"><use href="#i-check"/></svg>Listo</span></div><pre id="h-perf">--concurrency=3 --hardware-acceleration=required --video-bitrate=12M
 --offthreadvideo-cache-size-in-bytes=2147483648 · frenos: ninguno</pre></div>
-              <p class="ai">Lanzo los tres renders con el motor de video, 3 hilos y 2 GB de caché cada uno.</p>
-              <div class="chips"><span class="chip" style="--c:var(--e-v)"><svg class="i"><use href="#i-film"/></svg>Motor de video</span><span class="chip" style="--c:var(--e-p)"><svg class="i"><use href="#i-cpu"/></svg>3 × 3 hilos</span><span class="chip" style="--c:var(--e-m)"><svg class="i"><use href="#i-mem"/></svg>2 GB por render</span></div>
+              <p class="ai" id="h-ai">Lanzo los tres renders con el motor de video, 3 hilos y 2 GB de caché cada uno.</p>
+              <div class="chips"><span class="chip" style="--c:var(--e-v)"><svg class="i"><use href="#i-film"/></svg>Motor de video</span><span class="chip" style="--c:var(--e-p)"><svg class="i"><use href="#i-cpu"/></svg><span id="h-hilos">3 × 3 hilos</span></span><span class="chip" style="--c:var(--e-m)"><svg class="i"><use href="#i-mem"/></svg><span id="h-cache">2 GB por render</span></span></div>
               <div class="composer"><span>Pide otra tarea a Codex</span><span class="send"><svg class="i"><use href="#i-up"/></svg></span></div>
             </div>
           </div>
@@ -517,24 +555,39 @@ presión normal · swap creciendo: no · térmico nominal</pre></div>
     </div>
   </section>
 
+  <!-- Selector de chip -->
+  <section class="pick" id="tu-chip" aria-labelledby="pick-h">
+    <div class="wrap">
+      <div class="head morph">
+        <span class="kicker"><svg class="i"><use href="#i-cpu"/></svg>Tu chip</span>
+        <h2 class="grad" id="pick-h">¿Qué Apple Silicon tiene tu Mac?</h2>
+        <p>Elige el tuyo y la página se ajusta: el dibujo del chip, sus motores y las cifras de antes y después. Lo ves en el menú Apple, en «Acerca de esta Mac».</p>
+      </div>
+      <div class="pick-grid" id="pick-grid" role="group" aria-label="Chip"></div>
+      <div class="pick-mem" id="pick-mem" role="group" aria-label="Memoria"></div>
+      <p class="pick-sum" id="pick-sum" aria-live="polite"></p>
+    </div>
+  </section>
+
   <!-- Antes y después -->
   <section class="ba" id="resultados">
     <div class="ba-pin"><div class="wrap" style="width:100%">
       <div class="head">
-        <span class="kicker"><svg class="i"><use href="#i-swap"/></svg>Antes y después</span>
-        <h2 class="grad">Lo que cambió en mi Mac.</h2>
-        <p>Las mismas tareas en el mismo equipo, sin la skill y con ella. Baja para pasar de un estado al otro y pasa el cursor por cada fila para ver el detalle.</p>
+        <div class="kick-row"><span class="kicker"><svg class="i"><use href="#i-swap"/></svg>Antes y después</span><span class="mode" id="ba-mode">Medido · M4 Pro de 24 GB</span></div>
+        <h2 class="grad" id="ba-h">Lo que cambió en mi Mac.</h2>
+        <p id="ba-p">Las mismas tareas en el mismo equipo, sin la skill y con ella. Baja para pasar de un estado al otro y pasa el cursor por cada fila para ver el detalle.</p>
       </div>
       <div class="ba-card" id="ba-card">
         <div class="ba-sw" role="group" aria-label="Estado"><span class="thumb"></span><button type="button" data-go="0" class="on">Antes · sin la skill</button><button type="button" data-go="1">Después · con la skill</button></div>
-          <div class="ba-row" data-b="22.1" data-a="4.1" data-dec="1" data-unit=" s" data-tip="libx264 en la CPU contra h264_videotoolbox, leyendo y codificando por hardware."><span class="ico"><svg class="i"><use href="#i-export"/></svg></span><h3>Codificar 15 s de video vertical</h3><span class="ba-val"><small>5,4× más rápido</small><b>22,1 s</b></span><div class="ba-bar"><i></i></div></div>
-          <div class="ba-row" data-b="263" data-a="5" data-dec="0" data-unit=" s" data-tip="Segundos de CPU sumados entre todos los núcleos."><span class="ico"><svg class="i"><use href="#i-cpu"/></svg></span><h3>Trabajo de CPU en esa misma prueba</h3><span class="ba-val"><small>53 veces menos</small><b>263 s</b></span><div class="ba-bar"><i></i></div></div>
-          <div class="ba-row" data-b="4.9" data-a="2.5" data-dec="1" data-unit=" s" data-tip="Punto medio de varias corridas: 4,4–5,4 s en CPU contra 2,4–2,6 s por hardware."><span class="ico"><svg class="i"><use href="#i-play"/></svg></span><h3>Leer 30 s de HEVC de iPhone</h3><span class="ba-val"><small>2× más rápido</small><b>4,9 s</b></span><div class="ba-bar"><i></i></div></div>
-          <div class="ba-row" data-b="15.3" data-a="11.8" data-dec="1" data-unit=" s" data-tip="Chrome sin ventana con GPU contra --disable-gpu. Aquí ganó la CPU."><span class="ico"><svg class="i"><use href="#i-image"/></svg></span><h3>Renderizar 4 láminas de carrusel</h3><span class="ba-val"><small>23 % menos</small><b>15,3 s</b></span><div class="ba-bar"><i></i></div></div>
-          <div class="ba-row" data-b="28.5" data-a="18.1" data-dec="1" data-unit=" s" data-tip="Con aceleración por hardware y bitrate fijo. Se midió con otros renders a la vez, así que la cifra tiene ruido."><span class="ico"><svg class="i"><use href="#i-layers"/></svg></span><h3>CPU por render de Remotion, 150 fotogramas</h3><span class="ba-val"><small>36 % menos</small><b>28,5 s</b></span><div class="ba-bar"><i></i></div></div>
-          <div class="ba-row" data-b="4" data-a="1" data-dec="0" data-unit="" data-tip="Uno era huérfano de otra sesión. Cada servidor carga el modelo entero en memoria y no suma velocidad."><span class="ico"><svg class="i"><use href="#i-server"/></svg></span><h3>Servidores de Whisper vivos a la vez</h3><span class="ba-val"><small>3 menos</small><b>4</b></span><div class="ba-bar"><i></i></div></div>
-          <div class="ba-row" data-b="9" data-a="5" data-dec="0" data-unit=" GB" data-tip="Antes: 9 GB y creciendo, con 4 servidores de Whisper, 3 renders y conversiones en CPU. Después: entre 4,7 y 5,1 GB y estable en los diagnósticos de hoy."><span class="ico"><svg class="i"><use href="#i-swap"/></svg></span><h3>Swap con trabajo pesado</h3><span class="ba-val"><small>deja de crecer</small><b>9 GB</b></span><div class="ba-bar"><i></i></div></div>
-        <p class="ba-foot"><svg class="i"><use href="#i-alert"/></svg><span>Mac piloto: M4 Pro de 24 GB, 27.10.2026. El swap de «después» viene de los diagnósticos posteriores, con menos procesos en marcha.</span></p>
+          <div class="ba-row" data-k="enc" data-b="22.1" data-a="4.1" data-dec="1" data-unit=" s" data-tip="libx264 en la CPU contra h264_videotoolbox, leyendo y codificando por hardware."><span class="ico"><svg class="i"><use href="#i-export"/></svg></span><h3>Codificar 15 s de video vertical</h3><span class="ba-val"><small>5,4× más rápido</small><b>22,1 s</b></span><div class="ba-bar"><i></i></div></div>
+          <div class="ba-row" data-k="cpu" data-b="263" data-a="5" data-dec="0" data-unit=" s" data-tip="Segundos de CPU sumados entre todos los núcleos."><span class="ico"><svg class="i"><use href="#i-cpu"/></svg></span><h3>Trabajo de CPU en esa misma prueba</h3><span class="ba-val"><small>53 veces menos</small><b>263 s</b></span><div class="ba-bar"><i></i></div></div>
+          <div class="ba-row" data-k="dec" data-b="4.9" data-a="2.5" data-dec="1" data-unit=" s" data-tip="Punto medio de varias corridas: 4,4–5,4 s en CPU contra 2,4–2,6 s por hardware."><span class="ico"><svg class="i"><use href="#i-play"/></svg></span><h3>Leer 30 s de HEVC de iPhone</h3><span class="ba-val"><small>2× más rápido</small><b>4,9 s</b></span><div class="ba-bar"><i></i></div></div>
+          <div class="ba-row" data-k="lam" data-b="15.3" data-a="11.8" data-dec="1" data-unit=" s" data-tip="Chrome sin ventana con GPU contra --disable-gpu. Aquí ganó la CPU."><span class="ico"><svg class="i"><use href="#i-image"/></svg></span><h3>Renderizar 4 láminas de carrusel</h3><span class="ba-val"><small>23 % menos</small><b>15,3 s</b></span><div class="ba-bar"><i></i></div></div>
+          <div class="ba-row" data-k="rem" data-b="28.5" data-a="18.1" data-dec="1" data-unit=" s" data-tip="Con aceleración por hardware y bitrate fijo. Se midió con otros renders a la vez, así que la cifra tiene ruido."><span class="ico"><svg class="i"><use href="#i-layers"/></svg></span><h3>CPU por render de Remotion, 150 fotogramas</h3><span class="ba-val"><small>36 % menos</small><b>28,5 s</b></span><div class="ba-bar"><i></i></div></div>
+          <div class="ba-row" data-k="wh" data-b="4" data-a="1" data-dec="0" data-unit="" data-tip="Uno era huérfano de otra sesión. Cada servidor carga el modelo entero en memoria y no suma velocidad."><span class="ico"><svg class="i"><use href="#i-server"/></svg></span><h3>Servidores de Whisper vivos a la vez</h3><span class="ba-val"><small>3 menos</small><b>4</b></span><div class="ba-bar"><i></i></div></div>
+          <div class="ba-row" data-k="swap" data-b="9" data-a="5" data-dec="0" data-unit=" GB" data-tip="Antes: 9 GB y creciendo, con 4 servidores de Whisper, 3 renders y conversiones en CPU. Después: entre 4,7 y 5,1 GB y estable en los diagnósticos de hoy."><span class="ico"><svg class="i"><use href="#i-swap"/></svg></span><h3>Swap con trabajo pesado</h3><span class="ba-val"><small>deja de crecer</small><b>9 GB</b></span><div class="ba-bar"><i></i></div></div>
+          <div class="ba-row" data-k="res" data-b="36" data-a="6" data-dec="0" data-unit=" GB" data-tip="Por defecto, cada render de Remotion puede reservar la mitad de la memoria disponible: tres juntos piden hasta 36 GB en un equipo de 24. La skill fija 2 GB por render (memoria × 0,25 ÷ 3)."><span class="ico"><svg class="i"><use href="#i-mem"/></svg></span><h3>Caché máxima de 3 renders de Remotion</h3><span class="ba-val"><small>30 GB menos</small><b>36 GB</b></span><div class="ba-bar"><i></i></div></div>
+        <p class="ba-foot"><svg class="i"><use href="#i-alert"/></svg><span id="ba-foot">Mac piloto: M4 Pro de 24 GB, 27.10.2026. El swap de «después» viene de los diagnósticos posteriores, con menos procesos en marcha.</span></p>
       </div>
     </div></div>
   </section>
@@ -545,23 +598,24 @@ presión normal · swap creciendo: no · térmico nominal</pre></div>
       <div class="wrap seq-grid">
         <div class="seq-text">
           <div class="caps">
-            <div class="cap on"><span class="kicker"><svg class="i"><use href="#i-cpu"/></svg>Apple M4 Pro</span><h2>Tu Mac no es un solo procesador.</h2></div>
+            <div class="cap on"><span class="kicker"><svg class="i"><use href="#i-cpu"/></svg><span id="cap-chip">Apple M4 Pro</span></span><h2>Tu Mac no es un solo procesador.</h2></div>
             <div class="cap"><span class="kicker"><svg class="i"><use href="#i-layers"/></svg>Por dentro</span><h2>Son seis motores, y cada uno es bueno en algo distinto.</h2></div>
             <div class="cap"><span class="kicker"><svg class="i"><use href="#i-pulse"/></svg>diagnosticar.py</span><h2>La skill los cuenta en tu equipo. Nada viene escrito a mano.</h2></div>
             <div class="cap"><span class="kicker"><svg class="i"><use href="#i-arrow"/></svg>Reparto</span><h2>Y manda cada tarea al que mejor la hace.</h2></div>
           </div>
-          <ul class="specs">
+          <ul class="specs" id="specs">
             <li><b>CPU de 14 núcleos</b><span>10 de rendimiento y 4 de eficiencia</span></li>
             <li><b>GPU de 20 núcleos</b><span>Metal, familia apple9</span></li>
             <li><b>Neural Engine de 16 núcleos</b><span>Core ML y Vision</span></li>
             <li><b>Motor de video</b><span>12 de 27 codificadores por hardware</span></li>
             <li><b>Memoria unificada de 24 GB</b><span>La GPU puede usar hasta 17,76 GB</span></li>
           </ul>
-          <p class="die-note">Dibujo propio en el estilo del anuncio del M4 Pro. Las zonas son aproximadas.</p>
+          <p class="die-note" id="die-note">Dibujo propio en el estilo del anuncio del M4 Pro. Las zonas son aproximadas.</p>
         </div>
         <div class="stage" id="stage">
-          <div class="pkg-wrap"><div class="pkg" id="pkg"><b>M4</b><span>PRO</span></div></div>
+          <div class="pkg-wrap"><div class="pkg" id="pkg"><b id="pkg-g">M4</b><span id="pkg-t">PRO</span></div></div>
           <svg class="die" id="die" viewBox="0 0 655 523" aria-hidden="true"></svg>
+          <span class="ultra" id="ultra" hidden>×2 · UltraFusion</span>
           <div class="lbls">
             <div class="lbl" data-k="p" style="left:17.4%;top:46.3%;--rc:var(--c-p)" data-tip="10 núcleos de rendimiento (nivel 0). Aquí van Remotion, las láminas de carrusel y el paso de HDR a SDR."><b data-to="10" data-suf="">10</b><span><span class="l">Rendimiento</span><span class="s">Rend.</span></span><em>Remotion · láminas · HDR</em></div>
             <div class="lbl" data-k="e" style="left:17.4%;top:88.5%;--rc:var(--c-e)" data-tip="4 núcleos de eficiencia (nivel 1). Aquí van los lotes de fondo con taskpolicy."><b data-to="4" data-suf="">4</b><span><span class="l">Eficiencia</span><span class="s">Efic.</span></span><em>Lotes de fondo</em></div>
@@ -613,7 +667,7 @@ presión normal · swap creciendo: no · térmico nominal</pre></div>
       <div class="head morph">
         <span class="kicker"><svg class="i"><use href="#i-timer"/></svg>Lo medido</span>
         <h2 class="grad">Cifras de un equipo real.</h2>
-        <p>La skill nació el 27.10.2026, cuando medí que mi Mac codificaba video en la CPU con el motor de video ocioso. Este es el detalle de cada prueba de ese día. Pasa el cursor por cada barra para ver las cifras exactas.</p>
+        <p id="med-p">La skill nació el 27.10.2026, cuando medí que mi Mac codificaba video en la CPU con el motor de video ocioso. Este es el detalle de cada prueba de ese día. Pasa el cursor por cada barra para ver las cifras exactas.</p>
       </div>
 
       <div class="charts">
@@ -822,6 +876,31 @@ presión normal · swap creciendo: no · térmico nominal</pre></div>
   var reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
   var vh = innerHeight;
 
+  // Chips Apple Silicon (especificaciones de Apple; promedios de Geekbench 7 en Geekbench Browser, leídos el 27.10.2026) y modelo de estimación
+  var CHIPS = [{"id":"m1","n":"M1","g":"M1","t":"","y":2020,"p":4,"p2":0,"e":4,"sup":false,"gpu":8,"ne":16,"ne2":false,"tops":11,"bw":null,"bwd":68.25,"mem":[8,16],"vq":true,"dec":1,"enc":1,"pr":0,"av1":false,"rt":false,"sc":2164,"mc":8219,"ultra":false},{"id":"m1pro","n":"M1 Pro","g":"M1","t":"Pro","y":2021,"p":8,"p2":0,"e":2,"sup":false,"gpu":16,"ne":16,"ne2":false,"tops":null,"bw":200,"bwd":200,"mem":[16,32],"vq":false,"dec":1,"enc":1,"pr":1,"av1":false,"rt":false,"sc":2200,"mc":13908,"ultra":false},{"id":"m1max","n":"M1 Max","g":"M1","t":"Max","y":2021,"p":8,"p2":0,"e":2,"sup":false,"gpu":32,"ne":16,"ne2":false,"tops":null,"bw":400,"bwd":400,"mem":[32,64],"vq":false,"dec":1,"enc":2,"pr":2,"av1":false,"rt":false,"sc":2214,"mc":14160,"ultra":false},{"id":"m1ultra","n":"M1 Ultra","g":"M1","t":"Ultra","y":2022,"p":16,"p2":0,"e":4,"sup":false,"gpu":64,"ne":32,"ne2":false,"tops":22,"bw":800,"bwd":800,"mem":[64,128],"vq":false,"dec":2,"enc":4,"pr":4,"av1":false,"rt":false,"sc":2221,"mc":23621,"ultra":true},{"id":"m2","n":"M2","g":"M2","t":"","y":2022,"p":4,"p2":0,"e":4,"sup":false,"gpu":10,"ne":16,"ne2":false,"tops":15.8,"bw":100,"bwd":100,"mem":[8,16,24],"vq":false,"dec":1,"enc":1,"pr":1,"av1":false,"rt":false,"sc":2401,"mc":9743,"ultra":false},{"id":"m2pro","n":"M2 Pro","g":"M2","t":"Pro","y":2023,"p":8,"p2":0,"e":4,"sup":false,"gpu":19,"ne":16,"ne2":false,"tops":15.8,"bw":200,"bwd":200,"mem":[16,32],"vq":false,"dec":1,"enc":1,"pr":1,"av1":false,"rt":false,"sc":2419,"mc":16562,"ultra":false},{"id":"m2max","n":"M2 Max","g":"M2","t":"Max","y":2023,"p":8,"p2":0,"e":4,"sup":false,"gpu":38,"ne":16,"ne2":false,"tops":15.8,"bw":400,"bwd":400,"mem":[32,64,96],"vq":false,"dec":1,"enc":2,"pr":2,"av1":false,"rt":false,"sc":2554,"mc":17335,"ultra":false},{"id":"m2ultra","n":"M2 Ultra","g":"M2","t":"Ultra","y":2023,"p":16,"p2":0,"e":8,"sup":false,"gpu":76,"ne":32,"ne2":false,"tops":31.6,"bw":800,"bwd":800,"mem":[64,128,192],"vq":false,"dec":2,"enc":4,"pr":4,"av1":false,"rt":false,"sc":2552,"mc":28121,"ultra":true},{"id":"m3","n":"M3","g":"M3","t":"","y":2023,"p":4,"p2":0,"e":4,"sup":false,"gpu":10,"ne":16,"ne2":false,"tops":null,"bw":100,"bwd":100,"mem":[8,16,24],"vq":false,"dec":1,"enc":1,"pr":1,"av1":true,"rt":true,"sc":2750,"mc":11649,"ultra":false},{"id":"m3pro","n":"M3 Pro","g":"M3","t":"Pro","y":2023,"p":6,"p2":0,"e":6,"sup":false,"gpu":18,"ne":16,"ne2":false,"tops":null,"bw":150,"bwd":150,"mem":[18,36],"vq":false,"dec":1,"enc":1,"pr":1,"av1":true,"rt":true,"sc":2819,"mc":16947,"ultra":false},{"id":"m3max","n":"M3 Max","g":"M3","t":"Max","y":2023,"p":12,"p2":0,"e":4,"sup":false,"gpu":40,"ne":16,"ne2":false,"tops":null,"bw":400,"bwd":400,"mem":[36,48,64,96,128],"vq":false,"dec":1,"enc":2,"pr":2,"av1":true,"rt":true,"sc":2829,"mc":24734,"ultra":false},{"id":"m3ultra","n":"M3 Ultra","g":"M3","t":"Ultra","y":2025,"p":24,"p2":0,"e":8,"sup":false,"gpu":80,"ne":32,"ne2":false,"tops":null,"bw":819,"bwd":819,"mem":[96,256,512],"vq":false,"dec":2,"enc":4,"pr":4,"av1":true,"rt":true,"sc":2920,"mc":39107,"ultra":true},{"id":"m4","n":"M4","g":"M4","t":"","y":2024,"p":4,"p2":0,"e":6,"sup":false,"gpu":10,"ne":16,"ne2":false,"tops":38,"bw":120,"bwd":120,"mem":[16,24,32],"vq":false,"dec":1,"enc":1,"pr":1,"av1":true,"rt":true,"sc":3242,"mc":15396,"ultra":false},{"id":"m4pro","n":"M4 Pro","g":"M4","t":"Pro","y":2024,"p":10,"p2":0,"e":4,"sup":false,"gpu":20,"ne":16,"ne2":false,"tops":null,"bw":273,"bwd":273,"mem":[24,48,64],"vq":false,"dec":1,"enc":1,"pr":1,"av1":true,"rt":true,"sc":3370,"mc":24835,"ultra":false},{"id":"m4max","n":"M4 Max","g":"M4","t":"Max","y":2024,"p":12,"p2":0,"e":4,"sup":false,"gpu":40,"ne":16,"ne2":false,"tops":null,"bw":546,"bwd":546,"mem":[36,48,64,128],"vq":false,"dec":1,"enc":2,"pr":2,"av1":true,"rt":true,"sc":3496,"mc":29111,"ultra":false},{"id":"m5","n":"M5","g":"M5","t":"","y":2025,"p":4,"p2":0,"e":6,"sup":true,"gpu":10,"ne":16,"ne2":false,"tops":null,"bw":153,"bwd":153,"mem":[16,24,32],"vq":false,"dec":1,"enc":1,"pr":1,"av1":true,"rt":true,"sc":3647,"mc":17955,"ultra":false},{"id":"m5pro","n":"M5 Pro","g":"M5","t":"Pro","y":2026,"p":6,"p2":12,"e":0,"sup":true,"gpu":20,"ne":16,"ne2":false,"tops":null,"bw":307,"bwd":307,"mem":[24,48,64],"vq":false,"dec":1,"enc":1,"pr":1,"av1":true,"rt":true,"sc":3692,"mc":33582,"ultra":false},{"id":"m5max","n":"M5 Max","g":"M5","t":"Max","y":2026,"p":6,"p2":12,"e":0,"sup":true,"gpu":40,"ne":16,"ne2":false,"tops":null,"bw":614,"bwd":614,"mem":[36,48,64,128],"vq":false,"dec":1,"enc":2,"pr":2,"av1":true,"rt":true,"sc":3724,"mc":35033,"ultra":false},{"id":"m5ultra","n":"M5 Ultra","g":"M5","t":"Ultra","y":2026,"p":12,"p2":24,"e":0,"sup":true,"gpu":80,"ne":32,"ne2":false,"tops":null,"bw":1200,"bwd":1200,"mem":[96,256,512],"vq":false,"dec":2,"enc":4,"pr":4,"av1":true,"rt":true,"sc":3731,"mc":52011,"ultra":true},{"id":"m6","n":"M6","g":"M6","t":"","y":2026,"p":2,"p2":4,"e":6,"sup":true,"gpu":12,"ne":16,"ne2":true,"tops":null,"bw":170,"bwd":170,"mem":[16,24,32],"vq":false,"dec":1,"enc":1,"pr":1,"av1":true,"rt":true,"sc":4002,"mc":21880,"ultra":false,"bw16":153}], BY = {}, PILOT = "m4pro";
+  CHIPS.forEach(function (c) { BY[c.id] = c; });
+  var CUR = BY[PILOT], GB = 24, M = null;
+  function gbTxt(x) { return num(x, x >= 10 || Math.abs(x - Math.round(x)) < .05 ? 0 : 1) + " GB"; }
+  // Mismas fórmulas que perfil.py: concurrencia de Remotion para 3 renders y caché por render (memoria × 0,25 ÷ 3, en MiB)
+  function modelo(c, gb) {
+    var p = BY[PILOT], rs = p.sc / c.sc, rm = p.mc / c.mc;
+    var bytes = Math.floor(Math.floor(gb * 1073741824 * .25) / 3); bytes -= bytes % 1048576;
+    var conc = Math.min(Math.max(1, Math.round(c.p * .6)), Math.max(1, Math.floor(Math.floor(c.p * .9) / 3)));
+    return { c: c, gb: gb, med: c.id === PILOT, rs: rs, rm: rm, conc: conc, bytes: bytes, cache: gbTxt(bytes / 1073741824),
+      enc: [22.1 * rm, 4.1 * rs], cpu: [263 * rs, 5 * rs], dec: [4.9 * rm, 2.5 * rs], lam: [15.3 * rs, 11.8 * rs], rem: [28.5 * rs, 18.1 * rs] };
+  }
+  M = modelo(CUR, GB);
+  function ap(v, d) { return (M.med ? "" : "≈ ") + num(v, d); }
+  function bwDe(c, gb) { return c.bw16 && gb === 16 ? c.bw16 : c.bw; }
+  function bwTxt(v) { return v >= 1000 ? num(v / 1000, 1) + " TB/s" : v + " GB/s"; }
+  function nCpu(c) { return c.p + c.p2 + c.e; }
+  function neTxt(c) { return c.ne2 ? "2 × " + c.ne : String(c.ne); }
+  function cpuTxt(c) {
+    if (!c.sup) return c.p + " de rendimiento y " + c.e + " de eficiencia";
+    var t = [c.p + " súper"]; if (c.p2) t.push(c.p2 + " de rendimiento"); if (c.e) t.push(c.e + " de eficiencia");
+    return t.length > 1 ? t.slice(0, -1).join(", ") + " y " + t[t.length - 1] : t[0];
+  }
+
   // Piezas generadas
   $$("[data-n]").forEach(function (c) { for (var i = 0; i < +c.dataset.n; i++) c.appendChild(document.createElement("i")); });
   $$("[data-dots]").forEach(function (c) { for (var i = 0; i < +c.dataset.dots; i++) c.appendChild(document.createElement("i")); });
@@ -846,11 +925,11 @@ presión normal · swap creciendo: no · térmico nominal</pre></div>
     heroTxt.style.transform = "translate3d(0," + (-scrollY * .22).toFixed(1) + "px,0) scale(" + (1 - q * .06).toFixed(4) + ")";
   }
 
-  // Plano del chip en el estilo del anuncio: mismo dibujo para la escena y para el esquema de tareas
+  // Plano del chip en el estilo del anuncio, con los núcleos del chip elegido: mismo dibujo para la escena y para el esquema de tareas
   var RC = { p: "--c-p", e: "--c-e", g: "--c-g", a: "--c-a", v: "--c-v", m: "--c-m" };
   var REG = { p: [8, 72, 212, 340], e: [8, 412, 212, 103], g: [220, 8, 427, 292], m: [220, 300, 172, 215], a: [392, 300, 128, 215], v: [520, 300, 127, 215] };
-  function buildDie(svg) {
-    var out = [];
+  function buildDie(svg, c) {
+    var u = c.ultra ? 2 : 1, out = [];
     Object.keys(REG).forEach(function (k) { var r = REG[k]; out.push('<rect class="rg" data-k="' + k + '" x="' + r[0] + '" y="' + r[1] + '" width="' + r[2] + '" height="' + r[3] + '" style="--rc:var(' + RC[k] + ')"/>'); });
     function P(d, x, y, cls, k) {
       var o = (x / 655 * .38 + y / 523 * .32).toFixed(3);
@@ -858,48 +937,73 @@ presión normal · swap creciendo: no · térmico nominal</pre></div>
     }
     function R(x, y, w, h, cls, k) { P("M" + x.toFixed(1) + " " + y.toFixed(1) + "h" + w.toFixed(1) + "v" + h.toFixed(1) + "h" + (-w).toFixed(1) + "z", x, y, cls, k); }
     function L(x1, y1, x2, y2) { P("M" + x1.toFixed(1) + " " + y1.toFixed(1) + "L" + x2.toFixed(1) + " " + y2.toFixed(1), x1, y1); }
-    var r, c, j, x, y, w, h;
+    // Reparte n bloques en filas dentro de una zona; los huecos quedan en contorno, como un núcleo desactivado
+    function grid(z, n, rows, draw) {
+      var cols = Math.ceil(n / rows), w = z[2] / cols, h = z[3] / rows;
+      for (var i = 0; i < rows * cols; i++) draw(z[0] + (i % cols) * w, z[1] + Math.floor(i / cols) * h, w, h, i < n);
+    }
+    var j, n, b, bw, bx, ix;
     R(0, 0, 655, 523, "edge"); R(8, 8, 212, 64); L(220, 0, 220, 523); L(8, 72, 220, 72);
-    out.push('<text class="lab" x="30" y="51">M4 PRO</text>');
-    for (r = 0; r < 2; r++) for (c = 0; c < 5; c++) {            // 10 núcleos de rendimiento
-      x = 8 + c * 42.4; y = 72 + r * 170; w = 42.4; h = 170;
-      R(x + 2, y + 3, w - 4, h - 6, "core", "p"); R(x + 8, y + 12, w - 16, 10); R(x + 9, y + 30, w - 18, h - 58);
-      L(x + 15, y + 36, x + 15, y + h - 34); L(x + w - 15, y + 36, x + w - 15, y + h - 34);
-      for (j = 0; j < 5; j++) L(x + 15, y + 52 + j * 20, x + w - 15, y + 52 + j * 20);
+    out.push('<text class="lab" x="30" y="51">' + c.n.toUpperCase() + '</text>');
+    function nucleo(x, y, w, h, on) {
+      var ix = Math.min(15, w * .36);
+      R(x + 2, y + 3, w - 4, h - 6, on && "core", on && "p");
+      if (!on) return;
+      R(x + 8, y + 12, w - 16, 10); R(x + 9, y + 30, w - 18, h - 58);
+      L(x + ix, y + 36, x + ix, y + h - 34); L(x + w - ix, y + 36, x + w - ix, y + h - 34);
+      for (j = 0; j < Math.floor((h - 60) / 20); j++) L(x + ix, y + 52 + j * 20, x + w - ix, y + 52 + j * 20);
     }
-    for (r = 0; r < 2; r++) for (c = 0; c < 2; c++) {            // 4 de eficiencia
-      x = 8 + c * 106; y = 412 + r * 51.5; w = 106; h = 51.5;
-      R(x + 3, y + 3, w - 6, h - 6, "core", "e"); R(x + w / 2 - 9, y + h / 2 - 12, 18, 24);
+    if (c.p2) {                                                     // súper arriba, rendimiento abajo (M5 Pro en adelante)
+      var fs = c.p / u > 6 ? 2 : 1, alto = 340 * fs / (fs + 2);
+      grid([8, 72, 212, alto], c.p / u, fs, nucleo);
+      grid([8, 72 + alto, 212, 340 - alto], c.p2 / u, 2, nucleo);
+    } else grid(REG.p, c.p / u, 2, nucleo);                          // núcleos de rendimiento (súper desde el M5)
+    n = c.e / u;
+    if (n) grid(REG.e, n, n > 2 ? 2 : 1, function (x, y, w, h, on) {    // de eficiencia
+      R(x + 3, y + 3, w - 6, h - 6, on && "core", on && "e");
+      if (!on) return;
+      R(x + w / 2 - 9, y + h / 2 - 12, 18, 24);
       L(x + 10, y + h / 2, x + w / 2 - 14, y + h / 2); L(x + w / 2 + 14, y + h / 2, x + w - 10, y + h / 2);
-    }
-    for (r = 0; r < 2; r++) for (c = 0; c < 10; c++) {           // GPU de 20 núcleos
-      x = 220 + c * 42.7; y = 8 + r * 146; w = 42.7; h = 146;
-      R(x + 2, y + 3, w - 4, h - 6, "core", "g"); L(x + 9, y + 12, x + 9, y + h - 12); L(x + w - 9, y + 12, x + w - 9, y + h - 12);
-      for (j = 0; j < 12; j++) L(x + 9, y + 16 + j * 10, x + w - 9, y + 16 + j * 10);
-    }
-    for (r = 0; r < 2; r++) for (c = 0; c < 4; c++) {            // memoria y caché
-      x = 222 + c * 42.5; y = 303 + r * 105; w = 42.5; h = 103;
-      R(x + 2, y + 2, w - 4, h - 4, "core", "m");
-      for (j = 0; j < 10; j++) L(x + 8, y + 10 + j * 9, x + w - 8, y + 10 + j * 9);
-    }
-    R(396, 304, 120, 46); L(400, 327, 512, 327);                   // Neural Engine: 16 núcleos
-    R(400, 360, 112, 124);
-    for (r = 0; r < 2; r++) for (c = 0; c < 8; c++) R(405 + c * 12.9, 368 + r * 56, 10.5, 50, "core", "a");
-    L(402, 422, 510, 422);
-    R(524, 304, 119, 46); L(530, 318, 636, 318); L(530, 336, 636, 336);   // motor de video
-    [[524, 56], [586, 57]].forEach(function (b) {
-      R(b[0], 356, b[1], 128, "core", "v"); R(b[0] + 8, 366, b[1] - 16, 28);
-      for (j = 0; j < 8; j++) L(b[0] + 8, 404 + j * 9.5, b[0] + b[1] - 8, 404 + j * 9.5);
     });
-    for (c = 0; c < 4; c++) R(396 + c * 63, 490, 59, 25);         // entrada y salida
+    n = c.gpu / u;
+    grid(REG.g, n, n > 20 ? 4 : 2, function (x, y, w, h, on) {   // GPU
+      var ix = Math.min(9, w * .22);
+      R(x + 2, y + 3, w - 4, h - 6, on && "core", on && "g");
+      if (!on) return;
+      L(x + ix, y + 12, x + ix, y + h - 12); L(x + w - ix, y + 12, x + w - ix, y + h - 12);
+      for (j = 0; j < Math.floor((h - 26) / 10); j++) L(x + ix, y + 16 + j * 10, x + w - ix, y + 16 + j * 10);
+    });
+    n = Math.min(16, Math.max(2, 2 * Math.round(c.bwd / u / 68)));
+    grid([222, 303, 170, 210], n, 2, function (x, y, w, h) {    // memoria y caché: más bloques, más ancho de banda
+      var ix = Math.min(8, w * .2);
+      R(x + 2, y + 2, w - 4, h - 4, "core", "m");
+      for (j = 0; j < Math.floor((h - 12) / 9); j++) L(x + ix, y + 10 + j * 9, x + w - ix, y + 10 + j * 9);
+    });
+    R(396, 304, 120, 46); L(400, 327, 512, 327);                   // Neural Engine: 16 núcleos por chip
+    R(400, 360, 112, 124);
+    n = c.ne * (c.ne2 ? 2 : 1) / u; b = Math.ceil(n / 8);           // filas de 8 núcleos
+    for (j = 0; j < n; j++) R(405 + (j % 8) * 12.9, 368 + Math.floor(j / 8) * 112 / b, 10.5, 112 / b - 6, "core", "a");
+    if (b === 2) L(402, 422, 510, 422);
+    R(524, 304, 119, 46); L(530, 318, 636, 318); L(530, 336, 636, 336);   // motor de video: un bloque por motor
+    n = (c.dec + c.enc + c.pr) / u; bw = (119 - 6 * (n - 1)) / n;
+    for (b = 0; b < n; b++) {
+      bx = 524 + b * (bw + 6); ix = Math.min(8, bw * .2);
+      R(bx, 356, bw, 128, "core", "v"); R(bx + ix, 366, bw - 2 * ix, 28);
+      for (j = 0; j < 8; j++) L(bx + ix, 404 + j * 9.5, bx + bw - ix, 404 + j * 9.5);
+    }
+    for (j = 0; j < 4; j++) R(396 + j * 63, 490, 59, 25);         // entrada y salida
+    if (c.ultra) for (j = 0; j < 14; j++) L(655, 58 + j * 31, 671, 58 + j * 31);   // UltraFusion hacia el segundo chip
     svg.innerHTML = out.join("");
   }
 
   // Chip: el paquete se levanta, el plano se dibuja, los núcleos se encienden; al subir, todo vuelve
   var stage = $("#stage"), seqEl = $("#chip"), caps = $$(".cap"), pkg = $("#pkg"), lbls = $$(".lbl", stage);
-  buildDie($("#die"));
-  var coreSets = ["p", "e", "g", "a", "v", "m"].map(function (k) { return $$('path.core[data-k="' + k + '"]', stage); });
-  var regs = $$("rect.rg", stage), lastCap = 0;
+  var coreSets, lastCap = 0;
+  function bindStage() {
+    buildDie($("#die"), CUR);
+    coreSets = ["p", "e", "g", "a", "v", "m"].map(function (k) { return $$('path.core[data-k="' + k + '"]', stage); });
+  }
+  bindStage();
   function chip() {
     var p = pSticky(seqEl);
     var lift = ease(seg(p, .1, .28));
@@ -915,7 +1019,7 @@ presión normal · swap creciendo: no · térmico nominal</pre></div>
       var lit = Math.round(set.length * fill);
       if (set._lit !== lit) { set.forEach(function (c, j) { c.classList.toggle("on", j < lit); }); set._lit = lit; }
     });
-    lbls.forEach(function (l) { var b = l.querySelector("b"); b.textContent = Math.round(+b.dataset.to * fill) + b.dataset.suf; });
+    lbls.forEach(function (l) { var b = l.querySelector("b"); b.textContent = isNaN(b.dataset.to) ? b.dataset.to : Math.round(+b.dataset.to * fill) + b.dataset.suf; });
     var c = p < .14 ? 0 : p < .5 ? 1 : p < .76 ? 2 : 3;
     if (c !== lastCap) { caps[lastCap].classList.remove("on"); caps[c].classList.add("on"); lastCap = c; }
   }
@@ -927,9 +1031,8 @@ presión normal · swap creciendo: no · térmico nominal</pre></div>
   });
   stage.addEventListener("pointerleave", function () { pkg.style.setProperty("--rx", "0deg"); pkg.style.setProperty("--ry", "0deg"); });
   lbls.forEach(function (l) {
-    var rg = regs.filter(function (r) { return r.dataset.k === l.dataset.k; })[0];
-    l.addEventListener("pointerenter", function () { rg.classList.add("hi"); });
-    l.addEventListener("pointerleave", function () { rg.classList.remove("hi"); });
+    l.addEventListener("pointerenter", function () { $$('rect.rg[data-k="' + l.dataset.k + '"]', stage).forEach(function (r) { r.classList.add("hi"); }); });
+    l.addEventListener("pointerleave", function () { $$("rect.rg.hi", stage).forEach(function (r) { r.classList.remove("hi"); }); });
   });
 
   // Antes y después: los valores pasan de un estado al otro con el scroll, en ambos sentidos
@@ -946,9 +1049,11 @@ presión normal · swap creciendo: no · térmico nominal</pre></div>
     var p = ease(seg(raw, .12, .78)), q = seg(raw, .8, .95);
     baCard.style.setProperty("--p", p.toFixed(4)); baCard.style.setProperty("--q", q.toFixed(4));
     baRows.forEach(function (r) {
+      var v = r.querySelector(".ba-val b"), bar = r.querySelector(".ba-bar i");
+      if (r.classList.contains("na")) { v.textContent = "—"; return; }
       var b = +r.dataset.b, a = +r.dataset.a;
-      r.querySelector(".ba-val b").textContent = num(lerp(b, a, p), +r.dataset.dec) + r.dataset.unit;
-      r.querySelector(".ba-bar i").style.setProperty("--w", lerp(1, a / b, p).toFixed(4));
+      v.textContent = (r.dataset.x ? "≈ " : "") + num(lerp(b, a, p), +r.dataset.dec) + r.dataset.unit;
+      bar.style.setProperty("--w", lerp(1, a / b, p).toFixed(4));
     });
     baBtns[0].classList.toggle("on", p < .5); baBtns[1].classList.toggle("on", p >= .5);
   }
@@ -1065,24 +1170,37 @@ presión normal · swap creciendo: no · térmico nominal</pre></div>
 
   // Tareas: interacción al pasar el cursor, enfocar o tocar
   var TAREAS = {
-    codificar: { k: ["v"], who: "Va al motor de video", nota: "15 s de video vertical de iPhone pasados a H.264 1080×1920. La CPU trabajó 5 s en vez de 263 s. Va con bitrate fijo para que el archivo no salga más grande.", cmd: "-hwaccel videotoolbox … -c:v h264_videotoolbox -b:v 12M -allow_sw 0", src: "Medido en el Mac piloto con medir.py" },
-    decodificar: { k: ["v"], who: "Va al motor de video", nota: "30 s de HEVC grabado con iPhone. La CPU trabajó 3,3 s en vez de 35–38 s. La guía de ffmpeg advierte que no siempre conviene; en este equipo convino.", cmd: "ffmpeg -nostdin -hwaccel videotoolbox -i toma.mov …", src: "Medido en el Mac piloto con medir.py" },
+    codificar: { k: ["v"], who: "Va al motor de video",
+      nota: function (m) { return "15 s de video vertical de iPhone pasados a H.264 1080×1920. " + (m.med ? "La CPU trabajó 5 s en vez de 263 s." : "En un " + m.c.n + ", la CPU trabajaría unos " + num(m.cpu[1], 0) + " s en vez de " + num(m.cpu[0], 0) + " s.") + " Va con bitrate fijo para que el archivo no salga más grande."; },
+      cmd: "-hwaccel videotoolbox … -c:v h264_videotoolbox -b:v 12M -allow_sw 0",
+      src: function (m) { return m.med ? "Medido en el Mac piloto con medir.py" : "Estimado desde lo medido en el Mac piloto"; } },
+    decodificar: { k: ["v"], who: "Va al motor de video",
+      nota: function (m) { return "30 s de HEVC grabado con iPhone. " + (m.med ? "La CPU trabajó 3,3 s en vez de 35–38 s." : "En el piloto, la CPU trabajó 3,3 s en vez de 35–38 s.") + " La guía de ffmpeg advierte que no siempre conviene; " + (m.med ? "en este equipo convino." : "medir.py lo comprueba en el tuyo."); },
+      cmd: "ffmpeg -nostdin -hwaccel videotoolbox -i toma.mov …",
+      src: function (m) { return m.med ? "Medido en el Mac piloto con medir.py" : "Medido en el piloto; en tu chip, por comprobar"; } },
     transcribir: { k: ["g", "m"], who: "Va a la GPU, con Metal", nota: "whisper.cpp con Metal y flash attention. El servidor atiende una petición a la vez: un segundo servidor no suma velocidad y carga otra copia del modelo. Llegué a tener 4 vivos y 9 GB de swap.", cmd: "whisper-server -m ggml-large-v3-turbo.bin --port 8801", src: "Medido en el Mac piloto y documentado por el mantenedor" },
     recortar: { k: ["a", "g"], who: "Va al Neural Engine y a la GPU", nota: "Vision de macOS separa a la persona del fondo en cada fotograma, sin subir nada a internet. Así quien habla queda por encima de los gráficos del video.", cmd: "VNGenerateForegroundInstanceMaskRequest", src: "Documentación oficial de Apple" },
-    componer: { k: ["p", "m"], who: "Va a los núcleos de rendimiento", nota: "La concurrencia sale de los 10 núcleos del nivel 0. Remotion reserva por defecto la mitad de la memoria en cada render; con tres juntos se pasa de la RAM, así que la caché se fija en 2 GB por render.", cmd: "--concurrency=3 --offthreadvideo-cache-size-in-bytes=2147483648", src: "Fórmula de perfil.py y medición en el Mac piloto" },
-    laminas: { k: ["p"], who: "Va a la CPU", nota: "4 láminas a 2× con Chrome sin ventana. La GPU fue más lenta y suavizaba distinto los bordes, así que la skill manda estas láminas a la CPU.", cmd: "chrome --headless --disable-gpu --screenshot …", src: "Medido en el Mac piloto" },
+    componer: { k: ["p", "m"], who: "Va a los núcleos de rendimiento",
+      nota: function (m) { return "La concurrencia sale de los " + m.c.p + " núcleos del nivel 0. Remotion reserva por defecto la mitad de la memoria disponible en cada render; con tres juntos se pasa de la RAM, así que la caché se fija en " + m.cache + " por render."; },
+      cmd: function (m) { return "--concurrency=" + m.conc + " --offthreadvideo-cache-size-in-bytes=" + m.bytes; },
+      src: function (m) { return m.med ? "Fórmula de perfil.py y medición en el Mac piloto" : "Fórmula de perfil.py con los datos de tu chip"; } },
+    laminas: { k: ["p"], who: "Va a la CPU",
+      nota: function (m) { return m.med ? "4 láminas a 2× con Chrome sin ventana. La GPU fue más lenta y suavizaba distinto los bordes, así que la skill manda estas láminas a la CPU." : "4 láminas a 2× con Chrome sin ventana. En el piloto la GPU fue más lenta y suavizaba distinto los bordes; en tu chip, medir.py decide."; },
+      cmd: "chrome --headless --disable-gpu --screenshot …",
+      src: function (m) { return m.med ? "Medido en el Mac piloto" : "Estimado desde lo medido en el Mac piloto"; } },
     hdr: { k: ["p"], who: "Va a la CPU, una sola vez", nota: "Es el paso sin una ruta por hardware validada: el filtro de VideoToolbox para HDR tiene un error de color reportado y el ffmpeg de este equipo no lo trae. Se convierte una vez y se guarda.", cmd: "zscale + tonemap en CPU, una vez por tramo, en caché", src: "Ticket de ffmpeg y criterio propio" },
-    lote: { k: ["e"], who: "Va a los núcleos de eficiencia", nota: "Con la prioridad de fondo de macOS, un lote largo corre en los núcleos de eficiencia y deja libres los de rendimiento para lo que estás haciendo.", cmd: "taskpolicy -c background python3 lote.py", src: "Documentación oficial de Apple" }
+    lote: { k: function (m) { return m.c.e ? ["e"] : ["p"]; }, who: function (m) { return m.c.e ? "Va a los núcleos de eficiencia" : "Va a los núcleos de rendimiento"; },
+      nota: function (m) { return m.c.e ? "Con la prioridad de fondo de macOS, un lote largo corre en los núcleos de eficiencia y deja libres los de rendimiento para lo que estás haciendo." : "Este chip no tiene núcleos de eficiencia. Con la prioridad de fondo de macOS, el lote cede el paso a lo que estás haciendo."; }, cmd: "taskpolicy -c background python3 lote.py", src: "Documentación oficial de Apple" }
   };
-  var mini = $("#mini"), taskBtns = $$(".task");
-  buildDie($("#die-mini"));
-  var miniRg = $$("rect.rg", mini), miniCores = $$("path.core", mini);
+  var mini = $("#mini"), taskBtns = $$(".task"), curTask = "codificar";
+  buildDie($("#die-mini"), CUR);
+  function val(x) { return typeof x === "function" ? x(M) : x; }
   function pick(id) {
-    var t = TAREAS[id];
+    var t = TAREAS[id], k = val(t.k); curTask = id;
     taskBtns.forEach(function (b) { b.classList.toggle("on", b.dataset.t === id); });
-    miniRg.forEach(function (r) { r.classList.toggle("on", t.k.indexOf(r.dataset.k) !== -1); });
-    miniCores.forEach(function (c) { c.classList.toggle("on", t.k.indexOf(c.dataset.k) !== -1); });
-    $("#i-who").textContent = t.who; $("#i-nota").textContent = t.nota; $("#i-cmd").textContent = t.cmd; $("#i-src").textContent = t.src;
+    $$("rect.rg", mini).forEach(function (r) { r.classList.toggle("on", k.indexOf(r.dataset.k) !== -1); });
+    $$("path.core", mini).forEach(function (c) { c.classList.toggle("on", k.indexOf(c.dataset.k) !== -1); });
+    $("#i-who").textContent = val(t.who); $("#i-nota").textContent = val(t.nota); $("#i-cmd").textContent = val(t.cmd); $("#i-src").textContent = val(t.src);
   }
   taskBtns.forEach(function (b) {
     b.addEventListener("pointerenter", function (e) { if (e.pointerType === "mouse") pick(b.dataset.t); });
@@ -1090,6 +1208,174 @@ presión normal · swap creciendo: no · térmico nominal</pre></div>
     b.addEventListener("click", function () { pick(b.dataset.t); });
   });
   pick("codificar");
+
+  // Selector de chip: todo lo que depende del chip se recalcula aquí
+  var FILAS = {
+    enc: { d: 1, u: " s", g: "x", med: "libx264 en la CPU contra h264_videotoolbox, leyendo y codificando por hardware.", est: "Estimado desde el piloto. Antes, libx264 en la CPU: escala con la puntuación multinúcleo de Geekbench 7. Después, el motor de video: escala con la de un núcleo, por la parte que sigue en la CPU." },
+    cpu: { d: 0, u: " s", g: "veces", med: "Segundos de CPU sumados entre todos los núcleos.", est: "Estimado: segundos de CPU sumados entre todos los núcleos, escalados con la puntuación de un núcleo de Geekbench 7." },
+    dec: { d: 1, u: " s", g: "x", med: "Punto medio de varias corridas: 4,4–5,4 s en CPU contra 2,4–2,6 s por hardware.", est: "Estimado. Antes, la CPU lee el video: escala con la puntuación multinúcleo de Geekbench 7. Después, el motor de video: escala con la de un núcleo." },
+    lam: { d: 1, u: " s", g: "pct", med: "Chrome sin ventana con GPU contra --disable-gpu. Aquí ganó la CPU.", est: "Estimado con la puntuación de un núcleo de Geekbench 7. En el piloto ganó la CPU; en tu chip conviene comprobarlo con medir.py." },
+    rem: { d: 1, u: " s", g: "pct", med: "Con aceleración por hardware y bitrate fijo. Se midió con otros renders a la vez, así que la cifra tiene ruido.", est: "Estimado con la puntuación de un núcleo de Geekbench 7. La cifra del piloto ya tenía ruido: se midió con otros renders a la vez." },
+    wh: { d: 0, u: "", g: "menos", med: "Uno era huérfano de otra sesión. Cada servidor carga el modelo entero en memoria y no suma velocidad.", est: "Regla de la skill en cualquier Mac: un solo servidor, porque cada uno carga el modelo entero en memoria y no suma velocidad. Los 4 son los que encontré vivos en el piloto." },
+    swap: { d: 0, u: " GB", g: "swap", med: "Antes: 9 GB y creciendo, con 4 servidores de Whisper, 3 renders y conversiones en CPU. Después: entre 4,7 y 5,1 GB y estable en los diagnósticos de hoy.", est: "Solo se midió en el Mac piloto de 24 GB: el swap depende de tu memoria y de lo que tengas abierto." },
+    res: { d: 0, u: " GB", g: "gb" }
+  };
+  function gana(g, b, a) {
+    if (g === "x") return num(b / a, 1).replace(/,0$/, "") + "× más rápido";
+    if (g === "veces") return Math.round(b / a) + " veces menos";
+    if (g === "pct") return Math.round((1 - a / b) * 100) + " % menos";
+    if (g === "menos") return (b - a) + " menos";
+    if (g === "gb") return num(b - a, b - a >= 10 ? 0 : 1) + " GB menos";
+    return "deja de crecer";
+  }
+  var flashes = [];
+  function flash(el) { if (el) flashes.push(el); return el; }
+  function txt(sel, t) { var el = $(sel); if (el.textContent !== String(t)) { el.textContent = t; flash(el); } return el; }
+
+  function motores(c) { return c.vq ? "codifica y lee video por hardware; Apple no publica cuántos motores" : c.enc + " de codificación y " + c.dec + " de lectura" + (c.pr ? ", más ProRes" : "") + (c.av1 ? ". Lee AV1" : ""); }
+
+  function aplicarPortada(c) {
+    var hilos = M.conc + (M.conc === 1 ? " hilo" : " hilos");
+    var niv = c.sup ? [c.p + " Super"].concat(c.p2 ? [c.p2 + " Performance"] : [], c.e ? [c.e + " Efficiency"] : []) : [c.p + " Performance", c.e + " Efficiency"];
+    txt("#h-diag", "Apple " + c.n + " · " + niv.join(" + ") + " · GPU " + c.gpu + " · Neural Engine " + neTxt(c) + " · " + GB + " GB\npresión normal · swap creciendo: no · térmico nominal");
+    txt("#h-perf", "--concurrency=" + M.conc + " --hardware-acceleration=required --video-bitrate=12M\n--offthreadvideo-cache-size-in-bytes=" + M.bytes + " · frenos: ninguno");
+    txt("#h-ai", "Lanzo los tres renders con el motor de video, " + hilos + " y " + M.cache + " de caché cada uno.");
+    txt("#h-hilos", "3 × " + hilos); txt("#h-cache", M.cache + " por render");
+    txt("#h-gpu", c.gpu + " núcleos"); txt("#h-ne", neTxt(c) + " núcleos");
+    txt("#h-enc", ap(M.enc[1], 1) + " s en vez de " + num(M.enc[0], 1));
+  }
+
+  var baP0 = $("#ba-p").textContent, baFoot0 = $("#ba-foot").textContent, medP0 = $("#med-p").textContent;
+  function aplicarResultados(c) {
+    var piloto24 = M.med && GB === 24;
+    txt("#ba-mode", M.med ? "Medido · M4 Pro" + (GB === 24 ? " de 24 GB" : "") : "Estimado · " + c.n + " de " + GB + " GB").classList.toggle("est", !M.med);
+    txt("#ba-h", M.med ? "Lo que cambió en mi Mac." : "Lo que cambiaría en un " + c.n + ".");
+    txt("#ba-p", M.med ? baP0 : "Las mismas tareas, estimadas desde lo medido en mi M4 Pro. Baja para pasar de un estado al otro y pasa el cursor por cada fila para ver cómo se calculó.");
+    txt("#ba-foot", M.med ? baFoot0 + " La caché de Remotion sale de la fórmula de perfil.py." :
+      "Estimación, no medición: escalé lo medido en mi M4 Pro con Geekbench 7 (" + num(c.sc, 0) + " puntos con un núcleo y " + num(c.mc, 0) + " con todos en el " + c.n + "). La caché sale de perfil.py. Para tus cifras, corre medir.py.");
+    var V = { enc: M.enc, cpu: M.cpu, dec: M.dec, lam: M.lam, rem: M.rem, wh: [4, 1], swap: piloto24 ? [9, 5] : null, res: [GB * 1.5, GB * .25] };
+    baRows.forEach(function (r) {
+      var k = r.dataset.k, f = FILAS[k], v = V[k], val = r.querySelector(".ba-val");
+      r.classList.toggle("na", !v);
+      if (k === "res") r.dataset.tip = "Por defecto, cada render de Remotion puede reservar la mitad de la memoria disponible: tres juntos piden hasta " + num(v[0], 0) + " GB en un equipo de " + GB + ". La skill fija " + M.cache + " por render (memoria × 0,25 ÷ 3).";
+      else r.dataset.tip = M.med && v ? f.med : f.est;
+      if (k === "swap" && M.med && !v) r.dataset.tip = "El swap se midió en el piloto de 24 GB; con otra memoria cambia.";
+      if (!v) return;
+      r.dataset.b = v[0]; r.dataset.a = v[1];
+      if (!M.med && k !== "wh" && k !== "res") r.dataset.x = "1"; else delete r.dataset.x;
+      val.querySelector("small").textContent = (r.dataset.x ? "≈ " : "") + gana(f.g, v[0], v[1]);
+      flash(val);
+    });
+  }
+
+  function aplicarChip(c) {
+    seqEl.setAttribute("aria-label", "El chip " + c.n + (M.med ? " del Mac piloto" : "") + ", por fuera y por dentro");
+    txt("#cap-chip", "Apple " + c.n);
+    txt("#pkg-g", c.g); var t = txt("#pkg-t", c.t.toUpperCase()); t.hidden = !c.t;
+    $("#ultra").hidden = !c.ultra;
+    var u = c.ultra ? " Suma los dos chips Max que forman el Ultra." : "", nVid = c.vq ? "H.264" : c.dec + c.enc + c.pr, bw = bwDe(c, GB);
+    var LB = {
+      p: [c.p + c.p2, "", (c.p2 ? c.p + " súper núcleos (nivel 0) y " + c.p2 + " de rendimiento. perfil.py reparte Remotion con los " + c.p + " súper; " : (c.sup ? c.p + " súper núcleos" : c.p + " núcleos de rendimiento") + " (nivel 0). ") + "Aquí van Remotion, las láminas de carrusel y el paso de HDR a SDR." + u],
+      e: [c.e, "", c.e ? c.e + " núcleos de eficiencia. Aquí van los lotes de fondo con taskpolicy." + u : "Este chip no tiene núcleos de eficiencia: los lotes de fondo van a los de rendimiento."],
+      g: [c.gpu, "", "GPU de " + c.gpu + " núcleos" + (M.med ? ", Metal apple9" : "") + ". Aquí va Whisper con Metal y flash attention." + u],
+      m: [GB, " GB", GB + " GB compartidos por CPU, GPU y Neural Engine" + (bw ? ", a " + bwTxt(bw) : "") + "." + (M.med && GB === 24 ? " La GPU puede usar hasta 17,76 GB." : "") + " Cada render de Remotion lleva " + M.cache + " de caché fija."],
+      a: [c.ne, c.ne2 ? " × 2" : "", (c.ne2 ? "Neural Engine doble, de 16 núcleos cada uno" : "Neural Engine de " + c.ne + " núcleos") + ". Aquí van los recortes de personas con Vision, sin subir nada a internet." + u],
+      v: [nVid, "", "Motores de video: " + motores(c) + "." + (M.med ? " En el piloto, 12 de 27 codificadores de ffmpeg corren por hardware." : "") + u]
+    };
+    lbls.forEach(function (l) {
+      var d = LB[l.dataset.k], b = l.querySelector("b");
+      if (b.dataset.to !== String(d[0])) flash(b);
+      b.dataset.to = d[0]; b.dataset.suf = d[1]; l.dataset.tip = d[2];
+    });
+    var lp = $('.lbl[data-k="p"]');
+    $(".l", lp).textContent = c.p2 ? "Súper y rendimiento" : c.sup ? "Súper" : "Rendimiento";
+    $(".s", lp).textContent = c.p2 ? "CPU" : c.sup ? "Súper" : "Rend.";
+    txt('.lbl[data-k="m"] em', M.cache + " de caché por render");
+    txt('.lbl[data-k="e"] em', c.e ? "Lotes de fondo" : "Este chip no tiene");
+    var specs = [
+      ["CPU de " + nCpu(c) + " núcleos", cpuTxt(c)],
+      ["GPU de " + c.gpu + " núcleos", M.med ? "Metal, familia apple9" : c.rt ? "Metal, con trazado de rayos por hardware" : "Metal"],
+      [c.ne2 ? "Neural Engine doble de 16 núcleos" : "Neural Engine de " + c.ne + " núcleos", "Core ML y Vision" + (c.tops ? " · " + num(c.tops, c.tops % 1 ? 1 : 0) + " TOPS según Apple" : "")],
+      ["Motor de video", M.med ? "12 de 27 codificadores por hardware" : motores(c)],
+      ["Memoria unificada de " + GB + " GB", M.med && GB === 24 ? "La GPU puede usar hasta 17,76 GB" : bw ? bwTxt(bw) + " de ancho de banda" : "Apple no publica su ancho de banda"]
+    ];
+    var sp = $("#specs"); sp.innerHTML = specs.map(function (s) { return "<li><b>" + s[0] + "</b><span>" + s[1] + "</span></li>"; }).join(""); flash(sp);
+    txt("#die-note", "Dibujo propio en el estilo del anuncio del M4 Pro. Las zonas son aproximadas." + (c.ultra ? " El Ultra une dos chips Max; el dibujo muestra uno." : ""));
+    bindStage(); flash($("#die"));
+  }
+
+  function aplicarTareas(c) {
+    function st(id, b, t) { var el = $('.task[data-t="' + id + '"] .st'), h = "<b>" + b + "</b>" + t; if (el.innerHTML !== h) { el.innerHTML = h; flash(el); } }
+    st("codificar", ap(M.enc[1], 1) + " s", "contra " + num(M.enc[0], 1) + " s");
+    st("decodificar", (M.med ? "2,4" : ap(M.dec[1], 1)) + " s", "contra " + num(4.4 * M.rm, 1) + "–" + num(5.4 * M.rm, 1) + " s");
+    st("recortar", neTxt(c), "núcleos, en local");
+    st("componer", "3 × " + M.conc, "renders × hilos");
+    st("laminas", ap(M.lam[1], 1) + " s", "contra " + num(M.lam[0], 1) + " s");
+    st("lote", c.e || c.p2, c.e ? "núcleos de eficiencia" : "núcleos de rendimiento");
+    buildDie($("#die-mini"), c); flash($("#die-mini"));
+    pick(curTask);
+    txt("#med-p", M.med ? medP0 : medP0 + " Son las cifras del M4 Pro en las que se basan las estimaciones para tu " + c.n + ".");
+  }
+
+  // Selector: rejilla por generación y nivel, memoria y resumen
+  var pickGrid = $("#pick-grid"), pickMem = $("#pick-mem"), pickSum = $("#pick-sum"), DET = null, KEY = "rendimiento-equipo:chip";
+  function detectar() {
+    try {
+      var gl = document.createElement("canvas").getContext("webgl"); if (!gl) return null;
+      var ext = gl.getExtension("WEBGL_debug_renderer_info"), s = String(gl.getParameter(ext ? ext.UNMASKED_RENDERER_WEBGL : gl.RENDERER) || "");
+      var lc = gl.getExtension("WEBGL_lose_context"); if (lc) lc.loseContext();
+      var m = /Apple (M\d+)(?: (Pro|Max|Ultra))?/.exec(s); if (!m) return null;
+      var id = (m[1] + (m[2] || "")).toLowerCase();
+      return BY[id] ? id : null;
+    } catch (e) { return null; }
+  }
+  function pintarRejilla() {
+    var gens = [], h = [];
+    CHIPS.forEach(function (c) { if (gens.indexOf(c.g) < 0) gens.push(c.g); });
+    gens.forEach(function (g) {
+      var ys = CHIPS.filter(function (c) { return c.g === g; }).map(function (c) { return c.y; }), y0 = Math.min.apply(0, ys), y1 = Math.max.apply(0, ys);
+      h.push('<span class="yr">' + y0 + (y1 > y0 ? "–" + String(y1).slice(2) : "") + "</span>");
+      ["", "Pro", "Max", "Ultra"].forEach(function (t) {
+        var c = BY[(g + t).toLowerCase()];
+        if (!c) { h.push('<span class="tile gap" aria-hidden="true"></span>'); return; }
+        var tag = c.id === DET ? "Este Mac" : c.id === PILOT ? "Piloto" : "";
+        h.push('<button type="button" class="tile" aria-pressed="false" data-id="' + c.id + '" aria-label="Apple ' + c.n + (tag ? ", " + tag.toLowerCase() : "") + '">' + (tag ? "<i>" + tag + "</i>" : "") + "<b>" + c.g + "</b>" + (c.t ? "<span>" + c.t + "</span>" : "") + "</button>");
+      });
+    });
+    pickGrid.innerHTML = h.join("");
+  }
+  function pintarSelector(c) {
+    $$(".tile[data-id]", pickGrid).forEach(function (t) { t.setAttribute("aria-pressed", String(t.dataset.id === c.id)); });
+    pickMem.innerHTML = '<span class="lab">Memoria</span>' + c.mem.map(function (g) { return '<button type="button" class="pill" aria-pressed="' + (g === GB) + '" data-gb="' + g + '">' + g + " GB</button>"; }).join("");
+    pickSum.innerHTML = '<span class="mode' + (M.med ? "" : " est") + '">' + (M.med ? "Cifras medidas en este chip" : "Cifras estimadas desde el piloto") + "</span>" +
+      "<span>Apple\u00a0" + c.n + " · CPU de " + nCpu(c) + "\u00a0núcleos · GPU de\u00a0" + c.gpu + (bwDe(c, GB) ? " · " + bwTxt(bwDe(c, GB)).replace(" ", "\u00a0") : "") + (c.id === DET ? " · detectado en este navegador" : "") + "</span>" +
+      '<a href="#resultados">Ver lo que cambia</a>';
+    flash(pickSum);
+    $("#nav-chip span").textContent = c.n;
+  }
+
+  function apply(id, gb, anim) {
+    var c = BY[id] || BY[PILOT];
+    if (c.mem.indexOf(gb) < 0) gb = c.id === PILOT ? 24 : c.mem[0];
+    CUR = c; GB = gb; M = modelo(c, gb); flashes = [];
+    try { localStorage.setItem(KEY, JSON.stringify({ id: c.id, gb: gb })); } catch (e) {}
+    pintarSelector(c); aplicarPortada(c); aplicarResultados(c); aplicarChip(c); aplicarTareas(c);
+    baMode(); chip(); frame();
+    if (anim && !reduce) flashes.forEach(function (el) { el.classList.remove("upd"); void el.offsetWidth; el.classList.add("upd"); });
+  }
+  pickGrid.addEventListener("click", function (e) { var t = e.target.closest(".tile[data-id]"); if (t) apply(t.dataset.id, GB, true); });
+  pickMem.addEventListener("click", function (e) {
+    var b = e.target.closest(".pill"); if (!b) return;
+    apply(CUR.id, +b.dataset.gb, true);
+    if (e.detail === 0) pickMem.querySelector('[data-gb="' + GB + '"]').focus();   // con teclado, el foco sigue en la memoria elegida
+  });
+
+  DET = detectar();
+  pintarRejilla();
+  var guardado = null;
+  try { guardado = JSON.parse(localStorage.getItem(KEY)); } catch (e) {}
+  if (guardado && BY[guardado.id]) apply(guardado.id, guardado.gb, false);
+  else apply(DET || PILOT, DET ? 0 : 24, false);
 
   // Brillo que sigue al cursor en las reglas
   $$(".rule").forEach(function (r) {
