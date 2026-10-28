@@ -10,6 +10,8 @@
 
 ## Página · 27.10.2026
 
+- «Ya la instalé. ¿Y ahora?»: tres pruebas para copiar después de instalar (ver tu Mac, convertir un video,
+  pedir varias cosas a la vez). Las cifras de cada prueba siguen al chip elegido. También en el README.
 - «Instalar y usar» con dos caminos: quien usa las apps (Claude Desktop en la pestaña Code, o Codex) copia un
   mensaje y el agente instala la skill; quien usa la terminal tiene los comandos. Cada camino trae sus tres pasos,
   y la sección dice para quién sirve la skill. El README sigue el mismo orden.

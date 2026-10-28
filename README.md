@@ -65,6 +65,19 @@ Requisitos: Python 3. Para el diagnóstico completo (Metal, motores de video, Ne
 falta las herramientas de línea de comandos de Xcode (`xcode-select --install`). Sin ellas funciona con menos
 datos y lo avisa.
 
+## Primeros pasos
+
+No vas a notar nada: la skill trabaja por detrás cuando le pides al agente algo pesado. Para verla en acción, pega
+una de estas pruebas en Claude Code o Codex:
+
+| Prueba | Qué pasa |
+|---|---|
+| «Usa la skill rendimiento-equipo y dime qué tiene mi Mac y qué recomienda.» | Te dice tu chip, sus núcleos y tu memoria, qué parte del chip conviene para video, audio y renders, y si la Mac va justa de memoria o está caliente. |
+| «Convierte este video a vertical 1080×1920.» | Lo hace con el motor de video y no con la CPU. En el Mac piloto, 15 s de video pasaron de 22,1 s a 4,1 s. Necesita ffmpeg: si falta, el agente te avisa. |
+| «Renderiza estos 3 videos en paralelo sin que se cuelgue la Mac.» | Reparte los hilos y la memoria entre los renders y deja un solo servidor de Whisper. |
+
+Si no le pides al agente nada de eso, la skill no aparece: está pensada para cuando la Mac trabaja duro.
+
 ## Usar
 
 La skill se activa sola cuando le pides al agente un render, una transcripción, una conversión o un lote. Los

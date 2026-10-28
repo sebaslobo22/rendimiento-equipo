@@ -213,10 +213,22 @@ h2{font-size:clamp(2.1rem,1.1rem + 3.8vw,4rem);font-weight:650;letter-spacing:-.
 .pasos li::before{content:counter(paso);grid-row:span 2;width:34px;height:34px;border-radius:50%;display:grid;place-items:center;font-weight:650;font-size:15px;color:var(--accent-text);background:color-mix(in srgb,var(--accent) 14%,transparent)}
 .pasos b{font-size:15.5px;font-weight:600}
 .pasos span{font-size:14px;color:var(--text-2)}
-.install+.compat{grid-template-columns:repeat(4,minmax(0,1fr));margin-top:14px}
-@media (max-width:900px){.install+.compat{grid-template-columns:repeat(2,minmax(0,1fr))}}
+#instalar .compat{grid-template-columns:repeat(4,minmax(0,1fr));margin-top:14px}
+.pp{margin-top:clamp(36px,5vw,56px)}
+.pp-h{display:grid;gap:6px;margin-bottom:16px}
+.pp-h h3{font-size:clamp(1.25rem,1rem + .9vw,1.7rem);font-weight:650;letter-spacing:-.02em}
+.pp-h p{color:var(--text-2);font-size:15px}
+.pp-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px}
+.pp-card{display:grid;gap:12px;align-content:start;padding:18px;border-radius:20px;background:var(--panel);border:1px solid var(--line);--rad:20px;min-width:0}
+.pp-t{display:flex;align-items:center;gap:12px}
+.pp-t h4{margin:0;font-size:16px;font-weight:600}
+.pp-card .msg{margin:0;max-width:none;border-radius:14px 14px 4px 14px;font-size:14px}
+.pp-card .res{font-size:13.5px;color:var(--text-2)}
+.pp-card .copy{justify-self:start}
+.pp-foot{margin-top:14px;color:var(--text-3);font-size:14px}
+@media (max-width:900px){#instalar .compat{grid-template-columns:repeat(2,minmax(0,1fr))}.pp-grid{grid-template-columns:1fr}}
 .copy.hecho{color:var(--ok);border-color:var(--ok)}
-@media (max-width:560px){.install .copy span{display:none}.install+.compat{grid-template-columns:1fr}.modo button{padding:10px;gap:8px}.modo button svg.i{display:none}}
+@media (max-width:560px){.install .copy span{display:none}#instalar .compat{grid-template-columns:1fr}.modo button{padding:10px;gap:8px}.modo button svg.i{display:none}}
 
 /* Selector de chip: la página se ajusta al Apple Silicon elegido */
 @media (max-width:920px){.links{display:none}}
@@ -859,13 +871,22 @@ presión normal · swap creciendo: no · térmico nominal</pre></div>
         <ol class="pasos" data-para="app">
           <li><b>Abre Claude Desktop en la pestaña Code, o la app de Codex.</b><span>Tienen que trabajar en tu Mac. El chat normal de Claude y las tareas en la nube de Codex no ven tu equipo.</span></li>
           <li><b>Pega el mensaje y acepta cuando te pida permiso.</b><span>El agente descarga la skill y la instala. Tú no escribes ningún comando.</span></li>
-          <li><b>Abre una conversación nueva y pide lo de siempre.</b><span>Por ejemplo: «convierte estos 3 videos a vertical». La skill revisa tu Mac y elige el motor.</span></li>
+          <li><b>Abre una conversación nueva y pide lo de siempre.</b><span>La skill revisa tu Mac y elige el motor. Si no sabes por dónde empezar, abajo tienes tres pruebas.</span></li>
         </ol>
         <ol class="pasos" data-para="cli" hidden>
           <li><b>Pega los tres comandos.</b><span><span class="k-code">install.sh</span> enlaza la skill donde la buscan Claude Code y Codex. No copia archivos, no instala dependencias y no usa la red.</span></li>
           <li><b>Abre una sesión nueva de <span class="k-code">claude</span> o <span class="k-code">codex</span>.</b><span>Las skills se cargan al empezar la sesión.</span></li>
-          <li><b>Pide lo de siempre.</b><span>Se activa sola con renders, transcripciones, conversiones y lotes. En Claude Code también la llamas con <span class="k-code">/rendimiento-equipo</span>.</span></li>
+          <li><b>Pide lo de siempre.</b><span>Se activa sola con renders, transcripciones, conversiones y lotes. En Claude Code también la llamas con <span class="k-code">/rendimiento-equipo</span>. Abajo, tres pruebas para empezar.</span></li>
         </ol>
+      </div>
+      <div class="pp" id="primeros-pasos">
+        <div class="pp-h morph"><h3>Ya la instalé. ¿Y ahora?</h3><p>No vas a notar nada: la skill trabaja por detrás cuando le pides al agente algo pesado. Para verla en acción, pega una de estas pruebas en Claude Code o Codex.</p></div>
+        <div class="pp-grid">
+          <article class="pp-card morph" style="--c:var(--e-a)"><div class="pp-t"><span class="ico"><svg class="i"><use href="#i-pulse"/></svg></span><h4>Mira qué tiene tu Mac</h4></div><p class="msg">Usa la skill rendimiento-equipo y dime qué tiene mi Mac y qué recomienda.</p><p class="res">Te dice tu chip, sus núcleos y tu memoria, qué parte del chip conviene para video, audio y renders, y si la Mac va justa de memoria o está caliente.</p><button class="copy" type="button"><svg class="i"><use href="#i-copy"/></svg><span>Copiar</span></button></article>
+          <article class="pp-card morph" style="--c:var(--e-v)"><div class="pp-t"><span class="ico"><svg class="i"><use href="#i-film"/></svg></span><h4>Convierte un video</h4></div><p class="msg">Convierte este video a vertical 1080×1920.</p><p class="res" id="pp-enc">Lo hace con el motor de video y no con la CPU. En mi Mac, 15 s de video pasaron de 22,1 s a 4,1 s. Necesita ffmpeg: si falta, el agente te avisa.</p><button class="copy" type="button"><svg class="i"><use href="#i-copy"/></svg><span>Copiar</span></button></article>
+          <article class="pp-card morph" style="--c:var(--e-p)"><div class="pp-t"><span class="ico"><svg class="i"><use href="#i-layers"/></svg></span><h4>Pide varias cosas a la vez</h4></div><p class="msg">Renderiza estos 3 videos en paralelo sin que se cuelgue la Mac.</p><p class="res" id="pp-par">Reparte el trabajo: con un M4 Pro de 24 GB, 3 renders con 3 hilos y 2 GB de caché cada uno, y un solo servidor de Whisper.</p><button class="copy" type="button"><svg class="i"><use href="#i-copy"/></svg><span>Copiar</span></button></article>
+        </div>
+        <p class="pp-foot">Si no le pides al agente nada de eso, la skill no aparece: está pensada para cuando la Mac trabaja duro.</p>
       </div>
         <div class="compat">
           <div class="cp morph" style="--c:var(--ok)"><span class="st"></span><b>macOS en Apple Silicon</b><span>Diagnóstico completo. Medido en un M4 Pro de 24 GB.</span></div>
@@ -1356,6 +1377,8 @@ presión normal · swap creciendo: no · térmico nominal</pre></div>
   }
 
   function aplicarTareas(c) {
+    txt("#pp-enc", "Lo hace con el motor de video y no con la CPU. " + (M.med ? "En mi Mac, 15 s de video pasaron de 22,1 s a 4,1 s." : "En un " + c.n + ", 15 s de video pasarían de ≈ " + num(M.enc[0], 1) + " s a ≈ " + num(M.enc[1], 1) + " s, según la estimación.") + " Necesita ffmpeg: si falta, el agente te avisa.");
+    txt("#pp-par", "Reparte el trabajo: con un " + c.n + " de " + GB + " GB, 3 renders con " + M.conc + (M.conc === 1 ? " hilo" : " hilos") + " y " + M.cache + " de caché cada uno, y un solo servidor de Whisper.");
     function st(id, b, t) { var el = $('.task[data-t="' + id + '"] .st'), h = "<b>" + b + "</b>" + t; if (el.innerHTML !== h) { el.innerHTML = h; flash(el); } }
     st("codificar", ap(M.enc[1], 1) + " s", "contra " + num(M.enc[0], 1) + " s");
     st("decodificar", (M.med ? "2,4" : ap(M.dec[1], 1)) + " s", "contra " + num(4.4 * M.rm, 1) + "–" + num(5.4 * M.rm, 1) + " s");
@@ -1468,6 +1491,16 @@ presión normal · swap creciendo: no · térmico nominal</pre></div>
   var modoGuardado = null;
   try { modoGuardado = localStorage.getItem("rendimiento-equipo:modo"); } catch (e) {}
   ponerModo(modoGuardado === "cli" ? "cli" : "app", false);
+
+  // Primeros pasos: copiar el mensaje de cada prueba
+  $$(".pp-card .copy").forEach(function (btn) {
+    btn.addEventListener("click", function () {
+      var msg = $(".msg", btn.closest(".pp-card")), lab = $("span", btn);
+      var ok = function () { lab.textContent = "Copiado"; btn.classList.add("hecho"); setTimeout(function () { lab.textContent = "Copiar"; btn.classList.remove("hecho"); }, 1600); };
+      var sel = function () { var r = document.createRange(); r.selectNodeContents(msg); var s = getSelection(); s.removeAllRanges(); s.addRange(r); };
+      if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(msg.textContent).then(ok, sel); else sel();
+    });
+  });
 })();
 </script>
 </body>
