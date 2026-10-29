@@ -187,3 +187,7 @@ MIT. Ver [LICENSE](LICENSE).
 transcription, segmentation, batches, parallel agents), routes each task to the engine that does it best, and keeps
 per-machine measurements outside the repo. Pilot: macOS on Apple Silicon. On Windows it diagnoses and measures,
 but makes no recommendations until real machines are measured. The skill and its docs are in Spanish.
+
+## Mediciones publicadas
+
+- [Dictado local en un M5 base de 16 GB y un M4 Pro de 24 GB](mediciones/2026-10-29-dictado-m5-y-m4-pro.md) (29.10.2026): Parakeet erró 2,3 % frente a 5,4–6,9 % de Whisper, y los Neural Accelerators del M5 estaban apagados en OpenWhispr 1.10.4.

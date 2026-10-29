@@ -397,13 +397,17 @@ h2{font-size:clamp(2.1rem,1.1rem + 3.8vw,4rem);font-weight:650;letter-spacing:-.
 .track i.rng{background:repeating-linear-gradient(135deg,var(--c) 0 2px,transparent 2px 6px);border:1px solid var(--c);left:calc(var(--a) * 100%);width:calc(var(--w,0) * (var(--b) - var(--a)) * 100%)}
 .track.tall{height:22px;border-radius:8px}.track.tall i{border-radius:8px}
 .axis{position:relative;height:16px;margin-top:-6px;font-size:11px;color:var(--text-3);font-variant-numeric:tabular-nums}
-.axis span{position:absolute;left:var(--x);transform:translateX(-50%)}
+.axis span{position:absolute;left:var(--x);transform:translateX(-50%);white-space:nowrap}
 .axis span:first-child{transform:none}.axis span:last-child{transform:translateX(-100%)}
 .dots{display:grid;gap:14px}
 .dots .row{grid-template-columns:minmax(0,1fr) auto}
 .dotgrid{grid-column:1/-1;display:flex;flex-wrap:wrap;gap:3px}
 .dotgrid i{width:8px;height:8px;border-radius:50%;background:var(--panel-3);transition:background-color .2s}
 .dotgrid i.on{background:var(--c)}
+.vnote{margin-top:14px;font-size:14px;color:var(--text-2)}
+.vlist{margin:4px 0 0;padding:0;list-style:none;display:grid;gap:12px;font-size:14.5px;color:var(--text-2)}
+.vlist b{color:var(--text)}
+.note a{color:var(--text);text-decoration:underline;text-underline-offset:3px}
 .note{margin-top:18px;display:flex;gap:12px;align-items:flex-start;padding:16px 18px;border-radius:18px;border:1px dashed var(--line-2);color:var(--text-2);font-size:14.5px}
 .note svg.i{color:var(--warn);margin-top:2px}
 @media (max-width:900px){.charts{grid-template-columns:1fr}}
@@ -573,7 +577,7 @@ footer .wrap{display:flex;justify-content:space-between;gap:12px 24px;flex-wrap:
   <a class="brand" href="#inicio"><span class="logo"><svg class="i"><use href="#i-cpu"/></svg></span><span class="bt">rendimiento-equipo</span></a>
   <div class="links" id="links">
     <span class="ind" id="ind"></span>
-    <a href="#resultados">Resultados</a><a href="#chip">Chip</a><a href="#tareas">Tareas</a><a href="#medido">Medido</a><a href="#como">Cómo</a>
+    <a href="#resultados">Resultados</a><a href="#chip">Chip</a><a href="#tareas">Tareas</a><a href="#medido">Medido</a><a href="#dictado">Dictado</a><a href="#como">Cómo</a>
   </div>
   <a class="chipbtn" href="#tu-chip" id="nav-chip" title="Cambiar de chip"><svg class="i"><use href="#i-cpu"/></svg><span>M4 Pro</span></a>
   <a class="btn pri" href="#instalar">Instalar</a>
@@ -822,6 +826,52 @@ presión normal · swap creciendo: no · térmico nominal</pre></div>
         </article>
       </div>
       <p class="note morph"><svg class="i"><use href="#i-alert"/></svg><span>Mac piloto: Apple M4 Pro, 10 núcleos de rendimiento y 4 de eficiencia, GPU de 20 núcleos, 24 GB, macOS 27.2. Pendiente: <span class="k-code">--gl=angle</span> en Remotion. Una de dos pruebas falló con otros renders en marcha, así que no se adopta hasta medirlo en limpio.</span></p>
+    </div>
+  </section>
+
+  <section class="sec" id="dictado">
+    <div class="wrap">
+      <div class="head morph">
+        <span class="kicker"><svg class="i"><use href="#i-wave"/></svg>Dictado medido</span>
+        <h2 class="grad">Dos Mac, dos respuestas.</h2>
+        <p>El 29.10.2026 un usuario midió con la skill cada modelo de dictado de OpenWhispr en un MacBook Pro M5 base de 16 GB y me mandó el informe. Lo repetí en el M4 Pro piloto. Lo que salió cambió cómo la skill elige tu modelo.</p>
+      </div>
+
+      <div class="charts">
+        <article class="card wide morph vbars">
+          <div class="card-h"><div><h3>Transcribir 42,7 s de voz en un M5 base</h3><p>Tiempo de cada modelo y, al lado, cuántas palabras erró. Menos es mejor en las dos cosas.</p></div></div>
+          <div class="rows">
+            <div class="row" style="--c:var(--e-g)" data-tip="Whisper Base con Metal · 0,50 s · 85 veces el tiempo real · 315 MB · 5,4 % de error"><span class="lab">Whisper Base · GPU</span><span class="val">0,50 s · 5,4 %</span><div class="track"><i style="--to:.025"></i></div></div>
+            <div class="row" style="--c:var(--e-g)" data-tip="Whisper Small con Metal · 1,21 s · 35 veces el tiempo real · 330 MB · 6,9 % de error"><span class="lab">Whisper Small · GPU</span><span class="val">1,21 s · 6,9 %</span><div class="track"><i style="--to:.0605"></i></div></div>
+            <div class="row" style="--c:var(--e-p)" data-tip="Parakeet TDT 0.6B v3 en el procesador, 4 hilos · 1,36 s · 31 veces el tiempo real · 1.748 MB · 2,3 % de error"><span class="lab"><b>Parakeet v3</b> · procesador</span><span class="val"><b>1,36 s · 2,3 %</b></span><div class="track"><i style="--to:.068"></i></div></div>
+            <div class="row" style="--c:var(--e-g)" data-tip="Whisper Turbo con Metal · 2,42 s · 18 veces el tiempo real · 1.159 MB · 6,9 % de error"><span class="lab">Whisper Turbo · GPU</span><span class="val">2,42 s · 6,9 %</span><div class="track"><i style="--to:.121"></i></div></div>
+            <div class="row" style="--c:var(--e-g)" data-tip="Whisper Medium con Metal · 3,28 s · 13 veces el tiempo real · 730 MB · 5,4 % de error"><span class="lab">Whisper Medium · GPU</span><span class="val">3,28 s · 5,4 %</span><div class="track"><i style="--to:.164"></i></div></div>
+            <div class="row" style="--c:var(--text-3)" data-tip="Whisper Turbo en el procesador (-ng) · 19,18 s · 2,2 veces el tiempo real · 1.816 MB · 6,9 % de error"><span class="lab">Whisper Turbo · procesador</span><span class="val">19,18 s · 6,9 %</span><div class="track"><i style="--to:.959"></i></div></div>
+            <div class="axis"><span style="--x:0%">0</span><span style="--x:25%">5</span><span style="--x:50%">10</span><span style="--x:75%">15</span><span style="--x:100%">20 s</span></div>
+          </div>
+        </article>
+
+        <article class="card morph vbars">
+          <div class="card-h"><div><h3>Mismo modelo, otro equipo</h3><p>Cuántas veces más rápido va Whisper Turbo en la GPU que en el procesador.</p></div></div>
+          <div class="rows">
+            <div class="row" style="--c:var(--e-g)" data-tip="M4 Pro, GPU de 20 núcleos · 0,53 s con Metal frente a 7,92 s en el procesador"><span class="lab">M4 Pro · GPU de 20 núcleos</span><span class="val">15 veces</span><div class="track"><i style="--to:.9375"></i></div></div>
+            <div class="row" style="--c:var(--e-g)" data-tip="M5 base, GPU de 10 núcleos · 2,42 s con Metal frente a 19,18 s en el procesador"><span class="lab">M5 base · GPU de 10 núcleos</span><span class="val">7,9 veces</span><div class="track"><i style="--to:.494"></i></div></div>
+            <div class="axis"><span style="--x:0%">0</span><span style="--x:50%">8</span><span style="--x:100%">16×</span></div>
+          </div>
+          <p class="vnote">Por eso la skill recomienda por equipo y no por chip: mira la memoria, su velocidad, la GPU y lo que hayas medido ahí.</p>
+        </article>
+
+        <article class="card morph">
+          <div class="card-h"><div><h3>Lo que la skill no veía</h3><p>Cuatro huecos que el informe destapó y que la versión 1.4.0 corrige.</p></div></div>
+          <ul class="vlist">
+            <li><b>Los Neural Accelerators del M5 estaban apagados.</b> El servidor de Whisper de OpenWhispr 1.10.4 no logró activarlos (<span class="k-code">has tensor = false</span>). Ahora la skill lo comprueba en vez de suponerlo.</li>
+            <li><b>Parakeet no se podía medir.</b> Ahora se miden también Parakeet, Orukeet y Cohere.</li>
+            <li><b>Los números contaban como error.</b> «12 %» y «doce por ciento» ya cuentan igual.</li>
+            <li><b>El swap lleno no frenaba nada.</b> Pasó de 2 a 4 GB con la memoria «normal». Ahora frena por encima del 75 %.</li>
+          </ul>
+        </article>
+      </div>
+      <p class="note morph"><svg class="i"><use href="#i-alert"/></svg><span>Voz sintética en español, un audio por equipo, una pasada de calentamiento y la media de 3. Los errores del M5 se midieron antes de normalizar cifras. <a href="https://github.com/sebaslobo22/rendimiento-equipo/blob/main/mediciones/2026-10-29-dictado-m5-y-m4-pro.md">Informe completo y cómo repetirlo</a>.</span></p>
     </div>
   </section>
 
@@ -1243,11 +1293,14 @@ presión normal · swap creciendo: no · térmico nominal</pre></div>
       if (g._lit !== lit) { for (var i = 0; i < all.length; i++) all[i].classList.toggle("on", i < lit); g._lit = lit; }
     });
   }
-  var bars = $("#bars"), barIs = $$(".track i", bars);
-  function barsFn() {
-    var f = ease(seg(pThrough(bars), .15, .6));
-    barIs.forEach(function (i) { i.style.setProperty("--w", (i.classList.contains("rng") ? f : f * +i.style.getPropertyValue("--to")).toFixed(4)); });
+  function barsOf(el) {
+    var is = $$(".track i", el);
+    return function () {
+      var f = ease(seg(pThrough(el), .15, .6));
+      is.forEach(function (i) { i.style.setProperty("--w", (i.classList.contains("rng") ? f : f * +i.style.getPropertyValue("--to")).toFixed(4)); });
+    };
   }
+  var bars = $("#bars"), barsFn = barsOf(bars);
   // Cómo trabaja: pasos y terminal ligados al scroll
   var how = $("#como"), steps = $$(".step"), term = $("#term"), panes = $$(".pane", term), tabs = $$(".seg button", term), lineOn = $("#line-on");
   var lastStep = -1;
@@ -1308,7 +1361,7 @@ presión normal · swap creciendo: no · térmico nominal</pre></div>
 
   var scenes = [
     [ba, baFn], [seqEl, chip], [race, raceFn], [dots, dotsFn], [bars, barsFn], [how, howFn], [brakesEl, brakesFn], [fp, fpFn]
-  ];
+  ].concat($$(".vbars").map(function (c) { return [c, barsOf(c)]; }));
   function frame() {
     if (!reduce) {
       morphs.forEach(function (m) { if (visible(m)) m.style.setProperty("--r", ease(pIn(m)).toFixed(4)); });
