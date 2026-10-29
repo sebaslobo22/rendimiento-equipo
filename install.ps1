@@ -361,6 +361,23 @@ try {
     if ($null -ne $python) { $comandoPython = $python }
     $perfil = [System.IO.Path]::Combine($ORIGEN, 'scripts', 'perfil.py')
     Write-Host ('  ' + $comandoPython + ' "' + $perfil + '" --formato texto')
+    $calibrar = [System.IO.Path]::Combine($ORIGEN, 'scripts', 'calibrar.py')
+    if ($null -ne $python -and [Environment]::UserInteractive -and -not [Console]::IsInputRedirected) {
+        Write-Host ''
+        Write-Host 'Calibrar mide este equipo: que modelo de dictado de OpenWhispr y que metodo de video le convienen.'
+        Write-Host 'Usa solo lo que ya tienes: no descarga nada ni cambia OpenWhispr. Tarda de 1 a 3 minutos.'
+        $r = Read-Host 'Calibrar ahora? [s/N]'
+        if ($r -match '^[sS]') {
+            $partes = @($python -split ' ')
+            $resto = @()
+            if ($partes.Count -gt 1) { $resto = $partes[1..($partes.Count - 1)] }
+            & $partes[0] @resto $calibrar
+        } else {
+            Write-Host ('Cuando quieras: ' + $comandoPython + ' "' + $calibrar + '"')
+        }
+    } else {
+        Write-Host ('Para calibrar este equipo: ' + $comandoPython + ' "' + $calibrar + '"')
+    }
     exit 0
 } catch {
     Write-Err ('Error: ' + $_.Exception.Message)

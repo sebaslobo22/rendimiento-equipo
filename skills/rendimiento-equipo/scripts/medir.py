@@ -713,7 +713,7 @@ def medir_voz(args):
     whisper_bin = next(iter(sorted(glob_bin(bin_ow, "whisper-server"))), None) or \
         next((s["ruta"] for s in (dg.buscar_whisper() or {}).get("servidores") or []), None)
     sherpa_bin = next(iter(sorted(glob_bin(bin_ow, "sherpa-onnx-ws"))), None)
-    todos = [m for m in voz.modelos(cat) if m["instalado"] and not m["streaming"]]
+    todos = [m for m in voz.modelos(cat) if m["ruta"] and not m["streaming"]]
     pedidos = [x.strip() for x in (args.modelos or "").split(",") if x.strip()]
     elegidos = [m for m in todos if not pedidos or m["id"] in pedidos]
     if not elegidos:
@@ -837,6 +837,7 @@ def medir_voz(args):
             continue  # se guarda el backend rapido de cada Whisper
         cambios[("voz", r["modelo"])] = {k: r[k] for k in ("backend", "hilos", "carga_s", "transcribe_s", "veces_tiempo_real", "memoria_mb", "wer")}
         cambios[("voz", r["modelo"])].update({"idioma": args.idioma, "audio_s": round(seg, 1), "audio_id": audio_id,
+                                              "audio_sintetico": bool(args.audio_sintetico),
                                               "estado": "adoptado", "fecha": hoy(), "nota": "medido con medir.py voz"})
     if tensor is not None:
         cambios[("whisper", "api_tensores")] = {"valor": tensor, "estado": "adoptado", "fecha": hoy(),
@@ -998,6 +999,7 @@ def parser():
     p.add_argument("--texto", help="lo que dice el audio (archivo .txt o el texto mismo): con esto se calcula el error")
     p.add_argument("--idioma", default="es", help="idioma del audio (por defecto %(default)s)")
     p.add_argument("--modelos", help="ids separados por coma (por defecto todos los instalados)")
+    p.add_argument("--audio-sintetico", action="store_true", help="el audio es voz sintetica (calibrar.py): tu voz real tendra prioridad")
     p.add_argument("--backends", help="en Whisper: metal, cpu o metal,cpu para compararlos (por defecto metal en Apple Silicon, cpu en lo demas)")
     comunes(p)
     p = sub.add_parser("paralelo", help="cuantas codificaciones por hardware rinden a la vez (1, 2, 4...)",

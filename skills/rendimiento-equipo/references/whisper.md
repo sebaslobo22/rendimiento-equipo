@@ -34,6 +34,25 @@ Qué dato manda, en orden:
   dos sistemas (sherpa-onnx).
 - La skill solo sugiere: el modelo se cambia en OpenWhispr, en Configuración > Conversión de voz a texto > Local.
 
+### Calibrar: que la skill lo encuentre sola
+
+`calibrar.py` hace la búsqueda del punto dulce de punta a punta, en cualquier equipo, sin lista de chips ni de
+modelos fija:
+
+1. Lee el catálogo del OpenWhispr instalado y filtra por este equipo (idioma, memoria, velocidad).
+2. Mide todo lo útil que ya está descargado, con un audio de prueba en español que lee la voz del sistema
+   (`say` en macOS, System.Speech en Windows) o con tu voz (`--audio`, `--texto`; tiene prioridad).
+3. Propone los candidatos que faltan: los de menos error público a menos de 1,5 puntos del mejor (hasta 3) y el
+   modelo nuevo más liviano que no tenga ficha, porque solo midiéndolo se sabe si gana. Con `--descargar` (y un
+   sí del usuario) los baja a `~/.local/share/rendimiento-equipo/modelos-voz/`, los mide y los borra.
+4. Con dos o más modelos medidos sobre el mismo audio, el punto dulce sale de lo medido. Las velocidades de los
+   no medidos se estiman desde el modelo del mismo motor medido en el equipo (la velocidad baja en proporción al
+   tamaño): sirve igual para un chip que salga mañana.
+5. Guarda `calibracion.json` con la versión de OpenWhispr y su catálogo. Si cambian, `perfil.py` avisa que toca
+   calibrar otra vez.
+
+El instalador ofrece calibrar al terminar. Nunca cambia la configuración de OpenWhispr.
+
 ### Medir en tu equipo
 
 ```

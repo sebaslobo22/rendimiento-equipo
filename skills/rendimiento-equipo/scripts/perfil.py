@@ -443,13 +443,29 @@ def bloque_subagentes(d, p):
     return "\n".join(L)
 
 
+def motivo_recalibrar(d):
+    """Por que conviene volver a correr calibrar.py en este equipo, o None si lo calibrado sigue vigente."""
+    c = dg.leer_json(os.path.join(dg.directorio_datos(d.get("huella") or ""), "calibracion.json"))
+    if not c:
+        return "este equipo no se ha calibrado"
+    cat, version, _ = voz.catalogo_openwhispr()
+    if not cat:
+        return None
+    if c.get("openwhispr") != version:
+        return "OpenWhispr cambio de %s a %s" % (c.get("openwhispr"), version)
+    nuevos = sorted(set(m["id"] for m in voz.modelos(cat)) - set(c.get("modelos_catalogo") or []))
+    return ("OpenWhispr trae modelos nuevos: %s" % ", ".join(nuevos)) if nuevos else None
+
+
 def recomendar_voz(d, medido, freno_memoria):
     """Modelo de dictado de OpenWhispr para este equipo (voz.py); None si algo falla, sin tumbar el perfil."""
     try:
         gpu = dg.es_macos() and d.get("arquitectura") == "arm64"  # Metal en Apple Silicon; en Windows e Intel, CPU por defecto
         ref = arq.referencia_apple((d.get("cpu") or {}).get("marca")) or {}
         equipo = {"ancho_banda_gbs": ref.get("ancho_banda_gbs"), "gpu_nucleos": (d.get("gpu") or {}).get("nucleos")}
-        return voz.recomendar((d.get("memoria") or {}).get("memsize"), "es", medido.get("voz"), freno_memoria, gpu, equipo)
+        v = voz.recomendar((d.get("memoria") or {}).get("memsize"), "es", medido.get("voz"), freno_memoria, gpu, equipo)
+        v["recalibrar"] = motivo_recalibrar(d)
+        return v
     except Exception as e:  # noqa: BLE001
         return {"error": "%s: %s" % (type(e).__name__, e)}
 
@@ -459,6 +475,8 @@ def texto_voz(v):
     if not v or v.get("error"):
         return ["", "VOZ  sin datos (%s)" % ((v or {}).get("error") or "sin OpenWhispr")]
     L = ["", "VOZ  modelo de dictado de OpenWhispr para este equipo (idioma %s; catalogo: %s)" % (v["idioma"], v["catalogo"])]
+    if v.get("recalibrar"):
+        L.append("  calibrar       %s: corre calibrar.py (sin descargas) o calibrar.py --descargar con permiso" % v["recalibrar"])
     e = v.get("equipo") or {}
     L.append("  equipo         %s GB, %s, Whisper en %s%s; criterio: %s" % (
         e.get("memoria_gb"), ("%s GB/s de memoria" % e["ancho_banda_gbs"]) if e.get("ancho_banda_gbs") else "ancho de banda sin dato",

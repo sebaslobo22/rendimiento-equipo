@@ -1,5 +1,18 @@
 # Cambios
 
+## 1.5.0 · 29.10.2026
+
+- `calibrar.py`: la skill busca sola el punto dulce de cada equipo. Mide dictado con todos los modelos de
+  OpenWhispr que ya tienes (audio de prueba con la voz del sistema, o tu voz) y video, y dice qué conviene y por
+  qué. Propone los candidatos que faltan y, solo con `--descargar` y permiso, los prueba en una carpeta propia
+  sin tocar OpenWhispr.
+- Sin lista fija de chips ni de modelos: los modelos nuevos sin ficha se proponen para medir, y la velocidad de
+  los no medidos se estima desde lo medido en el mismo equipo.
+- `perfil.py` avisa cuando toca calibrar otra vez: equipo nuevo, OpenWhispr actualizado o modelos nuevos.
+- Tu voz real tiene prioridad sobre la voz sintética. Un clip de video sintético ya no se guarda en el perfil:
+  se comprime demasiado fácil y daba ganadora a la CPU por error.
+- `install.sh` e `install.ps1` ofrecen calibrar al terminar.
+
 ## 1.4.0 · 29.10.2026
 
 - El modelo de dictado se recomienda por equipo, no por chip: cuenta la memoria (tamaño y ancho de banda), si

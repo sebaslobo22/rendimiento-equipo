@@ -92,24 +92,38 @@ def fichas():
         return {"modelos": {}}
 
 
+def carpeta_pruebas():
+    """Modelos que descarga calibrar.py solo para medir: fuera de OpenWhispr, que nunca se toca."""
+    base = os.environ.get("XDG_DATA_HOME") or os.path.expanduser("~/.local/share")
+    return os.path.join(base, "rendimiento-equipo", "modelos-voz")
+
+
 def modelos(cat):
-    """Lista plana de modelos locales de dictado del catalogo, con lo que hace falta para decidir."""
+    """Lista plana de modelos locales de dictado del catalogo, con lo que hace falta para decidir y para medir.
+
+    instalado: descargado en OpenWhispr. ruta: donde esta, en OpenWhispr o en la carpeta de pruebas de la skill.
+    """
     out = []
-    raiz = raiz_cache()
+    raiz, prueba = raiz_cache(), carpeta_pruebas()
+
+    def ubicar(sub, nombre, es_archivo):
+        existe = os.path.isfile if es_archivo else os.path.isdir
+        ow, pr = os.path.join(raiz, sub, nombre), os.path.join(prueba, sub, nombre)
+        return existe(ow), (ow if existe(ow) else pr if existe(pr) else None)
     for mid, m in (cat.get("whisperModels") or {}).items():
-        archivo = os.path.join(raiz, "whisper-models", m.get("fileName") or "")
+        inst, ruta = ubicar("whisper-models", m.get("fileName") or "?", True)
         out.append({"id": mid, "nombre": "Whisper " + m.get("name", mid), "familia": "whisper", "motor": "whisper.cpp",
                     "mb": m.get("sizeMb"), "idiomas": None, "auto_idioma": True,
-                    "instalado": os.path.isfile(archivo), "ruta": archivo if os.path.isfile(archivo) else None,
-                    "streaming": False})
+                    "instalado": inst, "ruta": ruta, "streaming": False,
+                    "url": m.get("downloadUrl"), "archivo": m.get("fileName")})
     for mid, m in (cat.get("parakeetModels") or {}).items():
-        carpeta = os.path.join(raiz, "parakeet-models", m.get("extractDir") or mid)
+        inst, ruta = ubicar("parakeet-models", m.get("extractDir") or mid, False)
         out.append({"id": mid, "nombre": m.get("name", mid), "familia": "sherpa-onnx", "motor": "sherpa-onnx",
                     "mb": round(m["sizeMb"]) if isinstance(m.get("sizeMb"), (int, float)) else None,
                     "idiomas": m.get("supportedLanguages"), "auto_idioma": m.get("language") == "multilingual",
-                    "instalado": os.path.isdir(carpeta), "ruta": carpeta if os.path.isdir(carpeta) else None,
-                    "streaming": m.get("runtime") == "online",
-                    "sherpa_tipo": m.get("sherpaModelType"), "tipo_modelo": m.get("modelType")})
+                    "instalado": inst, "ruta": ruta, "streaming": m.get("runtime") == "online",
+                    "sherpa_tipo": m.get("sherpaModelType"), "tipo_modelo": m.get("modelType"),
+                    "url": m.get("downloadUrl"), "archivo": m.get("extractDir") or mid})
     return out
 
 
@@ -125,7 +139,12 @@ def _audio_comun(medido):
             por_audio.setdefault(r["audio_id"], []).append(mid)
     if not por_audio:
         return None, []
-    aid, mids = max(por_audio.items(), key=lambda kv: len(kv[1]))
+    sintetico = {r.get("audio_id"): bool(r.get("audio_sintetico")) for r in medido.values() if isinstance(r, dict)}
+    validos = {a: m for a, m in por_audio.items() if len(m) >= 2}
+    if not validos:
+        return None, []
+    # tu voz real primero; despues el audio con mas modelos medidos
+    aid, mids = max(validos.items(), key=lambda kv: (not sintetico.get(kv[0]), len(kv[1])))
     return (aid, mids) if len(mids) >= 2 else (None, [])
 
 
@@ -148,8 +167,15 @@ def recomendar(memsize, idioma="es", medido=None, frenos_memoria=False, whisper_
     bw = equipo.get("ancho_banda_gbs")
     audio_id, con_error_medido = _audio_comun(medido)
     presupuesto = (memsize or 0) / 1024 ** 2 * MEMORIA_MAX * (0.5 if frenos_memoria else 1)
+    lista = modelos(cat)
+    referencia_propia = {}  # por motor: (veces tiempo real, MB del modelo, nombre) del mas grande medido aqui
+    for m in lista:
+        r = medido.get(m["id"])
+        if r and r.get("veces_tiempo_real") and m["mb"] and (r.get("backend") != "cpu" or m["familia"] != "whisper" or not whisper_gpu):
+            if m["mb"] > referencia_propia.get(m["familia"], (0, 0))[1]:
+                referencia_propia[m["familia"]] = (r["veces_tiempo_real"], m["mb"], m["nombre"])
     candidatos = []
-    for m in modelos(cat):
+    for m in lista:
         f = fx.get(m["id"], {})
         med = medido.get(m["id"])
         wer_pub = (f.get("wer_" + idioma) or {}).get("valor")
@@ -158,12 +184,16 @@ def recomendar(memsize, idioma="es", medido=None, frenos_memoria=False, whisper_
         mem = (med or {}).get("memoria_mb") or (f.get("memoria_mb") or {}).get("valor") \
             or (m["mb"] * FACTOR_MEMORIA if m["mb"] else None)
         vel, vel_origen = (med or {}).get("veces_tiempo_real"), "medida"
-        if vel is None and m["familia"] == "whisper" and whisper_gpu and bw and m["mb"]:
+        ref = referencia_propia.get(m["familia"])
+        if vel is None and ref and m["mb"]:
+            # mismo equipo, mismo motor: la velocidad baja en proporcion al tamano del modelo
+            vel, vel_origen = round(ref[0] * ref[1] / m["mb"], 1), "estimada desde %s medido en este equipo" % ref[2]
+        elif vel is None and m["familia"] == "whisper" and whisper_gpu and bw and m["mb"]:
             vel, vel_origen = round(K_ANCHO_BANDA * bw / m["mb"], 1), "estimada con %s GB/s de memoria" % bw
         elif vel is None:
             vel_origen = None
         m.update({"wer": wer, "wer_publico": wer_pub,
-                  "wer_fuente": ("medido en este equipo, audio %s" % audio_id) if usa_medido else (f.get("wer_" + idioma) or {}).get("dataset"),
+                  "wer_fuente": ("medido en este equipo con %s" % ("voz sintetica" if (med or {}).get("audio_sintetico") else "tu voz")) if usa_medido else (f.get("wer_" + idioma) or {}).get("dataset"),
                   "memoria_mb": round(mem) if mem else None, "velocidad": vel, "velocidad_origen": vel_origen,
                   "ficha": bool(f), "medido": med})
         if not habla(m, idioma):
@@ -178,6 +208,7 @@ def recomendar(memsize, idioma="es", medido=None, frenos_memoria=False, whisper_
             m["descarte"] = "en este equipo va a %s veces el tiempo real (%s): dictar se sentiria lento" % (vel, vel_origen)
         elif wer is None:
             m["descarte"] = "sin datos publicos de precision: medir antes de elegir"
+            m["medible"] = True
         candidatos.append(m)
     validos = [m for m in candidatos if "descarte" not in m]
     if con_error_medido and any(m["id"] in con_error_medido for m in validos):
@@ -198,6 +229,28 @@ def recomendar(memsize, idioma="es", medido=None, frenos_memoria=False, whisper_
             "recomendado": elegido, "modelos": candidatos, "medir_tambien": por_medir,
             "nuevos_sin_ficha": [m["nombre"] for m in candidatos if not m["ficha"]],
             "como_cambiarlo": "OpenWhispr > Configuracion > Conversion de voz a texto > Local > elige el modelo y descargalo"}
+
+
+def candidatos_prueba(rec, max_descargas=3, margen=1.5):
+    """Que medir en este equipo: todo lo que ya esta y sirve (gratis), mas los mejores por ficha publica que faltan.
+
+    Entran los que pasaron los filtros del equipo (idioma, memoria, velocidad) o solo les falta un dato de error.
+    De los que faltan, los que quedan a menos de `margen` puntos del mejor error publico, el recomendado siempre,
+    hasta `max_descargas`, los de menos error primero.
+    """
+    sirven = [m for m in rec["modelos"] if "descarte" not in m or m.get("medible")]
+    ya = [m for m in sirven if m.get("ruta")]
+    faltan = sorted((m for m in sirven if not m.get("ruta") and m.get("url") and m.get("wer") is not None), key=lambda m: m["wer"])
+    mejor = faltan[0]["wer"] if faltan else None
+    bajar = [m for m in faltan if m["wer"] - mejor <= margen][:max_descargas]
+    # modelos que el catalogo trajo despues de la ficha: solo midiendolos se sabe si ganan. Entra el mas liviano.
+    nuevos = sorted((m for m in sirven if not m.get("ruta") and m.get("url") and m.get("wer") is None and not m["ficha"]),
+                    key=lambda m: m["mb"] or 1e9)
+    bajar += nuevos[:1]
+    r = rec.get("recomendado")
+    if r and not r.get("ruta") and r.get("url") and all(m["id"] != r["id"] for m in bajar):
+        bajar = ([r] + bajar)[:max_descargas]
+    return ya, bajar
 
 
 if __name__ == "__main__":

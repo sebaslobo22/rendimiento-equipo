@@ -588,7 +588,7 @@ footer .wrap{display:flex;justify-content:space-between;gap:12px 24px;flex-wrap:
   <section class="hero" id="hero">
     <div class="wrap">
       <div class="hero-txt" id="hero-txt">
-        <a class="tag" href="#instalar"><span class="dot"></span>Skill para Claude Code y Codex · Mac y Windows · v1.4.0</a>
+        <a class="tag" href="#instalar"><span class="dot"></span>Skill para Claude Code y Codex · Mac y Windows · v1.5.0</a>
         <h1 class="grad">Cada tarea, al motor que mejor la hace.</h1>
         <p class="sub"><b>rendimiento-equipo</b> mira tu computadora, Mac o Windows, antes de un render, una transcripción o un lote, y reparte el trabajo entre la CPU, la GPU, el Neural Engine y el motor de video. Lo que mide en tu equipo manda.</p>
         <div class="ctas">
@@ -862,11 +862,12 @@ presión normal · swap creciendo: no · térmico nominal</pre></div>
         </article>
 
         <article class="card morph">
-          <div class="card-h"><div><h3>Lo que la skill no veía</h3><p>Cuatro huecos que el informe destapó y que la versión 1.4.0 corrige.</p></div></div>
+          <div class="card-h"><div><h3>Lo que la skill no veía</h3><p>Lo que el informe destapó y cómo quedó corregido.</p></div></div>
           <ul class="vlist">
             <li><b>Los Neural Accelerators del M5 estaban apagados.</b> El servidor de Whisper de OpenWhispr 1.10.4 no logró activarlos (<span class="k-code">has tensor = false</span>). Ahora la skill lo comprueba en vez de suponerlo.</li>
             <li><b>Parakeet no se podía medir.</b> Ahora se miden también Parakeet, Orukeet y Cohere.</li>
             <li><b>Los números contaban como error.</b> «12 %» y «doce por ciento» ya cuentan igual.</li>
+            <li><b>El punto dulce dependía de que alguien midiera.</b> Ahora cada equipo se calibra al instalar la skill: mide lo que tiene, propone qué más probar y avisa cuando OpenWhispr trae modelos nuevos.</li>
             <li><b>El swap lleno no frenaba nada.</b> Pasó de 2 a 4 GB con la memoria «normal». Ahora frena por encima del 75 %.</li>
           </ul>
         </article>
@@ -981,8 +982,8 @@ presión normal · swap creciendo: no · térmico nominal</pre></div>
         <div class="term chat-win morph" data-para="app" style="--rad:16px">
           <div class="term-bar"><span class="lights"><i></i><i></i><i></i></span><div class="seg" role="tablist" aria-label="Mensajes para tu agente"><button role="tab" aria-selected="true">Instalar</button><button role="tab" aria-selected="false">Probar</button><button role="tab" aria-selected="false">Actualizar</button><button role="tab" aria-selected="false">Quitar</button></div><button class="copy" type="button" aria-label="Copiar"><svg class="i"><use href="#i-copy"/></svg><span>Copiar</span></button></div>
           <div class="panes">
-            <div class="pane on"><p class="msg">Instala la skill rendimiento-equipo. Clona https://github.com/sebaslobo22/rendimiento-equipo en la carpeta rendimiento-equipo de mi usuario, muéstrame qué hará el instalador en modo de prueba (./install.sh --prueba en Mac, .\install.ps1 -Prueba en Windows) y, si te digo que sí, ejecútalo.</p><p class="msg-ai"><svg class="i"><use href="#i-check"/></svg><span>El agente descarga la skill, te enseña lo que va a enlazar y te pide permiso antes de instalarla.</span></p></div>
-            <div class="pane"><p class="msg">Usa la skill rendimiento-equipo para revisar mi Mac y dime qué recomienda para renders y transcripciones.</p><p class="msg-ai"><svg class="i"><use href="#i-check"/></svg><span>Corre el diagnóstico y te dice qué motor usar para cada tarea, con los frenos que vea activos.</span></p></div>
+            <div class="pane on"><p class="msg">Instala la skill rendimiento-equipo. Clona https://github.com/sebaslobo22/rendimiento-equipo en la carpeta rendimiento-equipo de mi usuario, muéstrame qué hará el instalador en modo de prueba (./install.sh --prueba en Mac, .\install.ps1 -Prueba en Windows) y, si te digo que sí, ejecútalo. Al terminar, calibra este equipo con scripts/calibrar.py.</p><p class="msg-ai"><svg class="i"><use href="#i-check"/></svg><span>El agente descarga la skill, te enseña lo que va a enlazar y te pide permiso antes de instalarla. Luego mide tu equipo y te dice su punto dulce.</span></p></div>
+            <div class="pane"><p class="msg">Usa la skill rendimiento-equipo para calibrar este equipo y dime qué recomienda para dictado, renders y transcripciones.</p><p class="msg-ai"><svg class="i"><use href="#i-check"/></svg><span>Mide tu equipo con lo que ya tiene y te dice qué modelo y qué motor usar en cada tarea, con los frenos que vea activos.</span></p></div>
             <div class="pane"><p class="msg">Actualiza la skill rendimiento-equipo con git pull en ~/rendimiento-equipo.</p><p class="msg-ai"><svg class="i"><use href="#i-check"/></svg><span>Baja la última versión. No hace falta volver a instalarla.</span></p></div>
             <div class="pane"><p class="msg">Desinstala la skill rendimiento-equipo con su instalador en la carpeta rendimiento-equipo de mi usuario (./install.sh --desinstalar en Mac, .\install.ps1 -Desinstalar en Windows).</p><p class="msg-ai"><svg class="i"><use href="#i-check"/></svg><span>Quita solo los enlaces de la skill. La carpeta ~/rendimiento-equipo queda donde está.</span></p></div>
           </div>
@@ -993,11 +994,11 @@ presión normal · swap creciendo: no · térmico nominal</pre></div>
           <div class="term-bar"><span class="lights"><i></i><i></i><i></i></span><div class="seg" role="tablist" aria-label="Comandos"><button role="tab" aria-selected="true" data-p="0">Instalar</button><button role="tab" aria-selected="false" data-p="1">Probar</button><button role="tab" aria-selected="false" data-p="2">Actualizar</button><button role="tab" aria-selected="false" data-p="3">Quitar</button></div><button class="copy" type="button" aria-label="Copiar"><svg class="i"><use href="#i-copy"/></svg><span>Copiar</span></button></div>
           <div class="panes">
             <div class="pane on" data-so="mac"><pre><span class="ln">git clone https://github.com/sebaslobo22/rendimiento-equipo.git ~/rendimiento-equipo</span><span class="ln">cd ~/rendimiento-equipo</span><span class="ln">./install.sh</span></pre></div>
-            <div class="pane" data-so="mac"><pre><span class="ln">python3 ~/rendimiento-equipo/skills/rendimiento-equipo/scripts/perfil.py --formato texto</span></pre></div>
+            <div class="pane" data-so="mac"><pre><span class="ln">python3 ~/rendimiento-equipo/skills/rendimiento-equipo/scripts/calibrar.py</span><span class="ln">python3 ~/rendimiento-equipo/skills/rendimiento-equipo/scripts/perfil.py --formato texto</span></pre></div>
             <div class="pane" data-so="mac"><pre><span class="ln">cd ~/rendimiento-equipo &amp;&amp; git pull</span></pre></div>
             <div class="pane" data-so="mac"><pre><span class="ln">~/rendimiento-equipo/install.sh --desinstalar</span></pre></div>
             <div class="pane" data-so="win"><pre><span class="ln">git clone https://github.com/sebaslobo22/rendimiento-equipo.git $HOME\rendimiento-equipo</span><span class="ln">cd $HOME\rendimiento-equipo</span><span class="ln">.\install.ps1</span></pre></div>
-            <div class="pane" data-so="win"><pre><span class="ln">python $HOME\rendimiento-equipo\skills\rendimiento-equipo\scripts\perfil.py --formato texto</span></pre></div>
+            <div class="pane" data-so="win"><pre><span class="ln">python $HOME\rendimiento-equipo\skills\rendimiento-equipo\scripts\calibrar.py</span><span class="ln">python $HOME\rendimiento-equipo\skills\rendimiento-equipo\scripts\perfil.py --formato texto</span></pre></div>
             <div class="pane" data-so="win"><pre><span class="ln">cd $HOME\rendimiento-equipo; git pull</span></pre></div>
             <div class="pane" data-so="win"><pre><span class="ln">$HOME\rendimiento-equipo\install.ps1 -Desinstalar</span></pre></div>
           </div>
@@ -1020,7 +1021,7 @@ presión normal · swap creciendo: no · térmico nominal</pre></div>
           <article class="pp-card morph" style="--c:var(--e-a)"><div class="pp-t"><span class="ico"><svg class="i"><use href="#i-pulse"/></svg></span><h4>Mira qué tiene tu Mac</h4></div><p class="msg">Usa la skill rendimiento-equipo y dime qué tiene mi Mac y qué recomienda.</p><p class="res">Te dice tu chip, sus núcleos y tu memoria, qué parte del chip conviene para video, audio y renders, y si la Mac va justa de memoria o está caliente.</p><button class="copy" type="button"><svg class="i"><use href="#i-copy"/></svg><span>Copiar</span></button></article>
           <article class="pp-card morph" style="--c:var(--e-v)"><div class="pp-t"><span class="ico"><svg class="i"><use href="#i-film"/></svg></span><h4>Convierte un video</h4></div><p class="msg">Convierte este video a vertical 1080×1920.</p><p class="res" id="pp-enc">Lo hace con el motor de video y no con la CPU. En mi Mac, 15 s de video pasaron de 22,1 s a 4,1 s. Necesita ffmpeg: si falta, el agente te avisa.</p><button class="copy" type="button"><svg class="i"><use href="#i-copy"/></svg><span>Copiar</span></button></article>
           <article class="pp-card morph" style="--c:var(--e-p)"><div class="pp-t"><span class="ico"><svg class="i"><use href="#i-layers"/></svg></span><h4>Pide varias cosas a la vez</h4></div><p class="msg">Renderiza estos 3 videos en paralelo sin que se cuelgue la Mac.</p><p class="res" id="pp-par">Reparte el trabajo: con un M4 Pro de 24 GB, 3 renders con 3 hilos y 2 GB de caché cada uno, y un solo servidor de Whisper.</p><button class="copy" type="button"><svg class="i"><use href="#i-copy"/></svg><span>Copiar</span></button></article>
-          <article class="pp-card morph" style="--c:var(--e-g)"><div class="pp-t"><span class="ico"><svg class="i"><use href="#i-wave"/></svg></span><h4>Elige tu modelo de dictado</h4></div><p class="msg">Usa la skill rendimiento-equipo y dime qué modelo de dictado de OpenWhispr me conviene en este equipo.</p><p class="res">Lee los modelos que trae tu OpenWhispr y, con la memoria, la velocidad y lo que mida en tu equipo, te dice cuál se equivoca menos en español sin cargarlo. En Mac o en Windows.</p><button class="copy" type="button"><svg class="i"><use href="#i-copy"/></svg><span>Copiar</span></button></article>
+          <article class="pp-card morph" style="--c:var(--e-g)"><div class="pp-t"><span class="ico"><svg class="i"><use href="#i-wave"/></svg></span><h4>Encuentra tu modelo de dictado</h4></div><p class="msg">Usa la skill rendimiento-equipo y calibra el dictado en este equipo: mide los modelos de OpenWhispr y dime cuál me conviene.</p><p class="res">Mide en tu equipo los modelos que ya tienes y te dice cuál se equivoca menos sin cargarlo. Si faltan candidatos que podrían ganar, te pide permiso antes de bajarlos para probarlos. Nunca cambia tu OpenWhispr. En Mac o en Windows.</p><button class="copy" type="button"><svg class="i"><use href="#i-copy"/></svg><span>Copiar</span></button></article>
         </div>
         <p class="pp-foot">Si no le pides al agente nada de eso, la skill no aparece: está pensada para cuando la Mac trabaja duro.</p>
       </div>
@@ -1067,7 +1068,7 @@ presión normal · swap creciendo: no · térmico nominal</pre></div>
 </main>
 
 <footer>
-  <div class="wrap"><span>rendimiento-equipo v1.4.0 · Licencia MIT</span><span>Hecha por Sebastián Lobo · 27.10.2026</span></div>
+  <div class="wrap"><span>rendimiento-equipo v1.5.0 · Licencia MIT</span><span>Hecha por Sebastián Lobo · 27.10.2026</span></div>
 </footer>
 
 <div class="tip" id="tip" role="tooltip"></div>

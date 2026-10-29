@@ -111,3 +111,17 @@ fi
 echo "Listo. Abre una sesión nueva de Claude Code o Codex para que la detecten."
 echo "Para ver lo que recomienda en este equipo:"
 echo "  python3 \"$ORIGEN/scripts/perfil.py\" --formato texto"
+calibrar="$ORIGEN/scripts/calibrar.py"
+if [ "$(uname -s)" = "Darwin" ] && command -v python3 >/dev/null 2>&1 && [ -t 0 ] && [ -t 1 ]; then
+  echo
+  echo "Calibrar mide este equipo: qué modelo de dictado de OpenWhispr y qué método de video le convienen."
+  echo "Usa solo lo que ya tienes: no descarga nada ni cambia OpenWhispr. Tarda de 1 a 3 minutos."
+  printf "¿Calibrar ahora? [s/N] "
+  read -r respuesta || respuesta=""
+  case "$respuesta" in
+    s|S|si|sí|Si|Sí) python3 "$calibrar" ;;
+    *) echo "Cuando quieras: python3 \"$calibrar\"" ;;
+  esac
+else
+  echo "Para calibrar este equipo: python3 \"$calibrar\""
+fi

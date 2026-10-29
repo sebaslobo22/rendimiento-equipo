@@ -158,6 +158,42 @@ def voz_unidad():
     print("OK voz_unidad: error normalizado, WebSocket y recomendacion medida (%s)" % r["criterio"])
 
 
+def calibrar_unidad():
+    """Descarga y extraccion segura (con file://, sin red), voz de prueba del sistema y plan sin OpenWhispr."""
+    import io
+    import tarfile
+    import tempfile
+    import calibrar as c
+    tmp = tempfile.mkdtemp()
+    bueno = os.path.join(tmp, "bueno.tar.bz2")
+    with tarfile.open(bueno, "w:bz2") as t:
+        dato = b"tokens"
+        info = tarfile.TarInfo("modelo-x/tokens.txt")
+        info.size = len(dato)
+        t.addfile(info, io.BytesIO(dato))
+    destino = os.path.join(tmp, "copia.tar.bz2")
+    c.bajar("file://" + bueno.replace(os.sep, "/") if os.sep == "/" else "file:///" + bueno.replace(os.sep, "/"), destino)
+    c.extraer_seguro(destino, os.path.join(tmp, "x"))
+    if not os.path.isfile(os.path.join(tmp, "x", "modelo-x", "tokens.txt")):
+        falla("no se extrajo el modelo")
+    malo = os.path.join(tmp, "malo.tar.bz2")
+    with tarfile.open(malo, "w:bz2") as t:
+        info = tarfile.TarInfo("../fuera.txt")
+        info.size = 1
+        t.addfile(info, io.BytesIO(b"x"))
+    try:
+        c.extraer_seguro(malo, os.path.join(tmp, "y"))
+        falla("extrajo una ruta que sale de la carpeta")
+    except ValueError:
+        pass
+    ruta, voz_o_motivo = c.voz_sistema(os.path.join(RAIZ, "skills", "rendimiento-equipo", "assets", "texto_calibracion_es.txt"),
+                                       os.path.join(tmp, "prueba"))
+    print("   voz del sistema: %s" % (("%s (%s)" % (voz_o_motivo, os.path.getsize(ruta))) if ruta else "sin voz: " + voz_o_motivo))
+    if c.main(["--plan"]) != 0:
+        falla("calibrar.py --plan fallo")
+    print("OK calibrar_unidad: descarga, extraccion segura, voz del sistema y plan")
+
+
 def cpu(ruta_diag):
     import medir as m
     ffmpeg = leer(ruta_diag)["herramientas"]["ffmpeg"]["elegido"]
@@ -172,4 +208,4 @@ def cpu(ruta_diag):
 
 if __name__ == "__main__":
     modo, resto = sys.argv[1], sys.argv[2:]
-    {"diagnostico": diagnostico, "medir": medir, "cpu": cpu, "paralelo": paralelo, "voz": voz, "voz_unidad": voz_unidad}[modo](*resto)
+    {"diagnostico": diagnostico, "medir": medir, "cpu": cpu, "paralelo": paralelo, "voz": voz, "voz_unidad": voz_unidad, "calibrar_unidad": calibrar_unidad}[modo](*resto)

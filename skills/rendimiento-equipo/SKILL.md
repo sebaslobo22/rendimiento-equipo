@@ -12,9 +12,15 @@ huella cambia y se empieza de cero sin heredar nada falso.
 
 ## Flujo
 
-Rutas relativas a la carpeta de esta skill. Necesita Python 3; no instala nada ni usa red. En Windows el
+Rutas relativas a la carpeta de esta skill. Necesita Python 3; no instala nada y solo usa la red con `calibrar.py --descargar`, con permiso. En Windows el
 comando suele ser `python` o `py -3` en lugar de `python3`, y el paso 2 no recomienda: lee `references/windows.md`.
 
+0. **Calibración.** Si `perfil.py` dice «calibrar» (equipo sin calibrar, OpenWhispr nuevo o con modelos nuevos),
+   corre `python3 scripts/calibrar.py`: mide dictado y video con lo que ya hay, sin descargar nada, y guarda el
+   punto dulce de este equipo. `--plan` dice qué mediría. `--descargar` baja los candidatos de dictado que faltan
+   a una carpeta de la skill (nunca a OpenWhispr) y los borra al terminar: **pide un sí antes**, son cientos de MB
+   o varios GB. Con `--audio`/`--texto` (tu voz) y `--video` (un video real) el resultado vale más; un clip
+   sintético no se guarda porque engaña.
 1. `python3 scripts/diagnosticar.py` (con `--proyecto <ruta>` si hay un proyecto Remotion). Entrega un JSON del
    equipo. Si falta Swift sigue sin Metal, video, Neural Engine y térmico, y lo dice en `avisos`.
 2. `python3 scripts/perfil.py --renders N --formato texto`, con N = cuántos renders irán en paralelo. Entrega
