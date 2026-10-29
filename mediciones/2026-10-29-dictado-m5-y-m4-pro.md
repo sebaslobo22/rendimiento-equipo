@@ -1,5 +1,7 @@
 # Dictado local en dos Mac: M5 base de 16 GB y M4 Pro de 24 GB
 
+> Actualizado el 29.10.2026 con la calibración completa del M4 Pro.
+
 Mediciones del 29.10.2026 con los modelos que trae OpenWhispr. El M5 lo midió un usuario con la skill instalada
 y escribió un informe; el M4 Pro es el Mac piloto. Las dos mediciones cambiaron la skill (versión 1.4.0).
 
@@ -48,6 +50,33 @@ GPU de 20 núcleos, 273 GB/s de memoria, OpenWhispr 1.11.0. 12 s de voz sintéti
 | Whisper Turbo | Procesador | 7,92 s | 1,5 | 1.768 MB | 6,3 % |
 
 El error que queda es un nombre propio: «Parakeet» lo escribió «Para KED».
+
+## Calibración completa del M4 Pro (`calibrar.py --descargar`)
+
+Mismo día, OpenWhispr 1.11.0, 41 s de voz sintética (voz Paulina) leyendo el texto de calibración de la skill
+(116 palabras con cifras y nombres de ciudades). Una pasada de calentamiento y la media de 3. Los cuatro
+candidatos se descargaron a una carpeta de la skill, se midieron y se borraron; OpenWhispr no se tocó.
+
+| Modelo | Motor | Tiempo | Veces el tiempo real | Memoria pico | Palabras erradas |
+|---|---|---|---|---|---|
+| Orukeet | sherpa-onnx, procesador | 0,83 s | 49 | 2.611 MB | 3,45 % (4) |
+| Parakeet TDT 0.6B v3 | sherpa-onnx, procesador | 1,03 s | 39 | 2.351 MB | 3,45 % (4) |
+| **Whisper Turbo (Q5)** | whisper.cpp, GPU | **1,28 s** | 32 | **771 MB** | **0,86 % (1)** |
+| Whisper Turbo | whisper.cpp, GPU | 1,33 s | 31 | 1.823 MB | 0,86 % (1) |
+| Cohere Transcribe 2B | sherpa-onnx, procesador | 2,79 s | 15 | 4.556 MB | 2,59 % (3) |
+
+Punto dulce de este equipo: **Whisper Turbo (Q5)**. Erró lo mismo que Turbo, ocupa 58 % menos memoria y va
+igual de rápido. Orukeet fue el más rápido, pero erró 3 palabras más y ocupa más del triple de memoria.
+
+Lo que esto enseña:
+
+- **La memoria publicada no es la que se usa.** Los modelos de sherpa-onnx pesan unos 650 MB en disco, pero el
+  servidor llegó a 2,3–2,6 GB al transcribir. La skill decide con lo medido.
+- **La versión comprimida (Q5) de Turbo no perdió precisión** en esta prueba y ahorra 1 GB. Es un modelo que el
+  catálogo trae sin ficha pública: la skill lo propuso solo porque es nuevo y liviano, y ganó.
+- **Las diferencias son de pocas palabras.** Con 116 palabras, cada una vale 0,86 %. Por eso la skill trata como
+  empate hasta 2 palabras de diferencia y decide por memoria y velocidad. Con voz humana el orden puede cambiar:
+  el M5, con otro texto y antes de normalizar cifras, dio ventaja a Parakeet.
 
 ## Límites
 

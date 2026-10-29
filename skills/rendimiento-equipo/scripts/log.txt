@@ -1,0 +1,39 @@
+[2026-10-29 13:06:31] [error] handle_read_handshake error: websocketpp.transport:7 (End of File)
+[2026-10-29 13:06:31] [connect] WebSocket Connection 127.0.0.1:53237 v13 "" / 101
+[2026-10-29 13:06:32] [error] handle_read_frame error: websocketpp.transport:7 (End of File)
+[2026-10-29 13:06:32] [disconnect] Disconnect close local:[1006,End of File] remote:[1006]
+[2026-10-29 13:06:32] [connect] WebSocket Connection 127.0.0.1:53242 v13 "" / 101
+[2026-10-29 13:06:33] [error] handle_read_frame error: websocketpp.transport:7 (End of File)
+[2026-10-29 13:06:33] [disconnect] Disconnect close local:[1006,End of File] remote:[1006]
+[2026-10-29 13:06:33] [connect] WebSocket Connection 127.0.0.1:53243 v13 "" / 101
+[2026-10-29 13:06:34] [error] handle_read_frame error: websocketpp.transport:7 (End of File)
+[2026-10-29 13:06:34] [disconnect] Disconnect close local:[1006,End of File] remote:[1006]
+[2026-10-29 13:06:34] [connect] WebSocket Connection 127.0.0.1:53249 v13 "" / 101
+[2026-10-29 13:06:35] [error] handle_read_frame error: websocketpp.transport:7 (End of File)
+[2026-10-29 13:06:35] [disconnect] Disconnect close local:[1006,End of File] remote:[1006]
+[2026-10-29 13:06:40] [error] handle_read_handshake error: websocketpp.transport:7 (End of File)
+[2026-10-29 13:06:40] [connect] WebSocket Connection 127.0.0.1:53300 v13 "" / 101
+[2026-10-29 13:06:45] [error] handle_read_frame error: websocketpp.transport:7 (End of File)
+[2026-10-29 13:06:45] [disconnect] Disconnect close local:[1006,End of File] remote:[1006]
+[2026-10-29 13:06:45] [connect] WebSocket Connection 127.0.0.1:53306 v13 "" / 101
+[2026-10-29 13:06:48] [error] handle_read_frame error: websocketpp.transport:7 (End of File)
+[2026-10-29 13:06:48] [disconnect] Disconnect close local:[1006,End of File] remote:[1006]
+[2026-10-29 13:06:48] [connect] WebSocket Connection 127.0.0.1:53311 v13 "" / 101
+[2026-10-29 13:06:51] [error] handle_read_frame error: websocketpp.transport:7 (End of File)
+[2026-10-29 13:06:51] [disconnect] Disconnect close local:[1006,End of File] remote:[1006]
+[2026-10-29 13:06:51] [connect] WebSocket Connection 127.0.0.1:53332 v13 "" / 101
+[2026-10-29 13:06:53] [error] handle_read_frame error: websocketpp.transport:7 (End of File)
+[2026-10-29 13:06:53] [disconnect] Disconnect close local:[1006,End of File] remote:[1006]
+[2026-10-29 13:06:54] [error] handle_read_handshake error: websocketpp.transport:7 (End of File)
+[2026-10-29 13:06:54] [connect] WebSocket Connection 127.0.0.1:53343 v13 "" / 101
+[2026-10-29 13:06:55] [error] handle_read_frame error: websocketpp.transport:7 (End of File)
+[2026-10-29 13:06:55] [disconnect] Disconnect close local:[1006,End of File] remote:[1006]
+[2026-10-29 13:06:55] [connect] WebSocket Connection 127.0.0.1:53348 v13 "" / 101
+[2026-10-29 13:06:56] [error] handle_read_frame error: websocketpp.transport:7 (End of File)
+[2026-10-29 13:06:56] [disconnect] Disconnect close local:[1006,End of File] remote:[1006]
+[2026-10-29 13:06:56] [connect] WebSocket Connection 127.0.0.1:53349 v13 "" / 101
+[2026-10-29 13:06:57] [error] handle_read_frame error: websocketpp.transport:7 (End of File)
+[2026-10-29 13:06:57] [disconnect] Disconnect close local:[1006,End of File] remote:[1006]
+[2026-10-29 13:06:57] [connect] WebSocket Connection 127.0.0.1:53350 v13 "" / 101
+[2026-10-29 13:06:58] [error] handle_read_frame error: websocketpp.transport:7 (End of File)
+[2026-10-29 13:06:58] [disconnect] Disconnect close local:[1006,End of File] remote:[1006]

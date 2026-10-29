@@ -838,6 +838,7 @@ def medir_voz(args):
         cambios[("voz", r["modelo"])] = {k: r[k] for k in ("backend", "hilos", "carga_s", "transcribe_s", "veces_tiempo_real", "memoria_mb", "wer")}
         cambios[("voz", r["modelo"])].update({"idioma": args.idioma, "audio_s": round(seg, 1), "audio_id": audio_id,
                                               "audio_sintetico": bool(args.audio_sintetico),
+                                              "palabras": len(_normalizar(referencia)) if referencia else None,
                                               "estado": "adoptado", "fecha": hoy(), "nota": "medido con medir.py voz"})
     if tensor is not None:
         cambios[("whisper", "api_tensores")] = {"valor": tensor, "estado": "adoptado", "fecha": hoy(),

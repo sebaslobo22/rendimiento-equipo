@@ -1,5 +1,12 @@
 # Cambios
 
+## 1.5.1 · 29.10.2026
+
+- Primera calibración completa, en el M4 Pro: cinco modelos medidos. Punto dulce: Whisper Turbo (Q5), igual de
+  preciso que Turbo con 58 % menos memoria. Los modelos de sherpa-onnx ocuparon el triple de su tamaño.
+- En lo medido, hasta 2 palabras de diferencia en el audio de prueba cuentan como empate: con audios cortos una
+  palabra no basta para separar modelos.
+
 ## 1.5.0 · 29.10.2026
 
 - `calibrar.py`: la skill busca sola el punto dulce de cada equipo. Mide dictado con todos los modelos de

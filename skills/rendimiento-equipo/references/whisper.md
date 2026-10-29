@@ -78,6 +78,11 @@ python3 scripts/medir.py voz --audio tu-voz.m4a --texto lo-que-dices.txt --regis
 - **M4 Pro piloto** (29/10/2026, 12 s de voz sintética, OpenWhispr 1.11.0): Whisper Turbo con Metal 0,53 s (23
   veces el tiempo real, 1,8 GB, 6 % de error: «Parakeet» lo escribió «Para KED»); en el procesador 7,9 s. Metal
   fue 15 veces más rápido. `has tensor = false`, lo esperado en un M4.
+- **M4 Pro piloto, calibración completa** (29/10/2026, `calibrar.py --descargar`, 116 palabras de voz
+  sintética): Whisper Turbo (Q5) 0,86 % de error, 771 MB, 32 veces el tiempo real; Turbo igual de preciso con
+  1.823 MB; Orukeet el más rápido (49 veces) con 3,45 % y 2,6 GB; Parakeet 3,45 % y 2,4 GB; Cohere 2,59 % con
+  4,6 GB y 15 veces. Punto dulce: Turbo (Q5). Los sherpa-onnx usaron el triple o más de memoria que su tamaño.
+  Desde aquí, hasta 2 palabras de diferencia en lo medido cuentan como empate (`PALABRAS_EMPATE`).
 - **MacBook Pro M5 base, 16 GB** (informe del usuario, OpenWhispr 1.10.4): el whisper-server venía con la API de
   tensores apagada (`has tensor = false`), así que Whisper no usaba los Neural Accelerators. Parakeet transcribió
   con 2,3 % de error contra cerca de 6 % de Whisper, en el procesador y con menos memoria.

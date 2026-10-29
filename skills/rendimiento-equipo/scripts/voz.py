@@ -23,6 +23,7 @@ FICHAS = os.path.join(os.path.dirname(AQUI), "assets", "fichas_voz.json")
 MEMORIA_MAX = 0.20     # criterio: el modelo no deberia ocupar mas del 20 % de la memoria total (deja sitio a renders y apps)
 EMPATE_WER = 0.5       # criterio: diferencias de menos de medio punto de error no justifican mas memoria
 FACTOR_MEMORIA = 1.3   # criterio: sin dato publicado, memoria al transcribir ~ 1,3 veces el archivo del modelo
+PALABRAS_EMPATE = 2    # criterio: en lo medido, hasta 2 palabras de diferencia en el audio de prueba es empate
 VELOCIDAD_MIN = 4.0    # criterio: dictar 30 s y tener el texto en menos de 8 s (4 veces el tiempo real)
 # Whisper en la GPU de Apple esta limitado por el ancho de banda de la memoria: cada palabra relee el modelo.
 # Calibrado con turbo (1549 MB) en un M4 Pro de 273 GB/s: 20 a 23 veces el tiempo real (medir.py voz, 29.10.2026).
@@ -217,7 +218,14 @@ def recomendar(memsize, idioma="es", medido=None, frenos_memoria=False, whisper_
     elegido, por_medir = None, []
     if validos:
         mejor = validos[0]["wer"]
-        cerca = [m for m in validos if m["wer"] - mejor < EMPATE_WER]
+        empate = EMPATE_WER
+        if con_error_medido:
+            # con un audio corto cada palabra pesa mucho: dos palabras de diferencia no separan a dos modelos
+            r0 = validos[0].get("medido") or {}
+            palabras = r0.get("palabras") or (r0.get("audio_s") or 0) * 2.5
+            if palabras:
+                empate = max(EMPATE_WER, 100.0 * PALABRAS_EMPATE / palabras + 0.01)
+        cerca = [m for m in validos if m["wer"] - mejor < empate]
         elegido = min(cerca, key=lambda m: (m["memoria_mb"], -(m["velocidad"] or 0)))
         if con_error_medido and elegido.get("wer_publico") is not None:
             por_medir = [m["nombre"] for m in candidatos if "descarte" not in m and m["id"] not in con_error_medido

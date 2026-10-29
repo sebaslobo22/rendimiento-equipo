@@ -404,6 +404,7 @@ h2{font-size:clamp(2.1rem,1.1rem + 3.8vw,4rem);font-weight:650;letter-spacing:-.
 .dotgrid{grid-column:1/-1;display:flex;flex-wrap:wrap;gap:3px}
 .dotgrid i{width:8px;height:8px;border-radius:50%;background:var(--panel-3);transition:background-color .2s}
 .dotgrid i.on{background:var(--c)}
+@media (max-width:560px){.vbars .row{grid-template-columns:minmax(0,1fr)}.vbars .row .val{justify-self:start}}
 .vnote{margin-top:14px;font-size:14px;color:var(--text-2)}
 .vlist{margin:4px 0 0;padding:0;list-style:none;display:grid;gap:12px;font-size:14.5px;color:var(--text-2)}
 .vlist b{color:var(--text)}
@@ -588,7 +589,7 @@ footer .wrap{display:flex;justify-content:space-between;gap:12px 24px;flex-wrap:
   <section class="hero" id="hero">
     <div class="wrap">
       <div class="hero-txt" id="hero-txt">
-        <a class="tag" href="#instalar"><span class="dot"></span>Skill para Claude Code y Codex · Mac y Windows · v1.5.0</a>
+        <a class="tag" href="#instalar"><span class="dot"></span>Skill para Claude Code y Codex · Mac y Windows · v1.5.1</a>
         <h1 class="grad">Cada tarea, al motor que mejor la hace.</h1>
         <p class="sub"><b>rendimiento-equipo</b> mira tu computadora, Mac o Windows, antes de un render, una transcripción o un lote, y reparte el trabajo entre la CPU, la GPU, el Neural Engine y el motor de video. Lo que mide en tu equipo manda.</p>
         <div class="ctas">
@@ -851,6 +852,19 @@ presión normal · swap creciendo: no · térmico nominal</pre></div>
           </div>
         </article>
 
+        <article class="card wide morph vbars">
+          <div class="card-h"><div><h3>La skill calibró sola el M4 Pro</h3><p>Bajó los candidatos a una carpeta propia, los midió con 41 s de voz y los borró. La barra es la memoria que usó cada uno al transcribir.</p></div></div>
+          <div class="rows">
+            <div class="row" style="--c:var(--e-g)" data-tip="Whisper Turbo (Q5) con Metal · 1,28 s · 32 veces el tiempo real · 771 MB · erró 1 de 116 palabras"><span class="lab"><b>Whisper Turbo (Q5)</b> · punto dulce</span><span class="val"><b>771 MB · 1 palabra mal</b></span><div class="track"><i style="--to:.154"></i></div></div>
+            <div class="row" style="--c:var(--e-g)" data-tip="Whisper Turbo con Metal · 1,33 s · 31 veces el tiempo real · 1.823 MB · erró 1 de 116 palabras"><span class="lab">Whisper Turbo · el que usaba</span><span class="val">1.823 MB · 1 palabra mal</span><div class="track"><i style="--to:.365"></i></div></div>
+            <div class="row" style="--c:var(--e-p)" data-tip="Parakeet TDT 0.6B v3 en el procesador · 1,03 s · 39 veces el tiempo real · 2.351 MB · erró 4 de 116 palabras"><span class="lab">Parakeet v3</span><span class="val">2.351 MB · 4 palabras mal</span><div class="track"><i style="--to:.470"></i></div></div>
+            <div class="row" style="--c:var(--e-p)" data-tip="Orukeet en el procesador · 0,83 s, el más rápido · 49 veces el tiempo real · 2.611 MB · erró 4 de 116 palabras"><span class="lab">Orukeet · el más rápido</span><span class="val">2.611 MB · 4 palabras mal</span><div class="track"><i style="--to:.522"></i></div></div>
+            <div class="row" style="--c:var(--text-3)" data-tip="Cohere Transcribe 2B en el procesador · 2,79 s · 15 veces el tiempo real · 4.556 MB · erró 3 de 116 palabras"><span class="lab">Cohere Transcribe 2B</span><span class="val">4.556 MB · 3 palabras mal</span><div class="track"><i style="--to:.911"></i></div></div>
+            <div class="axis"><span style="--x:0%">0</span><span style="--x:50%">2,5</span><span style="--x:100%">5 GB</span></div>
+          </div>
+          <p class="vnote">Ganó un modelo sin ficha pública que la skill propuso solo por ser nuevo y liviano: igual de preciso que el que usaba, con 1 GB menos. Parakeet, Orukeet y Cohere ocuparon el triple de lo que pesan en disco.</p>
+        </article>
+
         <article class="card morph vbars">
           <div class="card-h"><div><h3>Mismo modelo, otro equipo</h3><p>Cuántas veces más rápido va Whisper Turbo en la GPU que en el procesador.</p></div></div>
           <div class="rows">
@@ -1068,7 +1082,7 @@ presión normal · swap creciendo: no · térmico nominal</pre></div>
 </main>
 
 <footer>
-  <div class="wrap"><span>rendimiento-equipo v1.5.0 · Licencia MIT</span><span>Hecha por Sebastián Lobo · 27.10.2026</span></div>
+  <div class="wrap"><span>rendimiento-equipo v1.5.1 · Licencia MIT</span><span>Hecha por Sebastián Lobo · 27.10.2026</span></div>
 </footer>
 
 <div class="tip" id="tip" role="tooltip"></div>
