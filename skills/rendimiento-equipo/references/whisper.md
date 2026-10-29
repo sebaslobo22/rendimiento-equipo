@@ -4,26 +4,64 @@ Niveles: Oficial/Mantenedor (whisper.cpp) / Medición / Criterio.
 
 ## Qué modelo de dictado usar (punto dulce)
 
-`perfil.py` (sección VOZ) y `scripts/voz.py` recomiendan el modelo local de OpenWhispr con menos error en el
-idioma que dictas, entre los que caben en el 20 % de la memoria del equipo (la mitad con el freno de memoria
-activo). Si dos quedan a menos de medio punto de error, gana el que ocupa menos (Criterio).
+`perfil.py` (sección VOZ) y `scripts/voz.py` recomiendan el modelo local de OpenWhispr para **este equipo**, no
+para su chip: cuentan la memoria (tamaño y ancho de banda), si Whisper corre en la GPU o en el procesador, el
+freno de memoria y lo medido ahí. El punto dulce es el de menos error en el idioma que dictas entre los que:
+
+1. caben en el 20 % de la memoria del equipo (la mitad con el freno de memoria activo), y
+2. transcriben al menos 4 veces el tiempo real en ese equipo (30 s de dictado en menos de 8 s).
+
+Si dos quedan a menos de medio punto de error, gana el que ocupa menos, y luego el más rápido (Criterio).
+
+Qué dato manda, en orden:
+
+- **Lo medido en el equipo** con `medir.py voz --registrar`. Si dos o más modelos se midieron con `--texto` sobre
+  el mismo audio, se elige entre ellos por su error medido (el error medido no se mezcla con el publicado). Si un
+  modelo sin medir promete menos error en su ficha, la sección VOZ lo lista en «medir también».
+- **Lo estimado con el ancho de banda de la memoria**: Whisper en la GPU de Apple relee el modelo por cada
+  palabra, así que su velocidad sigue al ancho de banda. Calibrado con Turbo en el M4 Pro (273 GB/s, unas 21 veces
+  el tiempo real): un M5 base (153 GB/s) daría unas 12 y Whisper Large en un M1 (68 GB/s) unas 3, por debajo del
+  mínimo. Es una estimación marcada como tal; medir la reemplaza.
+- **La ficha pública** (`assets/fichas_voz.json`): error en español con su conjunto de prueba y su fuente. Vienen
+  de fuentes distintas y son aproximadas entre sí. La única comparación limpia publicada es Parakeet v3 contra
+  Orukeet en los mismos clips: 3,22 contra 2,75 % en FLEURS español (autores de Orukeet).
 
 - **El catálogo se lee del OpenWhispr instalado** (`modelRegistryData.json` dentro de `app.asar`, en Mac y en
   Windows). Si la app suma modelos, aparecen solos; sin ficha pública quedan marcados para medir y nunca se les
   inventa una precisión. Sin OpenWhispr, se usa la copia de `assets/fichas_voz.json`.
-- **Las fichas** (`assets/fichas_voz.json`) traen el error en español con su conjunto de prueba y su fuente. Vienen
-  de fuentes distintas (artículo de Whisper, NVIDIA, Open ASR Leaderboard, autores de Orukeet) y son aproximadas
-  entre sí. La única comparación limpia es Parakeet v3 contra Orukeet en los mismos clips: 3,22 contra 2,75 % en
-  FLEURS español, publicada por los autores de Orukeet.
 - **En Windows e Intel**, OpenWhispr corre Whisper en el procesador (CUDA y Vulkan son descargas aparte), así que
   los Whisper de más de 500 MB se descartan por lentos. Parakeet, Orukeet y Cohere corren en el procesador en los
   dos sistemas (sherpa-onnx).
-- **Medir en tu equipo:** `medir.py voz --audio tu-voz.m4a --texto lo-que-dices.txt --registrar` transcribe con
-  cada modelo Whisper descargado en un servidor propio (puerto 88xx; nunca toca el de OpenWhispr) y guarda tiempo,
-  memoria y porcentaje de error. Los modelos de sherpa-onnx todavía no se pueden medir desde aquí.
-- **Medido en el M4 Pro piloto** (29/10/2026, 15 s de voz sintética en español): Whisper Turbo transcribió en
-  0,75 s (20 veces el tiempo real) con 1,8 GB de memoria y 10 % de palabras erradas («Mac» lo escribió «máquina»).
 - La skill solo sugiere: el modelo se cambia en OpenWhispr, en Configuración > Conversión de voz a texto > Local.
+
+### Medir en tu equipo
+
+```
+python3 scripts/medir.py voz --audio tu-voz.m4a --texto lo-que-dices.txt --registrar
+```
+
+- Mide **todos** los modelos descargados: Whisper con whisper-server y Parakeet, Orukeet y Cohere con
+  `sherpa-onnx-ws`, cada uno en un servidor propio (puerto 88xx) que se apaga al terminar. Nunca toca el de
+  OpenWhispr. sherpa-onnx se lanza con los argumentos de OpenWhispr (`parakeetWsServer.js`): `--encoder`,
+  `--decoder`, `--joiner`, `--tokens`, `--model-type` según el catálogo (Cohere usa `--cohere-transcribe-*`),
+  `--num-threads` = mín(4, 75 % de los núcleos) y `--num-work-threads=3`. El audio va por WebSocket:
+  `[int32 tasa][int32 bytes][float32…]`, luego el texto «Done».
+- Una pasada de calentamiento que no cuenta y luego 3 repeticiones (`--repeticiones`).
+- `--backends metal,cpu` compara Whisper con Metal y en el procesador (`-ng`).
+- El error normaliza tildes, puntuación, cifras («12» = «doce», hasta 999.999) y «%» = «por ciento»: así no
+  castiga a un modelo por escribir números.
+- Del registro de whisper-server lee `has tensor = true|false`: si la compilación usa los Neural Accelerators de
+  M5 en adelante. Se guarda en el perfil y la sección ARQUITECTURA lo dice.
+- Cada medición guarda un `audio_id` (huella del audio): solo se comparan errores medidos sobre el mismo audio.
+
+### Medido
+
+- **M4 Pro piloto** (29/10/2026, 12 s de voz sintética, OpenWhispr 1.11.0): Whisper Turbo con Metal 0,53 s (23
+  veces el tiempo real, 1,8 GB, 6 % de error: «Parakeet» lo escribió «Para KED»); en el procesador 7,9 s. Metal
+  fue 15 veces más rápido. `has tensor = false`, lo esperado en un M4.
+- **MacBook Pro M5 base, 16 GB** (informe del usuario, OpenWhispr 1.10.4): el whisper-server venía con la API de
+  tensores apagada (`has tensor = false`), así que Whisper no usaba los Neural Accelerators. Parakeet transcribió
+  con 2,3 % de error contra cerca de 6 % de Whisper, en el procesador y con menos memoria.
 
 ## Un solo servidor
 

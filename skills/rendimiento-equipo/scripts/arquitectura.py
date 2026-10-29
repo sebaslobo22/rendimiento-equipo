@@ -37,8 +37,9 @@ def _ffmpeg(d):
     return next((c for c in h.get("candidatos", []) if c.get("ruta") == h.get("elegido")), {})
 
 
-def capacidades(d):
-    """Lo que el diagnostico detecto, en una forma comoda para las reglas."""
+def capacidades(d, medido=None):
+    """Lo que el diagnostico detecto (y lo medido que cambia una regla), en una forma comoda para las reglas."""
+    t = ((medido or {}).get("whisper") or {}).get("api_tensores")
     gpu = d.get("gpu") or {}
     metal = gpu.get("metal") or {}
     m = re.search(r"(\d+)", metal.get("familia_apple_maxima") or "")
@@ -55,6 +56,7 @@ def capacidades(d):
         "ne_nucleos": (d.get("neural_engine") or {}).get("nucleos"),
         "ffmpeg_version": ff.get("version"),
         "ffmpeg_mayor": version_mayor(ff.get("version")),
+        "api_tensores": t.get("valor") if isinstance(t, dict) else None,
     }
 
 
@@ -109,9 +111,14 @@ REGLAS = [
      "Chrome, Remotion y ffmpeg no lo usan. Las APIs existen desde M1, pero sin hardware dedicado.", "Oficial"),
     (lambda c: c["familia"] is not None and c["familia"] >= 10,
      "GPU", "Neural Accelerators en cada nucleo de la GPU (desde M5, familia Metal apple10)",
-     "Core ML y Metal Performance Shaders los usan solos. whisper.cpp los usa desde v1.8.3 (mejor v1.9.5 o posterior: "
-     "una version intermedia caia a la ruta normal sin avisar en un M5 Max). Core ML no tiene ventaja demostrada "
-     "frente a Metal en estos chips: mide antes de cambiar el backend.", "Oficial (Apple) + codigo de whisper.cpp"),
+     lambda c: "Core ML y Metal Performance Shaders los usan solos. whisper.cpp puede usarlos desde v1.8.3, pero "
+     "depende de como se compilo: el whisper-server de OpenWhispr 1.10.4 los tenia apagados en un M5 (\"has tensor = "
+     "false\"). " + {True: "Medido en este equipo: el whisper-server de OpenWhispr SI los usa.",
+                      False: "Medido en este equipo: el whisper-server de OpenWhispr NO los usa; Whisper corre en la GPU "
+                             "normal y Parakeet (en el procesador) suele ganarle.",
+                      None: "Sin medir aqui: medir.py voz lo lee del registro del servidor."}[c.get("api_tensores")]
+     + " Core ML no tiene ventaja demostrada frente a Metal: mide antes de cambiar el backend.",
+     "Oficial (Apple) + codigo de whisper.cpp + medicion en M5"),
     (lambda c: "metal4" in c["metal"],
      "GPU", "Metal 4 (API de tensores; macOS 26 o posterior, desde M1)",
      "Se informa: lo aprovechan las bibliotecas que lo implementan. En M5 o posterior corre en los Neural Accelerators.",
@@ -129,9 +136,9 @@ REGLAS = [
 ]
 
 
-def saltos(d):
+def saltos(d, medido=None):
     """Lista de saltos de arquitectura que este equipo tiene, con lo que la skill hace con cada uno."""
-    c = capacidades(d)
+    c = capacidades(d, medido)
     out = []
     for si, modulo, salto, uso, nivel in REGLAS:
         try:

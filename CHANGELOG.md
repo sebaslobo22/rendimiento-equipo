@@ -1,5 +1,20 @@
 # Cambios
 
+## 1.4.0 · 29.10.2026
+
+- El modelo de dictado se recomienda por equipo, no por chip: cuenta la memoria (tamaño y ancho de banda), si
+  Whisper corre en GPU o en procesador, el freno de memoria y lo medido. Descarta lo que en ese equipo iría a menos
+  de 4 veces el tiempo real. Con dos o más modelos medidos sobre el mismo audio, elige por el error medido.
+- `medir.py voz` mide también Parakeet, Orukeet y Cohere (sherpa-onnx, con los argumentos de OpenWhispr), calienta
+  y repite 3 veces, compara Metal y CPU con `--backends metal,cpu` y lee si whisper-server usa los Neural
+  Accelerators (`has tensor`).
+- El porcentaje de error ya no castiga cifras, tildes ni «%».
+- La regla del M5 ya no da por hecho que whisper.cpp usa los Neural Accelerators: el OpenWhispr 1.10.4 de un M5
+  los traía apagados. Dice lo medido en el equipo.
+- `perfil.py` elige el modelo de Whisper con un criterio dicho (el que usa OpenWhispr, luego el recomendado, luego
+  el más grande) y activa el freno de memoria si el swap pasa del 75 % de su tamaño aunque no crezca.
+- Gracias al informe de un MacBook Pro M5 de 16 GB.
+
 ## 1.3.0 · 29.10.2026
 
 - Modelo de dictado: la skill recomienda el punto dulce entre precisión y consumo para OpenWhispr, en Mac y en

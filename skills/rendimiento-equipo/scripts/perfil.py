@@ -35,6 +35,7 @@ import voz  # noqa: E402
 FRACCION_UN_RENDER = 0.6    # de los nucleos para render (ver nucleos_para_render) que usa un render solo
 FRACCION_TOTAL = 0.9        # de los nucleos para render que se reparten entre renders en paralelo
 FRACCION_CACHE = 0.25       # de la memoria total para las cache de OffthreadVideo, repartida entre renders
+SWAP_ALTO = 0.75            # swap usado sobre su tamaño: por encima, freno de memoria aunque no este creciendo
 BITRATE_FINAL = "12M"
 BITRATE_PREVIA = "3500k"
 ESTADOS_VALIDOS = ("gana", "adoptado")
@@ -109,6 +110,10 @@ def calcular_frenos(d, medido):
         motivos.append("presion de memoria %s (nivel %s)" % (mem.get("presion"), nivel))
     if crece:
         motivos.append("el swap esta creciendo")
+    sw = mem.get("swap") or {}
+    if (sw.get("total_mb") or 0) >= 1024 and (sw.get("usado_mb") or 0) >= SWAP_ALTO * sw["total_mb"]:
+        motivos.append("el swap esta al %d %% (%s de %s MB) aunque no crezca ahora" % (
+            100 * sw["usado_mb"] / sw["total_mb"], round(sw["usado_mb"]), round(sw["total_mb"])))
     termico = d.get("termico")
     termico_activo = termico in ("serious", "critical")
     return {
@@ -299,14 +304,28 @@ def calcular_remotion(d, medido, renders, frenos):
     }
 
 
-def calcular_whisper(d, medido, avisos):
+def elegir_modelo_whisper(d, modelos, voz_rec):
+    """Que modelo ggml cargar, con el criterio dicho: el que ya usa OpenWhispr (comparte cache de disco), si no el
+    Whisper recomendado para este equipo, si no el mas grande instalado (el mas preciso)."""
+    usados = " ".join(p.get("comando") or "" for p in d.get("procesos_pesados") or [] if p["tipo"] == "whisper-server")
+    for m in modelos:
+        if m["ruta"] in usados:
+            return m, "el mismo que usa OpenWhispr"
+    rec = ((voz_rec or {}).get("recomendado") or {}).get("ruta")
+    for m in modelos:
+        if rec and m["ruta"] == rec:
+            return m, "el Whisper recomendado para este equipo"
+    return max(modelos, key=lambda m: m.get("mb") or 0), "el mas grande instalado (el mas preciso)"
+
+
+def calcular_whisper(d, medido, avisos, voz_rec=None):
     h = (d.get("herramientas") or {}).get("whisper") or {}
     m = medido.get("whisper", {})
     servidores, modelos = h.get("servidores", []), h.get("modelos", [])
     if not servidores or not modelos:
         avisos.append("Whisper: falta %s." % ("el servidor" if not servidores else "un modelo ggml-*.bin"))
         return {"disponible": False}
-    s, mod = servidores[0], modelos[0]
+    s, mod, criterio_modelo = servidores[0], *elegir_modelo_whisper(d, modelos, voz_rec)
     metal_ok = bool((d.get("gpu") or {}).get("metal")) and "metal" in s["backends_junto_al_binario"]
     b = m.get("backend")
     if vale(b):
@@ -325,6 +344,7 @@ def calcular_whisper(d, medido, avisos):
         "origen": o,
         "servidor": s["ruta"],
         "modelo": mod["ruta"],
+        "modelo_criterio": criterio_modelo,
         "reutilizar_propio": ("puerto %s (pid %s)" % (propios[0]["puerto"], propios[0]["pid"])) if propios else None,
         "puerto_sugerido": puerto,
         "comando": cmd,
@@ -345,7 +365,8 @@ def calcular(d, renders):
     ffmpeg, a = calcular_ffmpeg(d, medido)
     avisos += a
     remotion = calcular_remotion(d, medido, renders, frenos)
-    whisper = calcular_whisper(d, medido, avisos)
+    voz_rec = recomendar_voz(d, medido, frenos["memoria"]["activo"])
+    whisper = calcular_whisper(d, medido, avisos, voz_rec)
     ne = (d.get("neural_engine") or {}).get("nucleos")
     segm = {"motor": "Vision de macOS (elige Neural Engine o GPU solo)",
             "apis": ["VNGenerateForegroundInstanceMaskRequest", "VNGeneratePersonSegmentationRequest"],
@@ -376,8 +397,8 @@ def calcular(d, renders):
         "segmentacion": segm,
         "carrusel_chrome": chrome_rec,
         "lotes": {"qos_fondo": "taskpolicy -c utility <comando>" if (d.get("herramientas") or {}).get("taskpolicy") else None},
-        "arquitectura": {"saltos": arq.saltos(d), "codificaciones_paralelas": arq.codificaciones_paralelas(d, medido)},
-        "voz": recomendar_voz(d, medido, frenos["memoria"]["activo"]),
+        "arquitectura": {"saltos": arq.saltos(d, medido), "codificaciones_paralelas": arq.codificaciones_paralelas(d, medido)},
+        "voz": voz_rec,
         "avisos": avisos,
     }
     perfil["bloque_subagentes"] = bloque_subagentes(d, perfil)
@@ -426,7 +447,9 @@ def recomendar_voz(d, medido, freno_memoria):
     """Modelo de dictado de OpenWhispr para este equipo (voz.py); None si algo falla, sin tumbar el perfil."""
     try:
         gpu = dg.es_macos() and d.get("arquitectura") == "arm64"  # Metal en Apple Silicon; en Windows e Intel, CPU por defecto
-        return voz.recomendar((d.get("memoria") or {}).get("memsize"), "es", medido.get("voz"), freno_memoria, gpu)
+        ref = arq.referencia_apple((d.get("cpu") or {}).get("marca")) or {}
+        equipo = {"ancho_banda_gbs": ref.get("ancho_banda_gbs"), "gpu_nucleos": (d.get("gpu") or {}).get("nucleos")}
+        return voz.recomendar((d.get("memoria") or {}).get("memsize"), "es", medido.get("voz"), freno_memoria, gpu, equipo)
     except Exception as e:  # noqa: BLE001
         return {"error": "%s: %s" % (type(e).__name__, e)}
 
@@ -436,18 +459,28 @@ def texto_voz(v):
     if not v or v.get("error"):
         return ["", "VOZ  sin datos (%s)" % ((v or {}).get("error") or "sin OpenWhispr")]
     L = ["", "VOZ  modelo de dictado de OpenWhispr para este equipo (idioma %s; catalogo: %s)" % (v["idioma"], v["catalogo"])]
+    e = v.get("equipo") or {}
+    L.append("  equipo         %s GB, %s, Whisper en %s%s; criterio: %s" % (
+        e.get("memoria_gb"), ("%s GB/s de memoria" % e["ancho_banda_gbs"]) if e.get("ancho_banda_gbs") else "ancho de banda sin dato",
+        "GPU" if e.get("whisper_en_gpu") else "procesador", "; freno de memoria activo" if e.get("freno_memoria") else "", v.get("criterio")))
     rec = v["recomendado"]
     if rec:
         L.append("  punto dulce    %s: %s %% de palabras erradas (%s), unos %s MB de memoria%s" % (
             rec["nombre"], rec["wer"], rec["wer_fuente"] or "ficha publica", rec["memoria_mb"],
             "; ya instalado" if rec["instalado"] else "; hay que descargarlo"))
+        if rec.get("velocidad"):
+            L.append("  velocidad      %s veces el tiempo real (%s)" % (rec["velocidad"], rec["velocidad_origen"]))
         L.append("  como           %s" % v["como_cambiarlo"])
+        if v.get("medir_tambien"):
+            L.append("  medir tambien  %s: su ficha publica dice que yerra menos; descargalo y corre medir.py voz" % ", ".join(v["medir_tambien"]))
     else:
         L.append("  sin recomendacion: ningun modelo con datos publicos cabe en %s MB" % v["presupuesto_mb"])
     for m in v["modelos"]:
         med = m.get("medido") or {}
         dato = "medido: %s s, %s MB, %sx tiempo real%s" % (med.get("transcribe_s"), med.get("memoria_mb"), med.get("veces_tiempo_real"),
                                                            (", %s %% error" % med["wer"]) if med.get("wer") is not None else "") if med else             ("%s %% error" % m["wer"] if m["wer"] is not None else "sin dato de error")
+        if not med and m.get("velocidad"):
+            dato += ", ~%sx tiempo real (estimado)" % m["velocidad"]
         L.append("  %-30s %-9s %6s MB  %s%s" % (m["nombre"][:30], "instalado" if m["instalado"] else "", m["memoria_mb"] or "?", dato,
                                               (" | descartado: " + m["descarte"]) if m.get("descarte") else ""))
     if v["nuevos_sin_ficha"]:
@@ -598,6 +631,7 @@ def a_texto(d, p):
     L.append("WHISPER")
     if w.get("disponible"):
         L.append("  1 servidor, backend %s [%s]" % (w["backend"], w["origen"]))
+        L.append("  modelo: %s" % w.get("modelo_criterio"))
         L.append("  %s" % (("reutilizar el propio vivo en " + w["reutilizar_propio"]) if w["reutilizar_propio"] else "lanzar: " + w["comando"]))
     else:
         L.append("  no disponible")

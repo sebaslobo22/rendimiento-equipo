@@ -23,6 +23,11 @@ FICHAS = os.path.join(os.path.dirname(AQUI), "assets", "fichas_voz.json")
 MEMORIA_MAX = 0.20     # criterio: el modelo no deberia ocupar mas del 20 % de la memoria total (deja sitio a renders y apps)
 EMPATE_WER = 0.5       # criterio: diferencias de menos de medio punto de error no justifican mas memoria
 FACTOR_MEMORIA = 1.3   # criterio: sin dato publicado, memoria al transcribir ~ 1,3 veces el archivo del modelo
+VELOCIDAD_MIN = 4.0    # criterio: dictar 30 s y tener el texto en menos de 8 s (4 veces el tiempo real)
+# Whisper en la GPU de Apple esta limitado por el ancho de banda de la memoria: cada palabra relee el modelo.
+# Calibrado con turbo (1549 MB) en un M4 Pro de 273 GB/s: 20 a 23 veces el tiempo real (medir.py voz, 29.10.2026).
+# Es una estimacion para equipos sin medir; lo medido en el equipo la reemplaza.
+K_ANCHO_BANDA = 119.0
 
 
 def rutas_app():
@@ -103,7 +108,8 @@ def modelos(cat):
                     "mb": round(m["sizeMb"]) if isinstance(m.get("sizeMb"), (int, float)) else None,
                     "idiomas": m.get("supportedLanguages"), "auto_idioma": m.get("language") == "multilingual",
                     "instalado": os.path.isdir(carpeta), "ruta": carpeta if os.path.isdir(carpeta) else None,
-                    "streaming": m.get("runtime") == "online"})
+                    "streaming": m.get("runtime") == "online",
+                    "sherpa_tipo": m.get("sherpaModelType"), "tipo_modelo": m.get("modelType")})
     return out
 
 
@@ -111,27 +117,55 @@ def habla(m, idioma):
     return m["idiomas"] is None or idioma in m["idiomas"]
 
 
-def recomendar(memsize, idioma="es", medido=None, frenos_memoria=False, whisper_gpu=True):
-    """Punto dulce: el menor error en el idioma, entre los modelos que caben en el presupuesto de memoria.
+def _audio_comun(medido):
+    """El audio con mas modelos medidos con error (--texto). Solo comparando el mismo audio el error medido sirve para elegir."""
+    por_audio = {}
+    for mid, r in (medido or {}).items():
+        if isinstance(r, dict) and r.get("wer") is not None and r.get("audio_id"):
+            por_audio.setdefault(r["audio_id"], []).append(mid)
+    if not por_audio:
+        return None, []
+    aid, mids = max(por_audio.items(), key=lambda kv: len(kv[1]))
+    return (aid, mids) if len(mids) >= 2 else (None, [])
 
-    Empates de menos de medio punto de error se resuelven por menos memoria. Con el freno de memoria activo,
-    el presupuesto se reduce a la mitad.
+
+def recomendar(memsize, idioma="es", medido=None, frenos_memoria=False, whisper_gpu=True, equipo=None):
+    """Punto dulce de ESTE equipo: el menor error en el idioma entre los modelos que caben en su memoria y que
+    transcriben al menos VELOCIDAD_MIN veces el tiempo real en su hardware.
+
+    Lo que manda, en orden: lo medido en el equipo con medir.py voz (error sobre el mismo audio, memoria y
+    velocidad reales), luego lo estimado con su ancho de banda de memoria (Whisper en GPU), luego la ficha publica.
+    El presupuesto de memoria es el 20 % de la del equipo, la mitad con el freno de memoria activo. Empates de
+    menos de medio punto de error se resuelven por menos memoria y despues por mas velocidad.
     """
     cat, version, ruta = catalogo_openwhispr()
     origen = "OpenWhispr %s" % version if cat else "tabla de la skill (OpenWhispr no esta instalado)"
     if not cat:
         cat = fichas().get("catalogo_respaldo") or {}
     fx = fichas().get("modelos", {})
-    medido = medido or {}
+    medido = {k: v for k, v in (medido or {}).items() if isinstance(v, dict)}
+    equipo = equipo or {}
+    bw = equipo.get("ancho_banda_gbs")
+    audio_id, con_error_medido = _audio_comun(medido)
     presupuesto = (memsize or 0) / 1024 ** 2 * MEMORIA_MAX * (0.5 if frenos_memoria else 1)
     candidatos = []
     for m in modelos(cat):
         f = fx.get(m["id"], {})
-        wer = (f.get("wer_" + idioma) or {}).get("valor")
-        mem = (medido.get(m["id"]) or {}).get("memoria_mb") or (f.get("memoria_mb") or {}).get("valor") \
+        med = medido.get(m["id"])
+        wer_pub = (f.get("wer_" + idioma) or {}).get("valor")
+        usa_medido = m["id"] in con_error_medido
+        wer = med["wer"] if usa_medido else wer_pub
+        mem = (med or {}).get("memoria_mb") or (f.get("memoria_mb") or {}).get("valor") \
             or (m["mb"] * FACTOR_MEMORIA if m["mb"] else None)
-        m.update({"wer": wer, "wer_fuente": (f.get("wer_" + idioma) or {}).get("dataset"), "memoria_mb": round(mem) if mem else None,
-                  "ficha": bool(f), "medido": medido.get(m["id"])})
+        vel, vel_origen = (med or {}).get("veces_tiempo_real"), "medida"
+        if vel is None and m["familia"] == "whisper" and whisper_gpu and bw and m["mb"]:
+            vel, vel_origen = round(K_ANCHO_BANDA * bw / m["mb"], 1), "estimada con %s GB/s de memoria" % bw
+        elif vel is None:
+            vel_origen = None
+        m.update({"wer": wer, "wer_publico": wer_pub,
+                  "wer_fuente": ("medido en este equipo, audio %s" % audio_id) if usa_medido else (f.get("wer_" + idioma) or {}).get("dataset"),
+                  "memoria_mb": round(mem) if mem else None, "velocidad": vel, "velocidad_origen": vel_origen,
+                  "ficha": bool(f), "medido": med})
         if not habla(m, idioma):
             m["descarte"] = "no transcribe este idioma"
         elif m["streaming"]:
@@ -140,17 +174,28 @@ def recomendar(memsize, idioma="es", medido=None, frenos_memoria=False, whisper_
             m["descarte"] = "aqui OpenWhispr corre Whisper en el procesador (CUDA o Vulkan son descargas aparte): un modelo grande va lento"
         elif mem is None or (presupuesto and mem > presupuesto):
             m["descarte"] = "ocupa %s MB: pasa del %d %% de la memoria" % (round(mem) if mem else "?", MEMORIA_MAX * 100)
+        elif vel is not None and vel < VELOCIDAD_MIN:
+            m["descarte"] = "en este equipo va a %s veces el tiempo real (%s): dictar se sentiria lento" % (vel, vel_origen)
         elif wer is None:
             m["descarte"] = "sin datos publicos de precision: medir antes de elegir"
         candidatos.append(m)
-    validos = sorted((m for m in candidatos if "descarte" not in m), key=lambda m: m["wer"])
-    elegido = None
+    validos = [m for m in candidatos if "descarte" not in m]
+    if con_error_medido and any(m["id"] in con_error_medido for m in validos):
+        validos = [m for m in validos if m["id"] in con_error_medido]  # el error medido no se mezcla con el publicado
+    validos.sort(key=lambda m: m["wer"])
+    elegido, por_medir = None, []
     if validos:
         mejor = validos[0]["wer"]
         cerca = [m for m in validos if m["wer"] - mejor < EMPATE_WER]
-        elegido = min(cerca, key=lambda m: m["memoria_mb"])
+        elegido = min(cerca, key=lambda m: (m["memoria_mb"], -(m["velocidad"] or 0)))
+        if con_error_medido and elegido.get("wer_publico") is not None:
+            por_medir = [m["nombre"] for m in candidatos if "descarte" not in m and m["id"] not in con_error_medido
+                         and m["wer"] is not None and m["wer"] < elegido["wer_publico"] - EMPATE_WER]
     return {"idioma": idioma, "catalogo": origen, "presupuesto_mb": round(presupuesto),
-            "recomendado": elegido, "modelos": candidatos,
+            "equipo": {"memoria_gb": round((memsize or 0) / 1024 ** 3), "ancho_banda_gbs": bw, "gpu_nucleos": equipo.get("gpu_nucleos"),
+                       "whisper_en_gpu": whisper_gpu, "freno_memoria": frenos_memoria},
+            "criterio": "error medido sobre el mismo audio (%d modelos)" % len(con_error_medido) if con_error_medido else "error publico",
+            "recomendado": elegido, "modelos": candidatos, "medir_tambien": por_medir,
             "nuevos_sin_ficha": [m["nombre"] for m in candidatos if not m["ficha"]],
             "como_cambiarlo": "OpenWhispr > Configuracion > Conversion de voz a texto > Local > elige el modelo y descargalo"}
 

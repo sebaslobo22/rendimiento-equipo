@@ -99,6 +99,65 @@ def voz(ruta):
                                                               d["recomendado"]["wer"], d["recomendado"]["memoria_mb"]))
 
 
+def voz_unidad():
+    """Sin OpenWhispr: error con cifras y tildes, cliente WebSocket de sherpa-onnx y recomendacion con lo medido."""
+    import base64
+    import hashlib
+    import socket
+    import struct
+    import threading
+    import medir as m
+    import voz as v
+    w = m.wer("Midió doce modelos: 2,3 por ciento en 2026", "midio 12 modelos 2,3 % en dos mil veintiseis")
+    if w != 0:
+        falla("el error deberia ser 0 con cifras y tildes normalizadas: %r" % w)
+
+    def servir(srv):
+        c, _ = srv.accept()
+        d = b""
+        while b"\r\n\r\n" not in d:
+            d += c.recv(4096)
+        k = [x.split(b": ")[1] for x in d.split(b"\r\n") if x.lower().startswith(b"sec-websocket-key")][0]
+        acc = base64.b64encode(hashlib.sha1(k + b"258EAFA5-E914-47DA-95CA-C5AB0DC85B11").digest())
+        c.sendall(b"HTTP/1.1 101 Switching Protocols\r\nUpgrade: websocket\r\nConnection: Upgrade\r\nSec-WebSocket-Accept: " + acc + b"\r\n\r\n")
+        buf = [b""]
+
+        def leer_n(n):
+            while len(buf[0]) < n:
+                buf[0] += c.recv(65536)
+            o, buf[0] = buf[0][:n], buf[0][n:]
+            return o
+
+        def rec():
+            _, b2 = leer_n(2)
+            n = b2 & 127
+            n = struct.unpack(">H", leer_n(2))[0] if n == 126 else struct.unpack(">Q", leer_n(8))[0] if n == 127 else n
+            mk = leer_n(4)
+            return bytes(x ^ mk[i % 4] for i, x in enumerate(leer_n(n)))
+
+        def env(p):
+            c.sendall(bytes([0x81, len(p)]) + p)
+        p = rec()
+        tasa, nb = struct.unpack("<ii", p[:8])
+        env(json.dumps({"text": "%d %d %d" % (tasa, nb, len(p) - 8)}).encode())
+        if rec() == b"Done":
+            env(b"Done!")
+        c.close()
+    srv = socket.socket()
+    srv.bind(("127.0.0.1", 0))
+    srv.listen(1)
+    threading.Thread(target=servir, args=(srv,), daemon=True).start()
+    t = m._ws_offline(srv.getsockname()[1], b"\x00" * 200000, 20)
+    if t != "16000 200000 200000":
+        falla("cliente WebSocket: %r" % t)
+    med = {"parakeet-tdt-0.6b-v3": {"wer": 2.3, "audio_id": "a", "veces_tiempo_real": 30, "memoria_mb": 700},
+           "small": {"wer": 6.1, "audio_id": "a", "veces_tiempo_real": 25, "memoria_mb": 900}}
+    r = v.recomendar(16 * 1024 ** 3, "es", med, False, True, {"ancho_banda_gbs": 153})
+    if not r["recomendado"] or r["recomendado"]["id"] != "parakeet-tdt-0.6b-v3" or "medido" not in r["criterio"]:
+        falla("con error medido en el mismo audio deberia elegir Parakeet: %r" % (r["recomendado"] or {}).get("id"))
+    print("OK voz_unidad: error normalizado, WebSocket y recomendacion medida (%s)" % r["criterio"])
+
+
 def cpu(ruta_diag):
     import medir as m
     ffmpeg = leer(ruta_diag)["herramientas"]["ffmpeg"]["elegido"]
@@ -113,4 +172,4 @@ def cpu(ruta_diag):
 
 if __name__ == "__main__":
     modo, resto = sys.argv[1], sys.argv[2:]
-    {"diagnostico": diagnostico, "medir": medir, "cpu": cpu, "paralelo": paralelo, "voz": voz}[modo](*resto)
+    {"diagnostico": diagnostico, "medir": medir, "cpu": cpu, "paralelo": paralelo, "voz": voz, "voz_unidad": voz_unidad}[modo](*resto)
