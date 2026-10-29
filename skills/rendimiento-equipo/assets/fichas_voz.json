@@ -1,0 +1,498 @@
+{
+ "_leeme": "Fichas publicas de los modelos locales de dictado de OpenWhispr (revisadas el 29.10.2026). wer_es: porcentaje de palabras erradas en espanol, con su conjunto de prueba y fuente; los numeros vienen de fuentes distintas y son aproximados entre si. memoria_mb: memoria al transcribir cuando hay dato publico. Lo medido con medir.py voz manda sobre esto. Un modelo nuevo del catalogo de OpenWhispr sin ficha aqui se marca para medir.",
+ "revisado": "2026-10-29",
+ "modelos": {
+  "tiny": {
+   "parametros_m": 39,
+   "idiomas": "99 (multilingüe), español sí",
+   "auto_idioma": true,
+   "streaming": false,
+   "licencia": "MIT (GitHub openai/whisper)",
+   "runtime": "whisper.cpp (OpenWhispr/whisper.cpp tag 0.0.11), whisper-server",
+   "notas": "El paper de Whisper mide con su propio normalizador; no es comparable 1:1 con las cifras de NVIDIA/Open ASR. Español de tiny/base/small/medium NO está en la tabla multilingüe del Open ASR Leaderboard consultada.",
+   "wer_es": {
+    "valor": 15.9,
+    "dataset": "FLEURS Spanish, test, Whisper paper Table 13 (WER %, normalizador de Whisper)",
+    "url": "https://ar5iv.labs.arxiv.org/html/2212.04356"
+   },
+   "memoria_mb": {
+    "valor": 273,
+    "nota": "RAM aproximada de whisper.cpp; disco/archivo exacto que baja OpenWhispr: 75 MB (ggml-tiny.bin)",
+    "url": "https://github.com/ggml-org/whisper.cpp"
+   }
+  },
+  "base": {
+   "parametros_m": 74,
+   "idiomas": "99 (multilingüe), español sí",
+   "auto_idioma": true,
+   "streaming": false,
+   "licencia": "MIT (GitHub openai/whisper)",
+   "runtime": "whisper.cpp (OpenWhispr/whisper.cpp tag 0.0.11), whisper-server",
+   "notas": "El paper de Whisper mide con su propio normalizador; no es comparable 1:1 con las cifras de NVIDIA/Open ASR. Español de tiny/base/small/medium NO está en la tabla multilingüe del Open ASR Leaderboard consultada.",
+   "wer_es": {
+    "valor": 9.9,
+    "dataset": "FLEURS Spanish, test, Whisper paper Table 13 (WER %, normalizador de Whisper)",
+    "url": "https://ar5iv.labs.arxiv.org/html/2212.04356"
+   },
+   "memoria_mb": {
+    "valor": 388,
+    "nota": "RAM aproximada de whisper.cpp; disco/archivo exacto que baja OpenWhispr: 142 MB",
+    "url": "https://github.com/ggml-org/whisper.cpp"
+   }
+  },
+  "small": {
+   "parametros_m": 244,
+   "idiomas": "99 (multilingüe), español sí",
+   "auto_idioma": true,
+   "streaming": false,
+   "licencia": "MIT (GitHub openai/whisper)",
+   "runtime": "whisper.cpp (OpenWhispr/whisper.cpp tag 0.0.11), whisper-server",
+   "notas": "El paper de Whisper mide con su propio normalizador; no es comparable 1:1 con las cifras de NVIDIA/Open ASR. Español de tiny/base/small/medium NO está en la tabla multilingüe del Open ASR Leaderboard consultada.",
+   "wer_es": {
+    "valor": 5.6,
+    "dataset": "FLEURS Spanish, test, Whisper paper Table 13 (WER %, normalizador de Whisper)",
+    "url": "https://ar5iv.labs.arxiv.org/html/2212.04356"
+   },
+   "memoria_mb": {
+    "valor": 852,
+    "nota": "RAM aproximada de whisper.cpp; disco/archivo exacto que baja OpenWhispr: 466 MB",
+    "url": "https://github.com/ggml-org/whisper.cpp"
+   }
+  },
+  "medium": {
+   "parametros_m": 769,
+   "idiomas": "99 (multilingüe), español sí",
+   "auto_idioma": true,
+   "streaming": false,
+   "licencia": "MIT (GitHub openai/whisper)",
+   "runtime": "whisper.cpp (OpenWhispr/whisper.cpp tag 0.0.11), whisper-server",
+   "notas": "El paper de Whisper mide con su propio normalizador; no es comparable 1:1 con las cifras de NVIDIA/Open ASR. Español de tiny/base/small/medium NO está en la tabla multilingüe del Open ASR Leaderboard consultada.",
+   "wer_es": {
+    "valor": 3.6,
+    "dataset": "FLEURS Spanish, test, Whisper paper Table 13 (WER %, normalizador de Whisper)",
+    "url": "https://ar5iv.labs.arxiv.org/html/2212.04356"
+   },
+   "memoria_mb": {
+    "valor": 2100,
+    "nota": "RAM aproximada de whisper.cpp; disco/archivo exacto que baja OpenWhispr: 1.5 GB",
+    "url": "https://github.com/ggml-org/whisper.cpp"
+   }
+  },
+  "large": {
+   "parametros_m": 1550,
+   "idiomas": "99, español sí",
+   "auto_idioma": true,
+   "streaming": false,
+   "licencia": "MIT (GitHub openai/whisper); la ficha HF de large-v3 dice apache-2.0 (discrepancia)",
+   "runtime": "whisper.cpp",
+   "notas": "large-v3 en whisper.cpp encode en M1 Ultra no medido en la fuente consultada.",
+   "wer_es": {
+    "valor": 3.65,
+    "dataset": "Open ASR Leaderboard multilingüe, columna ES (Whisper large-v3; FLEURS+MCV+MLS combinados, sin desglose en la tabla)",
+    "url": "https://arxiv.org/html/2510.06961"
+   },
+   "wer_en": {
+    "valor": 7.44,
+    "dataset": "Open ASR Leaderboard, promedio inglés corto (modelo large-v3)",
+    "url": "https://huggingface.co/openai/whisper-large-v3"
+   },
+   "memoria_mb": {
+    "valor": 3900,
+    "nota": "~3.9 GB RAM (whisper.cpp README). Archivo ggml-large-v3.bin 3.14 GB. OpenAI indica ~10 GB VRAM con PyTorch.",
+    "url": "https://github.com/ggml-org/whisper.cpp"
+   }
+  },
+  "turbo": {
+   "parametros_m": 809,
+   "idiomas": "99 (multilingüe), español sí",
+   "auto_idioma": true,
+   "streaming": false,
+   "licencia": "MIT",
+   "runtime": "whisper.cpp",
+   "notas": "Decoder recortado de 32 a 4 capas; OpenAI: 'minor quality degradation' vs large-v3.",
+   "wer_en": {
+    "valor": 7.83,
+    "dataset": "Open ASR Leaderboard, promedio inglés corto",
+    "url": "https://huggingface.co/openai/whisper-large-v3-turbo"
+   }
+  },
+  "parakeet-tdt-0.6b-v3": {
+   "parametros_m": 600,
+   "idiomas": "25 idiomas europeos, español sí",
+   "auto_idioma": true,
+   "streaming": false,
+   "licencia": "CC-BY-4.0",
+   "runtime": "sherpa-onnx 1.13.8 (CPU)",
+   "notas": "Auto-detección de idioma. Offline.",
+   "wer_es": {
+    "valor": 3.45,
+    "dataset": "FLEURS Spanish (NVIDIA, sin puntuación/mayúsculas)",
+    "url": "https://huggingface.co/nvidia/parakeet-tdt-0.6b-v3"
+   },
+   "wer_en": {
+    "valor": 6.32,
+    "dataset": "Open ASR Leaderboard promedio inglés corto (la ficha dice 6.34 en tabla y 6.32 en metadatos)",
+    "url": "https://arxiv.org/html/2510.06961"
+   },
+   "memoria_mb": {
+    "valor": 680,
+    "nota": "Descarga int8 680 MB (catálogo); sherpa lista ~640 MB extraído. RAM al transcribir: NVIDIA indica mínimo 2 GB para cargar. No medí RAM real.",
+    "url": "https://huggingface.co/nvidia/parakeet-tdt-0.6b-v3"
+   }
+  },
+  "parakeet-unified-en-0.6b": {
+   "parametros_m": 600,
+   "idiomas": "Solo inglés",
+   "auto_idioma": false,
+   "streaming": false,
+   "licencia": "NVIDIA Open Model License",
+   "runtime": "sherpa-onnx 1.13.8 (CPU)",
+   "notas": "El modelo admite streaming, pero OpenWhispr usa la variante non-streaming (offline).",
+   "wer_en": {
+    "valor": 5.91,
+    "dataset": "Open ASR Leaderboard, WER offline (tabla de la ficha)",
+    "url": "https://huggingface.co/nvidia/parakeet-unified-en-0.6b"
+   },
+   "memoria_mb": {
+    "valor": 631,
+    "nota": "Archivo int8 non-streaming 631 MB (catálogo). RAM no publicada.",
+    "url": "https://huggingface.co/nvidia/parakeet-unified-en-0.6b"
+   }
+  },
+  "nemotron-speech-streaming-en-0.6b": {
+   "parametros_m": 600,
+   "idiomas": "Solo inglés (en-US)",
+   "auto_idioma": false,
+   "streaming": true,
+   "licencia": "NVIDIA Open Model License",
+   "runtime": "sherpa-onnx 1.13.8 (servidor online)",
+   "notas": "Streaming real con caché; chunks 80/160/560/1120 ms. Peor WER que parakeet-unified offline.",
+   "wer_en": {
+    "valor": 7.07,
+    "dataset": "Open ASR promedio, chunk 560 ms (el build de OpenWhispr es 560 ms int8)",
+    "url": "https://huggingface.co/nvidia/nemotron-speech-streaming-en-0.6b"
+   },
+   "memoria_mb": {
+    "valor": 632,
+    "nota": "Archivo 632 MB (catálogo). RAM no publicada.",
+    "url": "https://huggingface.co/nvidia/nemotron-speech-streaming-en-0.6b"
+   }
+  },
+  "nemotron-3.5-asr-streaming-0.6b": {
+   "parametros_m": 600,
+   "idiomas": "40 locales en la ficha de NVIDIA; OpenWhispr expone 15 (incl. español)",
+   "auto_idioma": true,
+   "streaming": true,
+   "licencia": "OpenMDW-1.1",
+   "runtime": "sherpa-onnx 1.13.8 (servidor online)",
+   "notas": "Ficha recomienda el modelo EN dedicado si solo usas inglés. Peor en inglés que en español.",
+   "wer_es": {
+    "valor": 4.26,
+    "dataset": "FLEURS Spanish (es-US/es-ES), chunk 560 ms, idioma fijado; 4.34 con auto-detección",
+    "url": "https://huggingface.co/nvidia/nemotron-3.5-asr-streaming-0.6b"
+   },
+   "memoria_mb": {
+    "valor": 650,
+    "nota": "Archivo 650 MB (catálogo). RAM no publicada.",
+    "url": "https://huggingface.co/nvidia/nemotron-3.5-asr-streaming-0.6b"
+   }
+  },
+  "cohere-transcribe-03-2026": {
+   "parametros_m": 2000,
+   "idiomas": "14 idiomas, español sí",
+   "auto_idioma": false,
+   "streaming": false,
+   "licencia": "Apache 2.0",
+   "runtime": "sherpa-onnx 1.13.8 (CPU)",
+   "notas": "Sin auto-detección: el idioma de dictado se fija y cambiarlo reinicia el motor (CHANGELOG OpenWhispr).",
+   "wer_es": {
+    "valor": 2.81,
+    "dataset": "Open ASR Leaderboard multilingüe, columna ES (FLEURS+MCV+MLS combinados)",
+    "url": "https://arxiv.org/html/2510.06961"
+   },
+   "wer_en": {
+    "valor": 5.42,
+    "dataset": "Open ASR Leaderboard promedio inglés corto (26-mar-2026)",
+    "url": "https://huggingface.co/CohereLabs/cohere-transcribe-03-2026"
+   },
+   "memoria_mb": {
+    "valor": 2700,
+    "nota": "Descarga ~1.7 GB (1,699,791,751 bytes), 2.7 GB en disco según OpenWhispr. RAM al transcribir no publicada.",
+    "url": "https://raw.githubusercontent.com/OpenWhispr/openwhispr/main/CHANGELOG.md"
+   }
+  },
+  "orukeet-v0.1.0": {
+   "parametros_m": 627,
+   "idiomas": "25 idiomas europeos, español sí",
+   "auto_idioma": true,
+   "streaming": false,
+   "licencia": "Pesos CC BY-SA 4.0; código MIT",
+   "runtime": "sherpa-onnx 1.13.8 (CPU)",
+   "notas": "Fine-tune de Parakeet TDT v3 (misma arquitectura, 627,008,134 parámetros). Evaluado por Oruk/OpenWhispr, no por terceros; mejor en 61 de 74 particiones. Selección de checkpoint usó LibriSpeech test-other, que también reportan.",
+   "wer_es": {
+    "valor": 2.75,
+    "dataset": "FLEURS Spanish, 908 clips (Parakeet v3 en el mismo test: 3.22)",
+    "url": "https://huggingface.co/oruk/orukeet/raw/main/docs/current-checkpoint-benchmarks.md"
+   },
+   "memoria_mb": {
+    "valor": 672,
+    "nota": "Archivo ONNX INT8: 486,807,585 bytes comprimido, 671.6 MB extraído. RAM no publicada.",
+    "url": "https://huggingface.co/oruk/orukeet"
+   }
+  }
+ },
+ "runtimes": {
+  "whisper.cpp": {
+   "mac_apple_silicon": "Metal (GPU) en whisper-server-darwin-arm64.zip",
+   "mac_intel": "solo CPU",
+   "windows": "Build CPU incluida con la app; CUDA (NVIDIA) y Vulkan (cualquier GPU: AMD/Intel/NVIDIA) son descargas opcionales dentro de la app; sin Metal/DirectML",
+   "linux": "CPU, CUDA, Vulkan",
+   "nota_coreml": "No hay evidencia de que OpenWhispr use Core ML para Whisper.",
+   "url": "https://github.com/OpenWhispr/whisper.cpp/releases/tag/0.0.11"
+  },
+  "sherpa-onnx": {
+   "mac": "CPU (onnxruntime arm64 nativo 1.28.2 para int8); no hallé en el código ajustes de CoreML",
+   "windows": "CPU (archivo win-x64-shared-MD-Release; no CUDA ni DirectML)",
+   "version": "1.13.8",
+   "mac_minimo_parakeet": "macOS 15.5",
+   "nota": "Inferencia: ausencia de CUDA/DirectML/CoreML deducida de los scripts de descarga y de que no hay opción de provider en el código revisado; no se leyó todo el repo (búsqueda de código GitHub requiere login).",
+   "url": "https://github.com/OpenWhispr/openwhispr/blob/main/scripts/download-sherpa-onnx.js"
+  }
+ },
+ "catalogo_respaldo": {
+  "whisperModels": {
+   "tiny": {
+    "name": "Tiny",
+    "description": "Fastest, lower quality",
+    "size": "75MB",
+    "sizeMb": 75,
+    "expectedSizeBytes": 78000000,
+    "fileName": "ggml-tiny.bin",
+    "downloadUrl": "https://huggingface.co/ggerganov/whisper.cpp/resolve/main/ggml-tiny.bin",
+    "descriptionKey": "models.descriptions.whisper.tiny"
+   },
+   "base": {
+    "name": "Base",
+    "description": "Good balance",
+    "size": "142MB",
+    "sizeMb": 142,
+    "expectedSizeBytes": 148000000,
+    "fileName": "ggml-base.bin",
+    "downloadUrl": "https://huggingface.co/ggerganov/whisper.cpp/resolve/main/ggml-base.bin",
+    "recommended": true,
+    "descriptionKey": "models.descriptions.whisper.base"
+   },
+   "small": {
+    "name": "Small",
+    "description": "Better quality, slower",
+    "size": "466MB",
+    "sizeMb": 466,
+    "expectedSizeBytes": 488000000,
+    "fileName": "ggml-small.bin",
+    "downloadUrl": "https://huggingface.co/ggerganov/whisper.cpp/resolve/main/ggml-small.bin",
+    "descriptionKey": "models.descriptions.whisper.small"
+   },
+   "medium": {
+    "name": "Medium",
+    "description": "High quality",
+    "size": "1.5GB",
+    "sizeMb": 1500,
+    "expectedSizeBytes": 1570000000,
+    "fileName": "ggml-medium.bin",
+    "downloadUrl": "https://huggingface.co/ggerganov/whisper.cpp/resolve/main/ggml-medium.bin",
+    "descriptionKey": "models.descriptions.whisper.medium"
+   },
+   "large": {
+    "name": "Large",
+    "description": "Best quality, slowest",
+    "size": "3GB",
+    "sizeMb": 3000,
+    "expectedSizeBytes": 3140000000,
+    "fileName": "ggml-large-v3.bin",
+    "downloadUrl": "https://huggingface.co/ggerganov/whisper.cpp/resolve/main/ggml-large-v3.bin",
+    "descriptionKey": "models.descriptions.whisper.large"
+   },
+   "turbo": {
+    "name": "Turbo",
+    "description": "Fast with good quality",
+    "size": "1.6GB",
+    "sizeMb": 1600,
+    "expectedSizeBytes": 1670000000,
+    "fileName": "ggml-large-v3-turbo.bin",
+    "downloadUrl": "https://huggingface.co/ggerganov/whisper.cpp/resolve/main/ggml-large-v3-turbo.bin",
+    "descriptionKey": "models.descriptions.whisper.turbo"
+   }
+  },
+  "parakeetModels": {
+   "parakeet-tdt-0.6b-v3": {
+    "name": "Parakeet TDT 0.6B",
+    "sherpaModelType": "nemo_transducer",
+    "description": "Fast multilingual ASR with auto language detection",
+    "size": "680MB",
+    "sizeMb": 680,
+    "language": "multilingual",
+    "supportedLanguages": [
+     "bg",
+     "hr",
+     "cs",
+     "da",
+     "nl",
+     "en",
+     "et",
+     "fi",
+     "fr",
+     "de",
+     "el",
+     "hu",
+     "it",
+     "lv",
+     "lt",
+     "mt",
+     "pl",
+     "pt",
+     "ro",
+     "sk",
+     "sl",
+     "es",
+     "sv",
+     "ru",
+     "uk"
+    ],
+    "downloadUrl": "https://github.com/k2-fsa/sherpa-onnx/releases/download/asr-models/sherpa-onnx-nemo-parakeet-tdt-0.6b-v3-int8.tar.bz2",
+    "extractDir": "sherpa-onnx-nemo-parakeet-tdt-0.6b-v3-int8",
+    "descriptionKey": "models.descriptions.parakeet.parakeet_tdt_0_6b_v3"
+   },
+   "parakeet-unified-en-0.6b": {
+    "name": "Parakeet Unified EN 0.6B",
+    "description": "English-only ASR with state-of-the-art accuracy (5.91% avg WER)",
+    "size": "631MB",
+    "sizeMb": 631,
+    "language": "en",
+    "supportedLanguages": [
+     "en"
+    ],
+    "downloadUrl": "https://github.com/k2-fsa/sherpa-onnx/releases/download/asr-models/sherpa-onnx-nemo-parakeet-unified-en-0.6b-int8-non-streaming.tar.bz2",
+    "extractDir": "sherpa-onnx-nemo-parakeet-unified-en-0.6b-int8-non-streaming",
+    "descriptionKey": "models.descriptions.parakeet.parakeet_unified_en_0_6b"
+   },
+   "nemotron-speech-streaming-en-0.6b": {
+    "name": "Nemotron Speech Streaming EN 0.6B",
+    "description": "English streaming ASR from NVIDIA Nemotron",
+    "size": "632MB",
+    "sizeMb": 632,
+    "language": "en",
+    "supportedLanguages": [
+     "en"
+    ],
+    "runtime": "online",
+    "downloadUrl": "https://github.com/k2-fsa/sherpa-onnx/releases/download/asr-models/sherpa-onnx-nemotron-speech-streaming-en-0.6b-560ms-int8-2026-04-25.tar.bz2",
+    "extractDir": "sherpa-onnx-nemotron-speech-streaming-en-0.6b-560ms-int8-2026-04-25",
+    "descriptionKey": "models.descriptions.parakeet.nemotron_speech_streaming_en_0_6b"
+   },
+   "nemotron-3.5-asr-streaming-0.6b": {
+    "name": "Nemotron 3.5 ASR Streaming 0.6B",
+    "description": "Multilingual streaming ASR from NVIDIA Nemotron with auto language detection (15 languages)",
+    "size": "650MB",
+    "sizeMb": 650,
+    "language": "multilingual",
+    "supportedLanguages": [
+     "en",
+     "es",
+     "fr",
+     "it",
+     "pt",
+     "nl",
+     "de",
+     "tr",
+     "ru",
+     "ar",
+     "hi",
+     "ja",
+     "ko",
+     "vi",
+     "uk"
+    ],
+    "runtime": "online",
+    "downloadUrl": "https://github.com/k2-fsa/sherpa-onnx/releases/download/asr-models/sherpa-onnx-nemotron-3.5-asr-streaming-0.6b-560ms-int8-2026-06-11.tar.bz2",
+    "extractDir": "sherpa-onnx-nemotron-3.5-asr-streaming-0.6b-560ms-int8-2026-06-11",
+    "descriptionKey": "models.descriptions.parakeet.nemotron_3_5_asr_streaming_0_6b"
+   },
+   "cohere-transcribe-03-2026": {
+    "name": "Cohere Transcribe 2B",
+    "description": "Most accurate local ASR (5.42% avg WER, 14 languages). No auto language detection",
+    "size": "2.7GB",
+    "sizeMb": 2700,
+    "expectedSizeBytes": 1699791751,
+    "language": "multilingual",
+    "supportedLanguages": [
+     "ar",
+     "de",
+     "el",
+     "en",
+     "es",
+     "fr",
+     "it",
+     "ja",
+     "ko",
+     "nl",
+     "pl",
+     "pt",
+     "vi",
+     "zh"
+    ],
+    "modelType": "cohere-transcribe",
+    "downloadUrl": "https://github.com/k2-fsa/sherpa-onnx/releases/download/asr-models/sherpa-onnx-cohere-transcribe-14-lang-int8-2026-04-01.tar.bz2",
+    "extractDir": "sherpa-onnx-cohere-transcribe-14-lang-int8-2026-04-01",
+    "descriptionKey": "models.descriptions.cohere.cohere_transcribe_03_2026"
+   },
+   "orukeet-v0.1.0": {
+    "name": "Orukeet",
+    "description": "Multilingual Parakeet fine-tune with frozen Gabor kernels",
+    "descriptionKey": "models.descriptions.parakeet.orukeet",
+    "size": "672MB",
+    "sizeMb": 671.6198,
+    "expectedSizeBytes": 486807585,
+    "language": "multilingual",
+    "supportedLanguages": [
+     "bg",
+     "hr",
+     "cs",
+     "da",
+     "nl",
+     "en",
+     "et",
+     "fi",
+     "fr",
+     "de",
+     "el",
+     "hu",
+     "it",
+     "lv",
+     "lt",
+     "mt",
+     "pl",
+     "pt",
+     "ro",
+     "sk",
+     "sl",
+     "es",
+     "sv",
+     "ru",
+     "uk"
+    ],
+    "runtime": "offline",
+    "sherpaModelType": "nemo_transducer",
+    "recommended": true,
+    "extractDir": "sherpa-onnx-orukeet-v0.1.0-int8",
+    "downloadUrl": "https://huggingface.co/oruk/orukeet/resolve/55a984d46f68323301837194ce647c702f55facc/onnx/sherpa-onnx-orukeet-v0.1.0-int8.tar.bz2",
+    "manifestUrl": "https://huggingface.co/oruk/orukeet/resolve/55a984d46f68323301837194ce647c702f55facc/onnx/manifest.json",
+    "license": "CC-BY-SA-4.0",
+    "organization": {
+     "id": "oruk",
+     "name": "Oruk"
+    },
+    "modelCardUrl": "https://huggingface.co/oruk/orukeet"
+   }
+  }
+ }
+}

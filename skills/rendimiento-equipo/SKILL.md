@@ -20,7 +20,7 @@ comando suele ser `python` o `py -3` en lugar de `python3`, y el paso 2 no recom
 2. `python3 scripts/perfil.py --renders N --formato texto`, con N = cuántos renders irán en paralelo. Entrega
    recomendaciones, los frenos activos y un **bloque para subagentes** ya relleno.
 3. Aplica las recomendaciones y pega el bloque en cada encargo a un subagente (no heredan skills ni contexto).
-4. Si vas a cambiar un método: `python3 scripts/medir.py codificar|decodificar|remotion|paralelo ... --registrar`, con nadie
+4. Si vas a cambiar un método: `python3 scripts/medir.py codificar|decodificar|remotion|paralelo|voz ... --registrar`, con nadie
    más renderizando. Solo actualiza el perfil con un ganador claro (≥15 % mejor y diferencia visual <2/255).
 5. Al terminar: `python3 scripts/limpiar.py` (solo muestra) y luego `python3 scripts/limpiar.py --aplicar`.
 
@@ -53,7 +53,7 @@ comando suele ser `python` o `py -3` en lugar de `python3`, y el paso 2 no recom
 | Qué trae cada generación (M1 a M6), qué herramienta lo usa y cómo se detecta | `references/arquitectura.md` |
 | Argumentos de ffmpeg, bitrates, HDR a SDR, qué ffmpeg usar | `references/ffmpeg.md` |
 | Flags de Remotion, concurrencia, caché, `--gl`, cómo medirlo | `references/remotion.md` |
-| Lanzar, reutilizar o apagar el servidor de transcripción; Core ML o Metal | `references/whisper.md` |
+| Lanzar, reutilizar o apagar el servidor de transcripción; Core ML o Metal; qué modelo de dictado conviene | `references/whisper.md` |
 | Entender presión de memoria, swap y los frenos | `references/memoria.md` |
 | Escribir encargos para subagentes, repartir trabajo, verificar, limpiar | `references/agentes.md` |
 | Trabajar en Windows (diagnóstico y mediciones; sin recomendaciones todavía) | `references/windows.md` |

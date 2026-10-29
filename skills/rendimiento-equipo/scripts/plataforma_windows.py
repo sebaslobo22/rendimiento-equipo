@@ -370,3 +370,26 @@ def tiempo_cpu(proceso):
     def seg(f):
         return ((f.dwHighDateTime << 32) | f.dwLowDateTime) / 1e7
     return round(seg(ft[2]) + seg(ft[3]), 2)
+
+
+class _Memoria(ctypes.Structure):
+    _fields_ = [("cb", wintypes.DWORD), ("PageFaultCount", wintypes.DWORD),
+                ("PeakWorkingSetSize", ctypes.c_size_t), ("WorkingSetSize", ctypes.c_size_t),
+                ("QuotaPeakPagedPoolUsage", ctypes.c_size_t), ("QuotaPagedPoolUsage", ctypes.c_size_t),
+                ("QuotaPeakNonPagedPoolUsage", ctypes.c_size_t), ("QuotaNonPagedPoolUsage", ctypes.c_size_t),
+                ("PagefileUsage", ctypes.c_size_t), ("PeakPagefileUsage", ctypes.c_size_t)]
+
+
+def memoria_pico_mb(proceso):
+    """Pico de memoria (working set) de un subprocess.Popen todavia vivo, en MB. None si no se puede."""
+    m = _Memoria()
+    m.cb = ctypes.sizeof(_Memoria)
+    try:
+        psapi = ctypes.WinDLL("psapi", use_last_error=True)
+        psapi.GetProcessMemoryInfo.argtypes = [wintypes.HANDLE, ctypes.c_void_p, wintypes.DWORD]
+        psapi.GetProcessMemoryInfo.restype = wintypes.BOOL
+        if not psapi.GetProcessMemoryInfo(wintypes.HANDLE(int(proceso._handle)), ctypes.byref(m), m.cb):
+            return None
+    except (OSError, AttributeError, TypeError):
+        return None
+    return round(m.PeakWorkingSetSize / 1024 ** 2)

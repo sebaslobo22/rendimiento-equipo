@@ -247,7 +247,7 @@ h2{font-size:clamp(2.1rem,1.1rem + 3.8vw,4rem);font-weight:650;letter-spacing:-.
 .pp-h{display:grid;gap:6px;margin-bottom:16px}
 .pp-h h3{font-size:clamp(1.25rem,1rem + .9vw,1.7rem);font-weight:650;letter-spacing:-.02em}
 .pp-h p{color:var(--text-2);font-size:15px}
-.pp-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px}
+.pp-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
 .pp-card{display:grid;gap:12px;align-content:start;padding:18px;border-radius:20px;background:var(--panel);border:1px solid var(--line);--rad:20px;min-width:0}
 .pp-t{display:flex;align-items:center;gap:12px}
 .pp-t h4{margin:0;font-size:16px;font-weight:600}
@@ -584,7 +584,7 @@ footer .wrap{display:flex;justify-content:space-between;gap:12px 24px;flex-wrap:
   <section class="hero" id="hero">
     <div class="wrap">
       <div class="hero-txt" id="hero-txt">
-        <a class="tag" href="#instalar"><span class="dot"></span>Skill para Claude Code y Codex · Mac y Windows · v1.2.0</a>
+        <a class="tag" href="#instalar"><span class="dot"></span>Skill para Claude Code y Codex · Mac y Windows · v1.3.0</a>
         <h1 class="grad">Cada tarea, al motor que mejor la hace.</h1>
         <p class="sub"><b>rendimiento-equipo</b> mira tu computadora, Mac o Windows, antes de un render, una transcripción o un lote, y reparte el trabajo entre la CPU, la GPU, el Neural Engine y el motor de video. Lo que mide en tu equipo manda.</p>
         <div class="ctas">
@@ -970,6 +970,7 @@ presión normal · swap creciendo: no · térmico nominal</pre></div>
           <article class="pp-card morph" style="--c:var(--e-a)"><div class="pp-t"><span class="ico"><svg class="i"><use href="#i-pulse"/></svg></span><h4>Mira qué tiene tu Mac</h4></div><p class="msg">Usa la skill rendimiento-equipo y dime qué tiene mi Mac y qué recomienda.</p><p class="res">Te dice tu chip, sus núcleos y tu memoria, qué parte del chip conviene para video, audio y renders, y si la Mac va justa de memoria o está caliente.</p><button class="copy" type="button"><svg class="i"><use href="#i-copy"/></svg><span>Copiar</span></button></article>
           <article class="pp-card morph" style="--c:var(--e-v)"><div class="pp-t"><span class="ico"><svg class="i"><use href="#i-film"/></svg></span><h4>Convierte un video</h4></div><p class="msg">Convierte este video a vertical 1080×1920.</p><p class="res" id="pp-enc">Lo hace con el motor de video y no con la CPU. En mi Mac, 15 s de video pasaron de 22,1 s a 4,1 s. Necesita ffmpeg: si falta, el agente te avisa.</p><button class="copy" type="button"><svg class="i"><use href="#i-copy"/></svg><span>Copiar</span></button></article>
           <article class="pp-card morph" style="--c:var(--e-p)"><div class="pp-t"><span class="ico"><svg class="i"><use href="#i-layers"/></svg></span><h4>Pide varias cosas a la vez</h4></div><p class="msg">Renderiza estos 3 videos en paralelo sin que se cuelgue la Mac.</p><p class="res" id="pp-par">Reparte el trabajo: con un M4 Pro de 24 GB, 3 renders con 3 hilos y 2 GB de caché cada uno, y un solo servidor de Whisper.</p><button class="copy" type="button"><svg class="i"><use href="#i-copy"/></svg><span>Copiar</span></button></article>
+          <article class="pp-card morph" style="--c:var(--e-g)"><div class="pp-t"><span class="ico"><svg class="i"><use href="#i-wave"/></svg></span><h4>Elige tu modelo de dictado</h4></div><p class="msg">Usa la skill rendimiento-equipo y dime qué modelo de dictado de OpenWhispr me conviene en este equipo.</p><p class="res">Lee los modelos que trae tu OpenWhispr y te dice cuál se equivoca menos en español sin cargar tu computadora, en Mac o en Windows.</p><button class="copy" type="button"><svg class="i"><use href="#i-copy"/></svg><span>Copiar</span></button></article>
         </div>
         <p class="pp-foot">Si no le pides al agente nada de eso, la skill no aparece: está pensada para cuando la Mac trabaja duro.</p>
       </div>
@@ -1016,7 +1017,7 @@ presión normal · swap creciendo: no · térmico nominal</pre></div>
 </main>
 
 <footer>
-  <div class="wrap"><span>rendimiento-equipo v1.2.0 · Licencia MIT</span><span>Hecha por Sebastián Lobo · 27.10.2026</span></div>
+  <div class="wrap"><span>rendimiento-equipo v1.3.0 · Licencia MIT</span><span>Hecha por Sebastián Lobo · 27.10.2026</span></div>
 </footer>
 
 <div class="tip" id="tip" role="tooltip"></div>

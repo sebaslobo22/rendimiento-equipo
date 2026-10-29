@@ -1,5 +1,14 @@
 # Cambios
 
+## 1.3.0 · 29.10.2026
+
+- Modelo de dictado: la skill recomienda el punto dulce entre precisión y consumo para OpenWhispr, en Mac y en
+  Windows. `voz.py` lee el catálogo del OpenWhispr instalado (los modelos nuevos aparecen solos), lo cruza con
+  fichas públicas (`assets/fichas_voz.json`) y con la memoria del equipo, y elige el de menos error en español
+  que cabe en el 20 % de la memoria. `perfil.py` lo muestra en la sección VOZ.
+- `medir.py voz` transcribe un audio tuyo con cada modelo Whisper descargado, en un servidor propio, y mide
+  tiempo, memoria y porcentaje de error. En el M4 Pro piloto, Whisper Turbo: 20 veces el tiempo real y 1,8 GB.
+
 ## 1.2.0 · 28.10.2026
 
 - La skill tiene en cuenta los saltos de arquitectura de cada generación de Apple Silicon, de M1 a M6. Decide por

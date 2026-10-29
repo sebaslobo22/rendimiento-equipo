@@ -89,6 +89,16 @@ def paralelo(ruta, codigo):
     print("OK paralelo: rinde %s, elige %s" % (out["escalado"], out["elegido"]))
 
 
+def voz(ruta):
+    d = leer(ruta)
+    if len(d.get("modelos") or []) < 6:
+        falla("catalogo de modelos de dictado vacio: %r" % d.get("catalogo"))
+    if not d.get("recomendado"):
+        falla("sin modelo recomendado con %s MB de presupuesto" % d.get("presupuesto_mb"))
+    print("OK voz: %s recomienda %s (%s %% de error, %s MB)" % (d["catalogo"], d["recomendado"]["nombre"],
+                                                              d["recomendado"]["wer"], d["recomendado"]["memoria_mb"]))
+
+
 def cpu(ruta_diag):
     import medir as m
     ffmpeg = leer(ruta_diag)["herramientas"]["ffmpeg"]["elegido"]
@@ -103,4 +113,4 @@ def cpu(ruta_diag):
 
 if __name__ == "__main__":
     modo, resto = sys.argv[1], sys.argv[2:]
-    {"diagnostico": diagnostico, "medir": medir, "cpu": cpu, "paralelo": paralelo}[modo](*resto)
+    {"diagnostico": diagnostico, "medir": medir, "cpu": cpu, "paralelo": paralelo, "voz": voz}[modo](*resto)

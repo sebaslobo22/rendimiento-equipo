@@ -28,6 +28,7 @@ AQUI = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, AQUI)
 import diagnosticar as dg  # noqa: E402
 import arquitectura as arq  # noqa: E402
+import voz  # noqa: E402
 
 # Criterios (no son mediciones): salen de la regla de la skill anterior y de la doc de Remotion.
 # Se pueden sustituir con lo medido (npx remotion benchmark --concurrencies) en perfil-medido.json.
@@ -338,7 +339,7 @@ def calcular(d, renders):
     avisos = list(d.get("avisos", []))
     if d.get("soporte"):
         return {"huella": huella, "soporte": d["soporte"], "recomendaciones": None,
-                "medido": medido or None, "perfil_medido": ruta_medido,
+                "medido": medido or None, "perfil_medido": ruta_medido, "voz": recomendar_voz(d, medido, False),
                 "avisos": avisos, "bloque_subagentes": bloque_sin_medir(d)}
     frenos = calcular_frenos(d, medido)
     ffmpeg, a = calcular_ffmpeg(d, medido)
@@ -376,6 +377,7 @@ def calcular(d, renders):
         "carrusel_chrome": chrome_rec,
         "lotes": {"qos_fondo": "taskpolicy -c utility <comando>" if (d.get("herramientas") or {}).get("taskpolicy") else None},
         "arquitectura": {"saltos": arq.saltos(d), "codificaciones_paralelas": arq.codificaciones_paralelas(d, medido)},
+        "voz": recomendar_voz(d, medido, frenos["memoria"]["activo"]),
         "avisos": avisos,
     }
     perfil["bloque_subagentes"] = bloque_subagentes(d, perfil)
@@ -418,6 +420,39 @@ def bloque_subagentes(d, p):
     L.append("- Nunca toques procesos de OpenWhispr (whisper-server con --model y --host). Apaga por PID, con SIGTERM, "
              "solo lo que lanzaste tu. Reporta cuanto tardo el render final y adjunta el comando y su salida como evidencia.")
     return "\n".join(L)
+
+
+def recomendar_voz(d, medido, freno_memoria):
+    """Modelo de dictado de OpenWhispr para este equipo (voz.py); None si algo falla, sin tumbar el perfil."""
+    try:
+        gpu = dg.es_macos() and d.get("arquitectura") == "arm64"  # Metal en Apple Silicon; en Windows e Intel, CPU por defecto
+        return voz.recomendar((d.get("memoria") or {}).get("memsize"), "es", medido.get("voz"), freno_memoria, gpu)
+    except Exception as e:  # noqa: BLE001
+        return {"error": "%s: %s" % (type(e).__name__, e)}
+
+
+def texto_voz(v):
+    """Seccion VOZ del texto de perfil.py."""
+    if not v or v.get("error"):
+        return ["", "VOZ  sin datos (%s)" % ((v or {}).get("error") or "sin OpenWhispr")]
+    L = ["", "VOZ  modelo de dictado de OpenWhispr para este equipo (idioma %s; catalogo: %s)" % (v["idioma"], v["catalogo"])]
+    rec = v["recomendado"]
+    if rec:
+        L.append("  punto dulce    %s: %s %% de palabras erradas (%s), unos %s MB de memoria%s" % (
+            rec["nombre"], rec["wer"], rec["wer_fuente"] or "ficha publica", rec["memoria_mb"],
+            "; ya instalado" if rec["instalado"] else "; hay que descargarlo"))
+        L.append("  como           %s" % v["como_cambiarlo"])
+    else:
+        L.append("  sin recomendacion: ningun modelo con datos publicos cabe en %s MB" % v["presupuesto_mb"])
+    for m in v["modelos"]:
+        med = m.get("medido") or {}
+        dato = "medido: %s s, %s MB, %sx tiempo real%s" % (med.get("transcribe_s"), med.get("memoria_mb"), med.get("veces_tiempo_real"),
+                                                           (", %s %% error" % med["wer"]) if med.get("wer") is not None else "") if med else             ("%s %% error" % m["wer"] if m["wer"] is not None else "sin dato de error")
+        L.append("  %-30s %-9s %6s MB  %s%s" % (m["nombre"][:30], "instalado" if m["instalado"] else "", m["memoria_mb"] or "?", dato,
+                                              (" | descartado: " + m["descarte"]) if m.get("descarte") else ""))
+    if v["nuevos_sin_ficha"]:
+        L.append("  nuevos sin ficha (medir con medir.py voz): %s" % ", ".join(v["nuevos_sin_ficha"]))
+    return L
 
 
 def bloque_sin_medir(d):
@@ -471,6 +506,7 @@ def a_texto(d, p):
                                                   d.get("arquitectura"), d.get("huella")),
              "  %s." % p["soporte"]]
         L.extend(resumen_sin_medir(d))
+        L.extend(texto_voz(p.get("voz")))
         if p.get("medido"):
             L.append("")
             L.append("MEDIDO en este equipo (%s): %s" % (p.get("perfil_medido"), json.dumps(p["medido"], ensure_ascii=False)))
@@ -547,6 +583,8 @@ def a_texto(d, p):
     else:
         L.append("  %-14s sin medir%s. Mide: %s" % ("Codif. HW", (" (" + cp["referencia"] + ")") if cp.get("referencia") else "", cp["medir"]))
     r = p["remotion"]
+    L.append("")
+    L.extend(texto_voz(p.get("voz")))
     L.append("")
     L.append("REMOTION  %d render(es) pedidos, %d en paralelo" % (r["renders_pedidos"], r["renders_en_paralelo"]))
     L.append("  concurrencia   %d por render (nucleos para render: %d, %s) [%s]" % (

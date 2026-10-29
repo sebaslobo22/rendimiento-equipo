@@ -2,6 +2,29 @@
 
 Niveles: Oficial/Mantenedor (whisper.cpp) / Medición / Criterio.
 
+## Qué modelo de dictado usar (punto dulce)
+
+`perfil.py` (sección VOZ) y `scripts/voz.py` recomiendan el modelo local de OpenWhispr con menos error en el
+idioma que dictas, entre los que caben en el 20 % de la memoria del equipo (la mitad con el freno de memoria
+activo). Si dos quedan a menos de medio punto de error, gana el que ocupa menos (Criterio).
+
+- **El catálogo se lee del OpenWhispr instalado** (`modelRegistryData.json` dentro de `app.asar`, en Mac y en
+  Windows). Si la app suma modelos, aparecen solos; sin ficha pública quedan marcados para medir y nunca se les
+  inventa una precisión. Sin OpenWhispr, se usa la copia de `assets/fichas_voz.json`.
+- **Las fichas** (`assets/fichas_voz.json`) traen el error en español con su conjunto de prueba y su fuente. Vienen
+  de fuentes distintas (artículo de Whisper, NVIDIA, Open ASR Leaderboard, autores de Orukeet) y son aproximadas
+  entre sí. La única comparación limpia es Parakeet v3 contra Orukeet en los mismos clips: 3,22 contra 2,75 % en
+  FLEURS español, publicada por los autores de Orukeet.
+- **En Windows e Intel**, OpenWhispr corre Whisper en el procesador (CUDA y Vulkan son descargas aparte), así que
+  los Whisper de más de 500 MB se descartan por lentos. Parakeet, Orukeet y Cohere corren en el procesador en los
+  dos sistemas (sherpa-onnx).
+- **Medir en tu equipo:** `medir.py voz --audio tu-voz.m4a --texto lo-que-dices.txt --registrar` transcribe con
+  cada modelo Whisper descargado en un servidor propio (puerto 88xx; nunca toca el de OpenWhispr) y guarda tiempo,
+  memoria y porcentaje de error. Los modelos de sherpa-onnx todavía no se pueden medir desde aquí.
+- **Medido en el M4 Pro piloto** (29/10/2026, 15 s de voz sintética en español): Whisper Turbo transcribió en
+  0,75 s (20 veces el tiempo real) con 1,8 GB de memoria y 10 % de palabras erradas («Mac» lo escribió «máquina»).
+- La skill solo sugiere: el modelo se cambia en OpenWhispr, en Configuración > Conversión de voz a texto > Local.
+
 ## Un solo servidor
 
 - El servidor serializa las peticiones con un mutex (Mantenedor): un segundo servidor no suma velocidad y

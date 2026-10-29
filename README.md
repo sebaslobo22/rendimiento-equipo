@@ -104,6 +104,7 @@ scripts también se corren a mano desde `skills/rendimiento-equipo/`:
 | `scripts/diagnosticar.py` | JSON del equipo: CPU por niveles, memoria y presión, GPU y familia Metal, codificadores y decodificadores por hardware, Neural Engine, estado térmico y procesos pesados vivos. |
 | `scripts/perfil.py --renders N --formato texto` | Recomendaciones para N renders en paralelo, frenos activos, qué trae la arquitectura de tu chip y qué hace la skill con cada cosa, y un bloque listo para pegar en el encargo de cada subagente. |
 | `scripts/medir.py codificar\|decodificar\|remotion` | Compara dos métodos en tu equipo. Con `--registrar` anota al ganador si mejora al menos un 15 % sin diferencia visual (menos de 2/255). |
+| `scripts/medir.py voz --audio <archivo> --texto <lo que dice>` | Mide los modelos de dictado de OpenWhispr descargados: tiempo, memoria y porcentaje de error. |
 | `scripts/medir.py paralelo` | Cuántas codificaciones por hardware rinden a la vez. Los chips Max y Ultra traen 2 y 4 motores de video, y ninguna API lo dice. |
 
 ### Cada generación, a fondo

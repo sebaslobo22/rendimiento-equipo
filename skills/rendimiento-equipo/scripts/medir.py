@@ -8,6 +8,8 @@ Subcomandos:
   decodificar ffmpeg: decodificar en CPU frente a -hwaccel videotoolbox.
               En Windows, CPU frente a cada acelerador que abre (cuda, qsv, d3d11va).
   remotion    render corto de una composicion: base, angle, hardware y ambos (solo macOS por ahora)
+  voz         modelos de dictado de OpenWhispr instalados (whisper.cpp): tiempo, memoria y error con un audio
+              tuyo; con --texto (lo que dice el audio) calcula el porcentaje de palabras erradas
   paralelo    cuantas codificaciones por hardware rinden a la vez (1, 2, 4...): los chips Max y Ultra traen
               2 y 4 motores de codificacion y ninguna API dice cuantos hay
 
@@ -518,6 +520,170 @@ def medir_paralelo(args):
     return out, ((filas, comps, ctx, cambios) if not fallos else None)
 
 
+def _normalizar(t):
+    t = re.sub(r"[^\w\s]", " ", (t or "").lower())
+    return t.split()
+
+
+def wer(referencia, hipotesis):
+    """Porcentaje de palabras erradas (sustituciones + borradas + agregadas) / palabras de la referencia."""
+    a, b = _normalizar(referencia), _normalizar(hipotesis)
+    if not a:
+        return None
+    previo = list(range(len(b) + 1))
+    for i, x in enumerate(a, 1):
+        actual = [i] + [0] * len(b)
+        for j, y in enumerate(b, 1):
+            actual[j] = min(previo[j] + 1, actual[j - 1] + 1, previo[j - 1] + (x != y))
+        previo = actual
+    return round(100 * previo[-1] / len(a), 2)
+
+
+def _memoria_mb(p):
+    """Memoria residente actual del proceso en MB (ps en macOS; en Windows se lee el pico al final)."""
+    if resource is None:
+        return None
+    rc, out, _ = dg.ejecutar(["ps", "-o", "rss=", "-p", str(p.pid)], 5)
+    try:
+        return int(out.strip()) / 1024 if rc == 0 else None
+    except ValueError:
+        return None
+
+
+def _post_audio(puerto, wav, idioma, timeout):
+    import urllib.request
+    limite = "----rendimientoequipo%d" % os.getpid()
+    with open(wav, "rb") as f:
+        datos = f.read()
+    cuerpo = b"".join([
+        ("--%s\r\nContent-Disposition: form-data; name=\"file\"; filename=\"audio.wav\"\r\nContent-Type: audio/wav\r\n\r\n" % limite).encode(),
+        datos, b"\r\n",
+        ("--%s\r\nContent-Disposition: form-data; name=\"response_format\"\r\n\r\njson\r\n" % limite).encode(),
+        ("--%s\r\nContent-Disposition: form-data; name=\"language\"\r\n\r\n%s\r\n" % (limite, idioma)).encode(),
+        ("--%s--\r\n" % limite).encode()])
+    req = urllib.request.Request("http://127.0.0.1:%d/inference" % puerto, data=cuerpo,
+                                 headers={"Content-Type": "multipart/form-data; boundary=" + limite})
+    with urllib.request.urlopen(req, timeout=timeout) as r:
+        # los segmentos llegan en lineas y a veces cortan una palabra: el salto no es un espacio
+        return json.loads(r.read().decode("utf-8", "replace")).get("text", "").replace("\n", "")
+
+
+def medir_voz(args):
+    """Transcribe el mismo audio con cada modelo whisper.cpp de OpenWhispr instalado, en un servidor propio.
+
+    Lanza su propio whisper-server en un puerto 88xx con -m (nunca toca el de OpenWhispr, que usa --model y
+    --host) y lo apaga al terminar. Mide la carga del modelo, el tiempo de transcripcion, la memoria y, si se
+    da --texto, el porcentaje de palabras erradas. Los modelos de sherpa-onnx (Parakeet, Cohere, Orukeet) no
+    se pueden medir desde aqui todavia: se comparan por su ficha publica.
+    """
+    import socket
+    import threading
+    import voz
+    audio = os.path.expanduser(args.audio)
+    if not os.path.isfile(audio):
+        raise ErrorUso("No existe el audio: %r" % audio)
+    referencia = None
+    if args.texto:
+        ruta = os.path.expanduser(args.texto)
+        referencia = open(ruta, encoding="utf-8").read() if os.path.isfile(ruta) else args.texto
+    servidores = (dg.buscar_whisper() or {}).get("servidores") or []
+    if not servidores:
+        raise ErrorUso("No encuentro whisper-server (OpenWhispr lo trae; tambien sirve el de whisper.cpp).")
+    servidor = servidores[0]["ruta"]
+    ffmpeg = resolver_ffmpeg(args)
+    cat, version, _ = voz.catalogo_openwhispr()
+    if not cat:
+        raise ErrorUso("No encuentro OpenWhispr instalado: sus modelos son los que se miden.")
+    todos = [m for m in voz.modelos(cat) if m["familia"] == "whisper" and m["instalado"]]
+    pedidos = [x.strip() for x in (args.modelos or "").split(",") if x.strip()]
+    elegidos = [m for m in todos if not pedidos or m["id"] in pedidos]
+    if not elegidos:
+        raise ErrorUso("No hay modelos whisper de OpenWhispr descargados%s. Instalados: %s" % (
+            " con esos nombres" if pedidos else "", ", ".join(m["id"] for m in todos) or "ninguno"))
+    tmp = tempfile.mkdtemp(prefix="rendimiento-equipo-")
+    wav = os.path.join(tmp, "audio.wav")
+    rc, _, err = dg.ejecutar([ffmpeg, "-nostdin", "-y", "-hide_banner", "-loglevel", "error", "-i", audio,
+                              "-ar", "16000", "-ac", "1", "-c:a", "pcm_s16le", wav], 300)
+    if rc != 0:
+        shutil.rmtree(tmp, ignore_errors=True)
+        raise ErrorUso("ffmpeg no pudo convertir el audio: %s" % err.strip()[-200:])
+    seg = duracion(ffmpeg, wav) or 0
+    if args.solo_comandos:
+        shutil.rmtree(tmp, ignore_errors=True)
+        return {"solo_comandos": {m["id"]: [servidor, "-m", m["ruta"], "--port", "88xx", "-l", args.idioma] for m in elegidos}}, None
+    ctx_ruido = ruido()
+    res = {}
+    try:
+        for m in elegidos:
+            puerto = pf.puerto_libre(set())
+            t0 = time.perf_counter()
+            p = _lanzar([servidor, "-m", m["ruta"], "--port", str(puerto), "-l", args.idioma])
+            listo = False
+            while time.perf_counter() - t0 < 180 and p.poll() is None:
+                try:
+                    socket.create_connection(("127.0.0.1", puerto), timeout=0.5).close()
+                    listo = True
+                    break
+                except OSError:
+                    time.sleep(0.2)
+            carga = time.perf_counter() - t0
+            if not listo:
+                p.kill()
+                res[m["id"]] = {"fallo": True, "error": "el servidor no arranco en 180 s"}
+                continue
+            pico = [0.0]
+            corriendo = [True]
+
+            def vigilar():
+                while corriendo[0]:
+                    v = _memoria_mb(p)
+                    if v:
+                        pico[0] = max(pico[0], v)
+                    time.sleep(0.2)
+            hilo = threading.Thread(target=vigilar, daemon=True)
+            hilo.start()
+            try:
+                t1 = time.perf_counter()
+                texto = _post_audio(puerto, wav, args.idioma, 1800)
+                dur = time.perf_counter() - t1
+                error = None
+            except Exception as e:  # noqa: BLE001 - un modelo que falla no tumba la medicion de los demas
+                texto, dur, error = "", None, "%s: %s" % (type(e).__name__, e)
+            corriendo[0] = False
+            hilo.join(1)
+            if resource is None:
+                import plataforma_windows as pw
+                pico[0] = pw.memoria_pico_mb(p) or 0
+            p.terminate()
+            try:
+                p.wait(10)
+            except subprocess.TimeoutExpired:
+                p.kill()
+            if error:
+                res[m["id"]] = {"fallo": True, "error": error}
+                continue
+            res[m["id"]] = {"carga_s": round(carga, 2), "transcribe_s": round(dur, 2),
+                            "veces_tiempo_real": round(seg / dur, 1) if dur else None,
+                            "memoria_mb": round(pico[0]) or None, "wer": wer(referencia, texto) if referencia else None,
+                            "texto": texto.strip()[:600]}
+    finally:
+        shutil.rmtree(tmp, ignore_errors=True)
+    cambios = {}
+    for mid, r in res.items():
+        if not r.get("fallo"):
+            cambios[("voz", mid)] = {k: r[k] for k in ("carga_s", "transcribe_s", "veces_tiempo_real", "memoria_mb", "wer")}
+            cambios[("voz", mid)].update({"idioma": args.idioma, "audio_s": round(seg, 1), "estado": "adoptado", "fecha": hoy(),
+                                          "nota": "medido con medir.py voz; wer solo si se dio --texto"})
+    filas = ["| %s | %s | | %s MB | %s |" % (mid, "falló" if r.get("fallo") else r["transcribe_s"],
+                                             "" if r.get("fallo") else r["memoria_mb"],
+                                             "" if r.get("fallo") or r["wer"] is None else "%s %% de error" % r["wer"])
+             for mid, r in res.items()]
+    ctx = {"audio": audio, "audio_s": round(seg, 1), "idioma": args.idioma, "servidor": servidor,
+           "openwhispr": version, "repeticiones": 1, "criterio": "tiempo", "ruido": ctx_ruido, "archivo": audio}
+    out = {"subcomando": "voz", **ctx, "variantes": res, "comparaciones": []}
+    return out, (filas, [], ctx, cambios)
+
+
 def num_es(x):
     return ("%.2f" % x).replace(".", ",")
 
@@ -624,7 +790,7 @@ def parser():
     ap = argparse.ArgumentParser(
         description="Pruebas cortas A/B (codificar, decodificar, remotion, paralelo) con tiempo real, CPU y diferencia visual.",
         formatter_class=argparse.RawDescriptionHelpFormatter, epilog=__doc__.split("Con --registrar:")[1].join(["Con --registrar:", ""]))
-    sub = ap.add_subparsers(dest="cmd", metavar="{codificar,decodificar,remotion,paralelo}")
+    sub = ap.add_subparsers(dest="cmd", metavar="{codificar,decodificar,remotion,paralelo,voz}")
 
     def comunes(p):
         p.add_argument("--repeticiones", type=int, default=None, help="repeticiones por variante (por defecto 1 en ffmpeg, 2 en paralelo, 3 en remotion)")
@@ -649,6 +815,13 @@ def parser():
     p.add_argument("--entrada", default="src/index.ts", help="punto de entrada (por defecto %(default)s)")
     p.add_argument("--variantes", default="base,angle,hardware,ambos", help="lista separada por comas (por defecto %(default)s)")
     p.add_argument("--concurrencia", type=int, help="--concurrency igual para todas las variantes (por defecto la formula con 1 render)")
+    comunes(p)
+    p = sub.add_parser("voz", help="modelos de dictado de OpenWhispr instalados: tiempo, memoria y error",
+                       description="Transcribe el mismo audio con cada modelo whisper.cpp de OpenWhispr instalado, en un servidor propio.")
+    p.add_argument("--audio", required=True, help="audio de prueba (mejor 30 a 120 s de tu voz)")
+    p.add_argument("--texto", help="lo que dice el audio (archivo .txt o el texto mismo): con esto se calcula el error")
+    p.add_argument("--idioma", default="es", help="idioma del audio (por defecto %(default)s)")
+    p.add_argument("--modelos", help="ids separados por coma (por defecto todos los whisper instalados)")
     comunes(p)
     p = sub.add_parser("paralelo", help="cuantas codificaciones por hardware rinden a la vez (1, 2, 4...)",
                        description="La misma codificacion con 1, 2, 4... copias a la vez. NO lo corras con otros renders en marcha.")
@@ -679,6 +852,8 @@ def main(argv=None):
     try:
         if args.cmd == "remotion":
             out, md = medir_remotion(args)
+        elif args.cmd == "voz":
+            out, md = medir_voz(args)
         elif args.cmd == "paralelo":
             out, md = medir_paralelo(args)
         elif dg.es_windows():
